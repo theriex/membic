@@ -114,92 +114,6 @@ app.membic = (function () {
     }
 
 
-    //If the theme is not cached, then there is no modified value to use as
-    //an appropriate cache bust parameter.  Since a plain img src reference
-    //can hang around for a potentially really long time, this uses a one
-    //hour time slug with minutes removed.  That provides for re-use across
-    //multiple display uses with eventual refresh.
-    function themeImgSrc(tid) {
-        var theme = app.refmgr.cached("Theme", tid);
-        if(theme) {
-            return app.pcd.picImgSrc(theme); }
-        return app.dr("/api/obimg?dt=Theme&di=" + tid + jt.ts("&cb=", "hour"));
-    }
-
-
-    //As you accumulate themes over time, you don't want to keep seeing
-    //suggestions for older archives.
-    function membicThemePostsHTML (cdx, membic) {
-        membic.svcdata = membic.svcdata || {};
-        membic.svcdata.postctms = membic.svcdata.postctms || [];
-        if(!mayEdit(membic) && !membic.svcdata.postctms.length) {
-            return ""; }
-        var links = [];
-        var tidcsv = "";
-        membic.svcdata.postctms.forEach(function (pn) {
-            tidcsv = tidcsv.csvappend(pn.ctmid);
-            var html = [
-                ["a", {href:app.dr("theme/" + pn.ctmid),
-                       onclick:jt.fs("app.statemgr.setState('Theme','" +
-                                     pn.ctmid + "')")},
-                 [["img", {src:themeImgSrc(pn.ctmid)}],
-                  pn.name]]];
-            if(mayEdit(membic)) {
-                //onclick of the '+' it changes to a select with options
-                //built from preferred themes minus those already selected.
-                //onchange of theme selection, it converts to a postnote
-                //with a remove.
-                html.push(
-                    ["button", {type:"button", title:"Remove membic from theme",
-                                onclick:jt.fs("app.membic.removepost(" + cdx +
-                                              ",'" + pn.ctmid + "')")},
-                     "x"]); }
-            links.push(jt.tac2html(
-                ["div", {cla:"postnotediv"}, html])); });
-        if(mayEdit(membic)) {
-            links.push(jt.tac2html(
-                ["div", {cla:"postnotediv", id:"addthemepostdiv" + cdx},
-                 ["button", {type:"button", title:"Add Theme Post",
-                             onclick:jt.fs("app.membic.themeselect(" + cdx + 
-                                           ")")},
-                  "+"]])); }
-        return jt.tac2html(
-            ["div", {cla:"postnotescontainerdiv"},
-             [["span", {id:"postedthemeids" + cdx, style:"display:none"},
-               tidcsv],
-              ["span", {cla:"masptlab"}, "Posted to: "],
-              links.join(" | ")]]);
-    }
-
-
-    function selectedPostThemes (cdx, membic) {
-        var postctms = membic.svcdata.postctms;
-        var pns = [];
-        var tids = jt.byId("postedthemeids" + cdx);
-        if(!tids) {  //checking if changed before csv written to HTML
-            return postctms; }
-        tids = tids.innerHTML;
-        tids.csvarray().forEach(function (tid) {
-            var currpn = postctms.find((pn) => pn.ctmid === tid);
-            if(currpn) {  //existing post
-                pns.push(currpn); }
-            else {  //new post
-                var proftheme = app.profile.myProfile().themes[tid];
-                pns.push({ctmid:tid, name:proftheme.name, revid:0}); } });
-        return pns;
-    }
-
-
-    function themePostsChanged (membic, tps) {
-        var postctms = membic.svcdata.postctms;
-        function postin (entry, posts) {
-            return posts.find((post) => post.ctmid === entry.ctmid); }
-        var same = (postctms.every((pn) => postin(pn, tps)) &&
-                    tps.every((tp) => postin(tp, postctms)));
-        return !same;
-    }
-
-
     //The profile membic dsId is used to indicate membic expansion.  The
     //membic display is expanded or condensed across the profile and all
     //themes to make it easier to track what you are focusing on.
@@ -365,190 +279,11 @@ app.membic = (function () {
     }
 
 
-    //Return a new object with the fields used for the details area of
-    //membic display and editing form.  The name/title fields are handled
-    //separately so they are not included here.
-    function initNewDetailsObject () {
-        return {artist:"", author:"", publisher:"", album:"",
-                starring:"", address:"", year:""};
-    }
-
-
-    //Custom detail fields are allowed, but lower case letters only.
-    //Removing the value from a detail attribute effectively removes it from
-    //the display when saved.  Slightly clunky, but not expecting heavy use
-    //and want to minimize the number of controls on screen.
-    function detailsHTML (cdx, membic, edit) {
-        var detobj = initNewDetailsObject();
-        membic.details = membic.details || {};
-        Object.keys(membic.details).forEach(function (key) {
-            if(key !== "title" && key !== "name") {
-                detobj[key] = membic.details[key]; } });
-        var chgfstr = jt.fs("app.membic.formInput(" + cdx + ")");
-        var dlos = [];  //datalist options for adding other detail fields
-        var html = [];
-        Object.keys(detobj).forEach(function (key) {
-            if(detobj[key]) { html.push(jt.tac2html(
-                ["tr",
-                 [["td", {cla:"detailattrtd"}, key],
-                  ["td", {cla:"detailvaltd", 
-                          id:"detail" + key + "valtd" + cdx,
-                          contenteditable:jt.toru(edit, "true"),
-                          oninput:jt.toru(edit, chgfstr)}, 
-                   detobj[key]]]])); } });
-        if(edit) {
-            Object.keys(detobj).forEach(function (key) {
-                if(!detobj[key]) {
-                    dlos.push(["option", {value:key}]); } });
-            var dlh = "";
-            if(dlos.length) {
-                dlh = jt.tac2html(["datalist", {id:"detnewattroptsdl" + cdx},
-                                   dlos]); }
-            html.push(jt.tac2html(
-                ["tr",
-                 [["td", {cla:"detailattrtd"},
-                   [["input", {type:"text", cla:"detnewattrin",
-                               id:"detnewattrin" + cdx,
-                               placeholder:"attribute", value:"",
-                               list:"detnewattroptsdl" + cdx,
-                               onchange:chgfstr}],
-                    dlh]],
-                  ["td", {cla:"detailvaltd"},
-                   ["input", {type:"text", cla:"detnewvalin",
-                              id:"detnewvalin" + cdx,
-                              placeholder:"value", value:"",
-                              onchange:chgfstr}]]]])); }
-        return jt.tac2html(["div", {cla:"mddetdiv"},
-                            ["table", {cla: "collapse"}, html]]);
-    }
-
-
     //Check the values of the keys in the source object against those in the
     //comparison object.  Return true if they are all equal.  The cmp object
     //may have additional keys not found in the src.
     function objKVEq (src, cmp) {
         return Object.keys(src).every((key) => src[key] === cmp[key]);
-    }
-
-
-    //Construct a details object from the interface display.  The resulting
-    //object can be used for comparison or update.  The user may enter a
-    //custom detail attribute, and they can change or remove the value for
-    //any existing attribute, but they cannot change the name of an existing
-    //attribute, so it is sufficient to walk the displayed attributes to
-    //construct the details object.
-    function detailsValues (cdx) {
-        var valobj = {};
-        Object.keys(initNewDetailsObject()).forEach(function (key) {
-            var td = jt.byId("detail" + key + "valtd" + cdx);
-            if(td) {
-                valobj[key] = td.innerHTML.trim(); } });
-        var input = jt.byId("detnewattrin" + cdx);
-        if(input && input.value.trim()) {  //adding a detail attribute
-            var valin = jt.byId("detnewvalin" + cdx);
-            if(valin && valin.value.trim()) {
-                valobj[input.value.trim()] = valin.value.trim(); } }
-        return valobj;
-    }
-
-
-    //Return all the possible keywords grouped by source.
-    function keywordGroups (cdx, membic, selkwcsv) {
-        selkwcsv = selkwcsv || membic.keywords;
-        var mt = membicTypes.find((md) => md.type === membic.revtype);
-        var keygrps = [{name:"", kwcsv:mt.dkwords.join(",")}];
-        selectedPostThemes(cdx, membic).forEach(function (pn) {
-            var proftheme = app.profile.myProfile().themes[pn.ctmid];
-            keygrps.push({name:proftheme.name, kwcsv:proftheme.keywords}); });
-        var knownkws = keygrps.reduce((acc, kg) => acc.csvappend(kg.kwcsv), "");
-        knownkws = knownkws.toLowerCase();
-        var akws = selkwcsv.csvarray()
-            .filter((kw) => !knownkws.csvcontains(kw.toLowerCase()));
-        keygrps.push({name:"Additional", kwcsv:akws.join(",")});
-        return keygrps;
-    }
-
-
-    //Unlike theme posts, it's easier to see all the available keywords and
-    //use checkboxes.  It's not great if the accumulated total gets really
-    //long, but it's still way better than clicking a pulldown for each one.
-    function keywordsHTML (cdx, membic, edit, selkwcsv) {
-        if(!edit) {
-            return jt.tac2html(["div", {cla:"mdkwsdiv"}, membic.keywords]); }
-        selkwcsv = selkwcsv || membic.keywords;
-        var html = [];
-        keywordGroups(cdx, membic, selkwcsv).forEach(function (kg, idx) {
-            if(kg.kwcsv) {
-                var kwshtml = [];
-                kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
-                    var kwid = "m" + cdx + "g" + idx + "c" + csvidx;
-                    var bchk = selkwcsv.csvcontains(kwd);
-                    kwshtml.push(
-                        ["div", {cla:"mdkwdiv"},
-                         [["input", {type:"checkbox", cla:"keywordcheckbox",
-                                     id:kwid, value:kwd, checked:jt.toru(bchk),
-                                     onclick:jt.fsd("app.membic.formInput(" +
-                                                    cdx + ")")}],
-                          ["label", {fo:kwid, id:kwid + "label"}, kwd]]]); });
-                html.push(jt.tac2html(
-                    ["div", {cla:"mdkwsectiondiv"},
-                     [["div", {cla:"mdkwgnamediv"}, kg.name],
-                      ["div", {cla:"mdkwcbsdiv"}, kwshtml]]])); } });
-        html.push(jt.tac2html(
-            ["div", {cla:"mdkwaddnewdiv"},
-             [["label", {fo:"newkwin" + cdx}, "Add Keyword"],
-              ["input", {type:"text", id:"newkwin" + cdx,
-                         placeholder:"New Keyword"}],
-              ["button", {type:"button", title:"Add Keyword",
-                          onclick:dispatchFStr(cdx, "keywords.addnew")},
-               "+"]]]));
-        return jt.tac2html(
-            ["div", {cla:"mdkwsdiv"},
-             ["div", {id:"mdkwscontentdiv" + cdx}, html]]);
-    }
-
-
-    function selectedKeywords (cdx, membic) {
-        var skws = "";
-        var kwgs = keywordGroups(cdx, membic);
-        kwgs.forEach(function (kg, idx) {
-            kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
-                var kwid = "m" + cdx + "g" + idx + "c" + csvidx;
-                var kwi = jt.byId(kwid);
-                if(!kwi) {  //UI not set up, return original keywords
-                    skws = membic.keywords; }
-                else if(kwi.checked) {
-                    skws = skws.csvappend(kwd); } }); });
-        var agi = kwgs.length - 1;  //additional keywords group index
-        var pui = kwgs[agi].kwcsv.length;  //previously unknown index
-        var newKeywordInput; var kwid;
-        do {
-            kwid = "m" + cdx + "g" + agi + "c" + pui;
-            newKeywordInput = jt.byId(kwid);
-            if(newKeywordInput && newKeywordInput.checked) {
-                skws = skws.csvappend(safeInner(kwid + "label")); }
-            pui += 1;
-        } while(newKeywordInput);
-        return skws;
-    }
-
-
-    function equivKeywords (kwsa, kwsb) {
-        kwsa = kwsa.toLowerCase().csvarray().sort().join(",");
-        kwsb = kwsb.toLowerCase().csvarray().sort().join(",");
-        return (kwsa === kwsb);
-    }
-
-
-    function addNewKeywordOption (cdx) {
-        var nkin = jt.byId("newkwin" + cdx);
-        if(nkin && nkin.value) {
-            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-            var currkws = selectedKeywords(cdx, membic);
-            currkws = currkws.csvappend(nkin.value);
-            jt.out("mdkwscontentdiv" + cdx,
-                   keywordsHTML(cdx, membic, true, currkws));
-            app.membic.formInput(cdx); }
     }
 
 
@@ -618,6 +353,227 @@ app.membic = (function () {
             bas.cla = "membicformbuttondisabled"; }
         return jt.tac2html(["button", bas, name]);
     }
+
+
+    var tpmgr = {
+        //If the theme is not cached, then there is no modified value to use
+        //as an appropriate cache bust parameter.  Since a plain img src
+        //reference can hang around for a potentially really long time, this
+        //uses a one hour time slug with minutes removed.  That provides for
+        //re-use across multiple display uses with eventual refresh.
+        themeImgSrc: function (tid) {
+            var theme = app.refmgr.cached("Theme", tid);
+            if(theme) {
+                return app.pcd.picImgSrc(theme); }
+            return app.dr("/api/obimg?dt=Theme&di=" + tid +
+                          jt.ts("&cb=", "hour")); },
+        removePostButtonHTML: function (cdx, editable, pn) {
+            if(!editable) {
+                return ""; }
+            return jt.tac2html(
+                ["button", {type:"button", title:"Remove membic from theme",
+                            onclick:jt.fs("app.membic.themepost(" + cdx +
+                                          ",'remove','" + pn.ctmid + "')")},
+                 "x"]); },
+        addPostContentHTML: function (cdx, select) {
+            if(!select) {
+                return jt.tac2html(
+                    ["button", {type:"button", title:"Add Theme Post",
+                                onclick:jt.fs("app.membic.themepost(" + cdx +
+                                              ",'add')")},
+                     "+"]); }
+            return jt.tac2html(
+                ["select", {cla:"themepostsel", id:"themepostsel" + cdx,
+                            onchange:jt.fs("app.membic.themepost(" + cdx + 
+                                           ",'select')")},
+                 tpmgr.themePostOptionsHTML(cdx)]); },
+        verifyThemePostTimes: function () {
+            var themes = app.profile.myProfile().themes;
+            var havePosts = true;
+            Object.keys(themes).forEach(function (ctmid) {
+                if(!themes[ctmid].lastPost) {
+                    havePosts = false;
+                    themes[ctmid].lastPost = "1234-12-12T00:00:00Z"; } });
+            if(!havePosts) {
+                app.profile.myProfile().preb.forEach(function (membic) {
+                    if(membic.svcdata.postctms) {
+                        membic.svcdata.postctms.forEach(function (pn) {
+                            if(membic.created > themes[pn.ctmid].lastPost) {
+                                themes[pn.ctmid].lastPost = membic.created; }
+                        }); } }); } },
+        themePostOptionsHTML: function (cdx) {
+            var tidcsv = "";
+            var pnlab = jt.byId("postnoteslabel" + cdx);
+            if(pnlab) {
+                tidcsv = pnlab.dataset.tidcsv; }
+            var uts = app.profile.myProfile().themes;
+            var avtis = Object.keys(uts)
+                .filter((tid) => !tidcsv.csvcontains(tid));
+            tpmgr.verifyThemePostTimes();
+            avtis.sort(function (a, b) {
+                if(uts[a].lastPost < uts[b].lastPost) { return 1; }
+                if(uts[a].lastPost > uts[b].lastPost) { return -1; }
+                return 0; });
+            var html = [["option", {value:""}, "--Choose Theme--"]];
+            avtis.forEach(function (ctmid) {
+                html.push(["option", {value:ctmid}, uts[ctmid].name]); });
+            return jt.tac2html(html); },
+        postNoteHTML: function (cdx, editable, pn) {
+            return jt.tac2html(
+                ["div", {cla:"postnotediv"},
+                 [["a", {href:app.dr("theme/" + pn.ctmid),
+                         onclick:jt.fs("app.statemgr.setState('Theme','" +
+                                       pn.ctmid + "')")},
+                   [["img", {src:tpmgr.themeImgSrc(pn.ctmid)}],
+                    pn.name]],
+                  tpmgr.removePostButtonHTML(cdx, editable, pn)]]); },
+        postNoteForThemeId: function (ignore /*cdx*/, membic, tid) {
+            var pn = membic.svcdata.postctms.find((cn) => cn.ctmid === tid);
+            if(!pn) {  //no previously existing post
+                var pt = app.profile.myProfile().themes[tid];
+                pn = {ctmid:tid, name:pt.name, revid:0}; }
+            return pn; },
+        themepost: function (cdx, command, ctmid) {
+            var pne = jt.byId("postnoteslabel" + cdx);
+            pne.innerHTML = "Post to: ";  //clarify actions take effect on save
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var pns = tpmgr.selectedPostThemes(cdx, membic);
+            switch(command) {
+            case "remove":  //remove the ctmid and redraw posts
+                pns = pns.filter((pn) => pn.ctmid !== ctmid);
+                if(pne) {
+                    pne.dataset.tidcsv = pne.dataset.tidcsv.csvremove(ctmid); }
+                jt.out("postnotescontdiv" + cdx,
+                       tpmgr.themePostsHTML(cdx, true, pns, true));
+                break;
+            case "add":  //replace '+' with a list of options
+                jt.out("addthemepostdiv" + cdx,
+                       tpmgr.addPostContentHTML(cdx, "select"));
+                break;
+            case "select":  //add the selected theme and '+' button
+                ctmid = jt.byId("themepostsel" + cdx);
+                ctmid = ctmid.options[ctmid.selectedIndex].value;
+                pns.push(tpmgr.postNoteForThemeId(cdx, membic, ctmid));
+                jt.out("postnotescontdiv" + cdx,
+                       tpmgr.themePostsHTML(cdx, true, pns, true));
+                break; }
+            app.membic.formInput(cdx); },  //note any changes
+        themePostsHTML: function (cdx, editable, pns, activated) {
+            var labtxt = "Posted to: ";
+            if(activated || !pns.length) {
+                labtxt = "Post to: "; }
+            var links = [];
+            var tidcsv = "";
+            pns.forEach(function (pn) {
+                tidcsv = tidcsv.csvappend(pn.ctmid);
+                links.push(tpmgr.postNoteHTML(cdx, editable, pn)); });
+            if(editable) {
+                links.push(jt.tac2html(
+                    ["div", {cla:"postnotediv", id:"addthemepostdiv" + cdx},
+                     tpmgr.addPostContentHTML(cdx, !pns.length)])); }
+            return jt.tac2html(
+                [["span", {cla:"postnoteslabel", id:"postnoteslabel" + cdx,
+                           "data-tidcsv":tidcsv}, labtxt],
+                 links.join(" | ")]); },
+        membicThemePostsHTML: function (cdx, membic) {
+            membic.svcdata = membic.svcdata || {};
+            membic.svcdata.postctms = membic.svcdata.postctms || [];
+            if(!mayEdit(membic) && !membic.svcdata.postctms.length) {
+                return ""; }
+            return jt.tac2html(
+                ["div", {cla:"postnotescontdiv", id:"postnotescontdiv" + cdx},
+                 tpmgr.themePostsHTML(cdx, mayEdit(membic), 
+                                      membic.svcdata.postctms, false)]); },
+        selectedPostThemes: function (cdx, membic) {
+            var pne = jt.byId("postnoteslabel" + cdx);
+            if(!pne) {  //checking for changes before post note element display
+                return membic.svcdata.postctms; }  //return original
+            var pns = [];
+            pne.dataset.tidcsv.csvarray().forEach(function (tid) {
+                pns.push(tpmgr.postNoteForThemeId(cdx, membic, tid)); });
+            return pns; },
+        themePostsChanged: function (membic, tps) {
+            var postctms = membic.svcdata.postctms;
+            function postin (entry, posts) {
+                return posts.find((post) => post.ctmid === entry.ctmid); }
+            var same = (postctms.every((pn) => postin(pn, tps)) &&
+                        tps.every((tp) => postin(tp, postctms)));
+            return !same; }
+    };
+
+
+    var detmgr = {
+        //Return a new object with the fields used for the details area of
+        //membic display and editing form.  The name/title fields are handled
+        //separately so they are not included here.
+        initNewDetailsObject: function () {
+            return {artist:"", author:"", publisher:"", album:"",
+                    starring:"", address:"", year:""}; },
+        //Custom detail fields are allowed, but lower case letters only.
+        //Removing the value from a detail attribute effectively removes it from
+        //the display when saved.  Slightly clunky, but not expecting heavy use
+        //and want to minimize the number of controls on screen.
+        detailsHTML: function (cdx, membic, edit) {
+            var detobj = detmgr.initNewDetailsObject();
+            membic.details = membic.details || {};
+            Object.keys(membic.details).forEach(function (key) {
+                if(key !== "title" && key !== "name") {
+                    detobj[key] = membic.details[key]; } });
+            var chgfstr = jt.fs("app.membic.formInput(" + cdx + ")");
+            var dlos = [];  //datalist options for adding other detail fields
+            var html = [];
+            Object.keys(detobj).forEach(function (key) {
+                if(detobj[key]) { html.push(jt.tac2html(
+                    ["tr",
+                     [["td", {cla:"detailattrtd"}, key],
+                      ["td", {cla:"detailvaltd", 
+                              id:"detail" + key + "valtd" + cdx,
+                              contenteditable:jt.toru(edit, "true"),
+                              oninput:jt.toru(edit, chgfstr)}, 
+                       detobj[key]]]])); } });
+            if(edit) {
+                Object.keys(detobj).forEach(function (key) {
+                    if(!detobj[key]) {
+                        dlos.push(["option", {value:key}]); } });
+                var dlh = "";
+                if(dlos.length) {
+                    dlh = jt.tac2html(
+                        ["datalist", {id:"detnewattroptsdl" + cdx}, dlos]); }
+                html.push(jt.tac2html(
+                    ["tr",
+                     [["td", {cla:"detailattrtd"},
+                       [["input", {type:"text", cla:"detnewattrin",
+                                   id:"detnewattrin" + cdx,
+                                   placeholder:"attribute", value:"",
+                                   list:"detnewattroptsdl" + cdx,
+                                   onchange:chgfstr}],
+                        dlh]],
+                      ["td", {cla:"detailvaltd"},
+                       ["input", {type:"text", cla:"detnewvalin",
+                                  id:"detnewvalin" + cdx,
+                                  placeholder:"value", value:"",
+                                  onchange:chgfstr}]]]])); }
+            return jt.tac2html(["div", {cla:"mddetdiv"},
+                                ["table", {cla: "collapse"}, html]]); },
+        //Construct a details object from the interface display.  The resulting
+        //object can be used for comparison or update.  The user may enter a
+        //custom detail attribute, and they can change or remove the value for
+        //any existing attribute, but they cannot change the name of an existing
+        //attribute, so it is sufficient to walk the displayed attributes to
+        //construct the details object.
+        detailsValues: function (cdx) {
+            var valobj = {};
+            Object.keys(detmgr.initNewDetailsObject()).forEach(function (key) {
+                var td = jt.byId("detail" + key + "valtd" + cdx);
+                if(td) {
+                    valobj[key] = td.innerHTML.trim(); } });
+            var input = jt.byId("detnewattrin" + cdx);
+            if(input && input.value.trim()) {  //adding a detail attribute
+                var valin = jt.byId("detnewvalin" + cdx);
+                if(valin && valin.value.trim()) {
+                    valobj[input.value.trim()] = valin.value.trim(); } }
+            return valobj; }
+    };
 
 
     var typemgr = {
@@ -768,6 +724,100 @@ app.membic = (function () {
     };
 
 
+    var kwmgr = {
+        //Return all the possible keywords grouped by source.
+        keywordGroups: function (cdx, membic, selkwcsv) {
+            selkwcsv = selkwcsv || membic.keywords;
+            var mt = membicTypes.find((md) => md.type === membic.revtype);
+            var keygrps = [{name:"", kwcsv:mt.dkwords.join(",")}];
+            tpmgr.selectedPostThemes(cdx, membic).forEach(function (pn) {
+                var proftheme = app.profile.myProfile().themes[pn.ctmid];
+                keygrps.push({name:proftheme.name,
+                              kwcsv:proftheme.keywords}); });
+            var knownkws = keygrps.reduce((acc, kg) => 
+                                          acc.csvappend(kg.kwcsv), "");
+            knownkws = knownkws.toLowerCase();
+            var akws = selkwcsv.csvarray()
+                .filter((kw) => !knownkws.csvcontains(kw.toLowerCase()));
+            keygrps.push({name:"Additional", kwcsv:akws.join(",")});
+            return keygrps; },
+        //Easier to see all the available keywords and use checkboxes.  It's
+        //not great if the accumulated total gets really long, but it's
+        //still way better than clicking a pulldown.
+        keywordsHTML: function (cdx, membic, edit, skcsv) {
+            if(!edit) {
+                return jt.tac2html(["div", {cla:"mdkwsdiv"},
+                                    membic.keywords]); }
+            skcsv = skcsv || membic.keywords;
+            var html = [];
+            kwmgr.keywordGroups(cdx, membic, skcsv).forEach(function (kg, idx) {
+                if(kg.kwcsv) {
+                    var kwshtml = [];
+                    kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
+                        var kwid = "m" + cdx + "g" + idx + "c" + csvidx;
+                        var bchk = skcsv.csvcontains(kwd);
+                        kwshtml.push(
+                            ["div", {cla:"mdkwdiv"},
+                             [["input", {type:"checkbox", cla:"keywordcheckbox",
+                                         id:kwid, value:kwd,
+                                         checked:jt.toru(bchk),
+                                         onclick:jt.fsd("app.membic.formInput("
+                                                        + cdx + ")")}],
+                              ["label", {fo:kwid, id:kwid + "label"},
+                               kwd]]]); });
+                    html.push(jt.tac2html(
+                        ["div", {cla:"mdkwsectiondiv"},
+                         [["div", {cla:"mdkwgnamediv"}, kg.name],
+                          ["div", {cla:"mdkwcbsdiv"}, kwshtml]]])); } });
+            html.push(jt.tac2html(
+                ["div", {cla:"mdkwaddnewdiv"},
+                 [["label", {fo:"newkwin" + cdx}, "Add Keyword"],
+                  ["input", {type:"text", id:"newkwin" + cdx,
+                             placeholder:"New Keyword"}],
+                  ["button", {type:"button", title:"Add Keyword",
+                              onclick:dispatchFStr(cdx, "keywords.addnew")},
+                   "+"]]]));
+            return jt.tac2html(
+                ["div", {cla:"mdkwsdiv"},
+                 ["div", {id:"mdkwscontentdiv" + cdx}, html]]); },
+        selectedKeywords: function (cdx, membic) {
+            var skws = "";
+            var kwgs = kwmgr.keywordGroups(cdx, membic);
+            kwgs.forEach(function (kg, idx) {
+                kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
+                    var kwid = "m" + cdx + "g" + idx + "c" + csvidx;
+                    var kwi = jt.byId(kwid);
+                    if(!kwi) {  //UI not set up, return original keywords
+                        skws = membic.keywords; }
+                    else if(kwi.checked) {
+                        skws = skws.csvappend(kwd); } }); });
+            var agi = kwgs.length - 1;  //additional keywords group index
+            var pui = kwgs[agi].kwcsv.length;  //previously unknown index
+            var newKeywordInput; var kwid;
+            do {
+                kwid = "m" + cdx + "g" + agi + "c" + pui;
+                newKeywordInput = jt.byId(kwid);
+                if(newKeywordInput && newKeywordInput.checked) {
+                    skws = skws.csvappend(safeInner(kwid + "label")); }
+                pui += 1;
+            } while(newKeywordInput);
+            return skws; },
+        equivKwrds: function (kwsa, kwsb) {
+            kwsa = kwsa.toLowerCase().csvarray().sort().join(",");
+            kwsb = kwsb.toLowerCase().csvarray().sort().join(",");
+            return (kwsa === kwsb); },
+        addNewKeywordOption: function (cdx) {
+            var nkin = jt.byId("newkwin" + cdx);
+            if(nkin && nkin.value) {
+                var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+                var currkws = kwmgr.selectedKeywords(cdx, membic);
+                currkws = currkws.csvappend(nkin.value);
+                jt.out("mdkwscontentdiv" + cdx,
+                       kwmgr.keywordsHTML(cdx, membic, true, currkws));
+                app.membic.formInput(cdx); } }
+    };
+
+
     formElements = {
         title: {
             closed: function (ignore /*cdx*/, membic) {
@@ -806,7 +856,7 @@ app.membic = (function () {
                 if(mayEdit(membic)) {
                     return typemgr.clickHTMLForType(cdx, mt); }
                 else {
-                    return typemgr.imgHTMLForType(mt); } },
+                    return typemgr.imgHTMLForType(cdx, mt); } },
             changed: function (cdx, membic) {
                 var rt = jt.byId("revtypeimg" + cdx).title;
                 return jt.toru(membic.revtype !== rt, rt); },
@@ -902,11 +952,11 @@ app.membic = (function () {
                 updobj.text = chgval; } },
         details: {
             closed: function (cdx, membic) {
-                return detailsHTML(cdx, membic, false); },
+                return detmgr.detailsHTML(cdx, membic, false); },
             expanded: function (cdx, membic) {
-                return detailsHTML(cdx, membic, mayEdit(membic)); },
+                return detmgr.detailsHTML(cdx, membic, mayEdit(membic)); },
             changed: function (cdx, membic) {
-                var dvo = detailsValues(cdx, membic);
+                var dvo = detmgr.detailsValues(cdx, membic);
                 return jt.toru(!objKVEq(dvo, membic.details), dvo); },
             write: function (chgval, updobj) {
                 updobj.details = updobj.details || {};
@@ -917,25 +967,25 @@ app.membic = (function () {
             expanded: function (cdx, membic) {
                 return jt.tac2html(
                     ["div", {cla:"mdptsdiv", id:"mdptsdiv" + cdx},
-                     membicThemePostsHTML(cdx, membic)]); },
+                     tpmgr.membicThemePostsHTML(cdx, membic)]); },
             changed: function (cdx, membic) {
-                var tps = selectedPostThemes(cdx, membic);
-                return jt.toru(themePostsChanged(membic, tps), tps); },
+                var tps = tpmgr.selectedPostThemes(cdx, membic);
+                return jt.toru(tpmgr.themePostsChanged(membic, tps), tps); },
             write: function (chgval, updobj) {
                 updobj.svcdata = updobj.svcdata || {};
                 updobj.svcdata.postctms = chgval; } },
         keywords: {
             closed: function (cdx, membic) {
-                return keywordsHTML(cdx, membic, false); },
+                return kwmgr.keywordsHTML(cdx, membic, false); },
             expanded: function (cdx, membic) {
-                return keywordsHTML(cdx, membic, mayEdit(membic)); },
+                return kwmgr.keywordsHTML(cdx, membic, mayEdit(membic)); },
             changed: function (cdx, membic) {
-                var kws = selectedKeywords(cdx, membic);
-                return jt.toru(!equivKeywords(membic.keywords, kws), kws); },
+                var kws = kwmgr.selectedKeywords(cdx, membic);
+                return jt.toru(!kwmgr.equivKwrds(membic.keywords, kws), kws); },
             write: function (chgval, updobj) {
                 updobj.keywords = chgval; },
             addnew: function (cdx) {
-                addNewKeywordOption(cdx); } }
+                kwmgr.addNewKeywordOption(cdx); } }
     };
 
 
@@ -1127,7 +1177,8 @@ return {
 
 
     ratingEventDispatch: function (event) { ratmgr.handleEvent(event); },
-    typesel: function (c, t, e) { typemgr.typesel(c, t, e); }
+    typesel: function (c, t, e) { typemgr.typesel(c, t, e); },
+    themepost: function (c, m, i) { tpmgr.themepost(c, m, i); }
 
 }; //end of returned functions
 }());
