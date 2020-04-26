@@ -138,16 +138,16 @@ app.membic = (function () {
                     savind = "";
                     pots.forEach(function (pot) {  //deserialize so ready to use
                         app.refmgr.deserialize(pot); });
-                    var profmem = pots[0].preb[0];  //profile membic
-                    profmem.postnotes.forEach(function (pn) {  //clear outdated
-                        app.refmgr.uncache("Theme", pn.ctmid); });
+                    var srcmem = pots[0].preb[0];  //profile membic
+                    srcmem.svcdata.postctms.forEach(function (pn) {
+                        app.refmgr.uncache("Theme", pn.ctmid); }); //outdated
                     pots.forEach(function (pot) {  //update all given data
                         app.refmgr.put(pot); });
-                    expandedMembics[profmem.dsId] = "expandedpostsave";
+                    expandedMembics[srcmem.dsId] = "expandedpostsave";
                     var dispobj = pots[pots.length - 1];
                     app.pcd.fetchAndDisplay(dispobj.dsType, dispobj.dsId);
                     if(contf) {
-                        contf(profmem); } },
+                        contf(srcmem); } },
                 function (code, errtxt) {
                     savind = "";
                     jt.log("saveMembic " + savemembic.dsId + " " + code + ": " +
@@ -303,14 +303,10 @@ app.membic = (function () {
     }
 
 
-    //Update the changed membic elements and redisplay closed to show
-    //completion.  When the update was just a fix to the title or text,
-    //redisplaying closed is the most intuitive, and provides more of a
-    //"just works" kind of feel.  In cases where more editing is needed,
-    //re-expanding still provides a sense of confirmation that the edits
-    //took effect.  If an error occurs, then leave expanded with message.
+    //Update the changed membic elements and call to save.
     function updateMembic (cdx) {
         jt.out("dlgbsmsgdiv" + cdx, "");
+        var bhtml = jt.byId("dlgbsbdiv" + cdx).innerHTML;
         jt.out("dlgbsbdiv" + cdx, "Saving...");
         var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
         var updm = {dsType:"Membic", dsId:membic.dsId};
@@ -319,7 +315,17 @@ app.membic = (function () {
             if(chgval) {
                 formElements[key].write(chgval, updm); } });
         jt.log("updateMembic: " + JSON.stringify(updm));
-        //saveMembic...
+        //Redisplay closed on successful completion.  If the update changed
+        //the title or text, redisplaying closed is intuitive and smooth.
+        //If the update changed other things, redisplaying closed still
+        //provides a sense of confirmation of updated info on re-expansion.
+        //If an error occurs, leave expanded with message.
+        saveMembic(updm,
+            function (srcmembic) {
+                expandedMembics[srcmembic.dsId] = ""; },  //close
+            function (code, txt) {
+                jt.out("dlgbsmsgdiv" + cdx, "Save failed " + code + ": " + txt);
+                jt.out("dlgbsbdiv" + cdx, bhtml); });
     }
 
 
@@ -893,7 +899,7 @@ app.membic = (function () {
             expanded: function (cdx, membic) {
                 if(mayEdit(membic)) {
                     var edited = membicEdited(cdx, membic);
-                    return jt.tac2html(
+                    return formActionButtonsHTML(cdx, 
                         [["a", {href:"#delete", title:"Delete Membic",
                                 onclick:dispatchFStr(cdx, "dlgbs.mrkdel")},
                           ["img", {cla:"masactbimg",
@@ -903,7 +909,7 @@ app.membic = (function () {
                          formButton("Save", dispatchFStr(cdx, "dlgbs.save"),
                                     !edited)]); }
                 if(mayRemove(membic)) {
-                    formActionButtonsHTML(cdx,
+                    return formActionButtonsHTML(cdx,
                         ["a", {href:"#remove", title:"Remove Theme Post",
                                onclick:dispatchFStr(cdx, "dlgbs.remove")},
                          ["img", {cla:"masactbimg",
@@ -1134,7 +1140,9 @@ return {
 
     formHTML: function (cdx, membic) {
         return jt.tac2html(
-            ["div", {cla:"mdouterdiv"},
+            //include membic data for debugging. 
+            ["div", {cla:"mdouterdiv", "data-dsId":membic.dsId,
+                     "data-ctmid":membic.ctmid, "data-srcrev":membic.srcrev},
              ["div", {cla:"mdinnerdiv"},
               [["a", {href:"#expand" + cdx, title:"Toggle Membic Expansion",
                     onclick:jt.fs("app.membic.toggleMembic(" + cdx + ")")},

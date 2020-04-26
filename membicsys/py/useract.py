@@ -1,3 +1,12 @@
+""" User initiated application actions """
+#pylint: disable=wrong-import-position
+#pylint: disable=wrong-import-order
+#pylint: disable=import-error
+#pylint: disable=missing-function-docstring
+#pylint: disable=invalid-name
+#pylint: disable=broad-except
+#pylint: disable=logging-not-lazy
+#pylint: disable=too-many-locals
 import logging
 logging.basicConfig(level=logging.DEBUG)
 import flask
@@ -9,10 +18,11 @@ import urllib.parse     # to be able to use urllib.parse.quote
 import io               # Image.open/save requires file-like access
 from PIL import Image   # Only need Image from Pillow
 import base64
+import datetime
 
 
 def verify_unused_email_address(emaddr, fpn="Email"):
-    if(dbacc.cfbk("MUser", "email", emaddr) or 
+    if(dbacc.cfbk("MUser", "email", emaddr) or
        dbacc.cfbk("MUser", "altinmail", emaddr)):
         raise ValueError(fpn + " " + emaddr + " already in use.")
 
@@ -45,15 +55,15 @@ def verify_active_account(muser):
     raise ValueError("Activation code did not match")
 
 
-memberassocs = ["Founder", "Moderator", "Member"]
-followassocs = ["Following", "Unknown"]
+MEMBERASSOCS = ["Founder", "Moderator", "Member"]
+FOLLOWASSOCS = ["Following", "Unknown"]
 
 def theme_association(theme, pid):
     if util.val_in_csv(pid, theme["founders"]):
         return "Founder"
-    elif util.val_in_csv(pid, theme["moderators"]):
+    if util.val_in_csv(pid, theme["moderators"]):
         return "Moderator"
-    elif util.val_in_csv(pid, theme["members"]):
+    if util.val_in_csv(pid, theme["members"]):
         return "Member"
     return "Unknown"
 
@@ -97,7 +107,7 @@ def verify_authorized_theme_member_change(muser, theme, prof, ras):
 
 
 def update_theme_membership(updt, prof, assoc):
-    for an in memberassocs:
+    for an in MEMBERASSOCS:
         field = an.lower() + "s"
         ids = util.csv_to_list(updt[field])
         try:
@@ -107,7 +117,7 @@ def update_theme_membership(updt, prof, assoc):
         if an == assoc:
             ids.append(prof["dsId"])
         updt[field] = ",".join(ids)
-    # logging.info("update_theme_membership Theme " + updt["dsId"] + 
+    # logging.info("update_theme_membership Theme " + updt["dsId"] +
     #              "\n  Founders: " + updt["founders"] +
     #              "\n  Moderators: " + updt["moderators"] +
     #              "\n  Members: " + updt["members"]);
@@ -124,7 +134,7 @@ def update_profile_association(prof, ao, ras):
         "hashtag": ao["hashtag"],
         "picture": ""}
     if ao["dsType"] == "Theme":
-        inf["description"] = ao["description"];
+        inf["description"] = ao["description"]
         if ao["picture"]:
             inf["picture"] = ao["dsId"]
         inf["keywords"] = ao["keywords"]
@@ -141,13 +151,13 @@ def update_profile_association(prof, ao, ras):
 
 def update_association(muser, ao, prof, ras):
     assoc = ras["assoc"]
-    if not (assoc in memberassocs or assoc in followassocs):
+    if not (assoc in MEMBERASSOCS or assoc in FOLLOWASSOCS):
         raise ValueError("Unknown association " + assoc)
     updt = None
     if ao["dsType"] == "Theme":
         prevassoc = theme_association(ao, prof["dsId"])
-        if prevassoc != assoc and (prevassoc in memberassocs or
-                                   assoc in memberassocs):
+        if prevassoc != assoc and (prevassoc in MEMBERASSOCS or
+                                   assoc in MEMBERASSOCS):
             verify_authorized_theme_member_change(muser, ao, prof, ras)
             update_theme_membership(ao, prof, assoc)
             updt = dbacc.write_entity(ao, vck=ao["modified"])
@@ -165,9 +175,11 @@ def update_association(muser, ao, prof, ras):
 # re.sub(r"<(/?)([^>]*)>", r"<\1\2>", test)
 def tagrepl(matchobj):
     tag = "<" + matchobj.group(1) + matchobj.group(2) + ">"
-    if matchobj.group(2) == "i": return tag
-    elif matchobj.group(2) == "b": return tag
-    else: return ""
+    if matchobj.group(2) == "i":
+        return tag
+    if matchobj.group(2) == "b":
+        return tag
+    return ""
 
 def verify_simple_html(val):
     return re.sub(r"<(/?)([^>]*)>", tagrepl, val)
@@ -182,7 +194,7 @@ def read_values(obj, fldspec):
             if fld in fldspec["special"]:
                 if fldspec["special"][fld] == "simplehtml":
                     val = verify_simple_html(val)
-        logging.debug("   read_values " + fld + ": " + val)
+        logging.debug("   read_values " + fld + ": " + str(val))
         if val and val.lower() == "unset_value":
             obj[fld] = ""
         elif val:  # Unchanged unless value given
@@ -207,7 +219,7 @@ def set_dispafter(newmbc, muser):
     if newmbc.get("dsId") and newmbc.get("dispafter"):
         raise ValueError("set_dispafter reset of existing value")
     preb = json.loads(muser.get("preb", "[]"))
-    if not len(preb):  # first membic, no wait.
+    if len(preb) == 0:  # first membic, no wait.
         newmbc.dispafter = dbacc.nowISO()
     else:  # set dispafter to be 24 hours after next most recent post
         disp = preb[0]["dispafter"] or preb[0]["created"]
@@ -262,20 +274,20 @@ def read_membic_data(muser):
     penname = muser["name"] or ("user" + muser["dsId"])
     newmbc = {"dsType": "Membic", "penid": muser["dsId"], "ctmid": 0,
               "penname": penname}
+    paramfields = ["url", "rurl", "revtype", "details", "rating", "srcrev",
+                   "text", "keywords", "svcdata", "imguri"]
     oldmbc = None
     dsId = dbacc.reqarg("dsId", "dbid")
     if dsId:
         oldmbc = dbacc.cfbk("Membic", "dsId", dsId)
         if oldmbc:
             copyflds = ["dsId", "importid", "revpic", "icdata", "icwhen",
-                        "dispafter", "reacdat"]
+                        "dispafter", "reacdat"] + paramfields
             for fld in copyflds:
-                newmbc[fld] = oldmc[fld]
+                newmbc[fld] = oldmbc[fld]
     else: # new membic instance
         set_dispafter(newmbc, muser)
-    read_values(newmbc, {"inflds": ["url", "rurl", "revtype", "details",
-                                    "rating", "srcrev", "text", "keywords",
-                                    "svcdata", "imguri"]})
+    read_values(newmbc, {"inflds": paramfields})
     newmbc["cankey"] = cankey_for_membic(newmbc)
     return newmbc, oldmbc
 
@@ -290,7 +302,7 @@ def make_theme_plan(newmbc, oldmbc):
         pts = sd.get("postctms", [])
         for postnote in pts:
             plan[str(postnote["ctmid"])] = "delete"
-    sd = json.loads(newmbc.get("svcdata"), "{}")
+    sd = json.loads(newmbc.get("svcdata", "{}"))
     pts = sd.get("postctms", [])
     for postnote in pts:
         ctmid = str(postnote["ctmid"])
@@ -314,15 +326,16 @@ def theme_membic_from_source_membic(theme, srcmbc):
     tmbc = {"dsType":"Membic", "ctmid":ctmid, "srcrev":srcrev}
     where = "WHERE ctmid=" + str(ctmid) + " AND srcrev=" + str(srcrev)
     membics = dbacc.query_entity("Membic", where)
-    if len(membics):
+    if len(membics) > 0:
         tmbc = membics[0]
     tmbc["svcdata"] = ""   # srcrev not updated yet. Not used for theme display
     tmbc["icdata"] = None  # all image caching is off the source membic
+    tmbc["importid"] = 0   # only the source membic is imported
     tmbc["icwhen"] = ""
-    flds = ["importid", "url", "rurl", "revtype", "details", "penid",
+    flds = ["url", "rurl", "revtype", "details", "penid",
             "rating", "cankey", "text", "keywords",
             "revpic", # copied for backward compatibility in case used
-            "imguri"  # used as indicator, client display references srcrev id
+            "imguri", # used as indicator, client display references srcrev id
             "dispafter", "penname", "reacdat"]
     for fld in flds:
         tmbc[fld] = srcmbc.get(fld)
@@ -337,14 +350,14 @@ def theme_membic_from_source_membic(theme, srcmbc):
 # here would be circular and potentially invalid.
 #
 # If a theme membic is being deleted or edited, then the user had write
-# access to the theme and is allowed to modify the content they previously
+# access to the theme, and is allowed to modify the content they previously
 # posted.  If they are adding, verify their theme membership first.
 def write_theme_membics(themeplan, newmbc):
     for themeid, action in themeplan.items():
         if action == "add":
             theme = dbacc.cfbk("Theme", "dsId", int(themeid))
             if theme_association(theme, newmbc["penid"]) == "Unknown":
-                raise ValueError("Not a member, so cannot post to Theme " + 
+                raise ValueError("Not a member, so cannot post to Theme " +
                                  themeid + " " + theme["name"])
     postctms = []
     memos = {}  # remember themes and added theme membics for preb update
@@ -354,6 +367,7 @@ def write_theme_membics(themeplan, newmbc):
         if action == "delete" and tmbc.get("dsId"):
             dbacc.delete_entity("Membic", tmbc.get("dsId"))
         else: # edit or add
+            # logging.info("write_theme_membics " + json.dumps(tmbc))
             tmbc = dbacc.write_entity(tmbc, vck=tmbc["modified"])
             postctms.append({"ctmid": themeid, "name": theme["name"],
                              "revid": str(tmbc["dsId"])})
@@ -387,7 +401,7 @@ def update_preb(obj, membic, verb):
         else:  # "edit". Should not have found anything if "add" but treat same
             pbms[idx] = pm
     else:  # no existing instance found
-        if verb == "add" or verb == "edit":
+        if verb in ["add", "edit"]:
             if idx > 0:
                 pbms.insert(idx, pm)
             else:
@@ -417,7 +431,7 @@ def accupd():
         prevhash = muser["hashtag"]
         read_values(muser, {"inflds": ["email", "altinmail", "name", "aboutme",
                                        "hashtag", "cliset"],
-                            "special": {"aboutme": "simplehtml"}});
+                            "special": {"aboutme": "simplehtml"}})
         val = dbacc.reqarg("password")
         if not val and muser["email"] != prevemail:
             raise ValueError("Password required to change email address.")
@@ -448,7 +462,7 @@ def accupd():
 def themeupd():
     res = ""
     try:
-        muser, srvtok = util.authenticate()
+        muser, _ = util.authenticate()
         verify_active_account(muser)
         dsId = dbacc.reqarg("dsId", "dbid")
         if dsId:
@@ -462,7 +476,7 @@ def themeupd():
         prevnamec = theme["name_c"]
         read_values(theme, {"inflds": ["name", "hashtag", "description",
                                        "cliset", "keywords"],
-                            "special": {"description": "simplehtml"}});
+                            "special": {"description": "simplehtml"}})
         verify_theme_name(prevnamec, theme)
         if theme["hashtag"] and theme["hashtag"] != prevhash:
             verify_hashtag(theme["hashtag"])
@@ -477,7 +491,7 @@ def themeupd():
 def associate():
     res = ""
     try:
-        muser, srvtok = util.authenticate()
+        muser, _ = util.authenticate()
         verify_active_account(muser)
         aot = dbacc.reqarg("aot", "string", required=True)
         aoi = dbacc.reqarg("aoi", "dbid", required=True)
@@ -505,7 +519,7 @@ def uploadimg():
         logging.debug("uploadimg Ready")
         return util.respond("Ready", mimetype="text/plain")
     try:
-        muser, srvtok = util.authenticate()
+        muser, _ = util.authenticate()
         dsType = dbacc.reqarg("dsType", "string", required=True)
         dsId = dbacc.reqarg("dsId", "dbid", required=True)
         logging.debug(muser["email"] + " uploadimg image for " + dsType +
@@ -551,18 +565,23 @@ def uploadimg():
 def membicsave():
     res = ""
     try:
-        muser, srvtok = util.authenticate()
+        muser, _ = util.authenticate()
         newmbc, oldmbc = read_membic_data(muser)
         themeplan, ctxid = make_theme_plan(newmbc, oldmbc)
+        # logpre = "membicsave dsId: " + str(newmbc["dsId"]) + " "
+        # logging.info(logpre + "themeplan " + json.dumps(themeplan) +
+        #              ", ctxid: " + str(ctxid))
         vck = None
         if oldmbc:
             vck = oldmbc["modified"]
         newmbc = dbacc.write_entity(newmbc, vck)  # write main membic
         newmbc, memos = write_theme_membics(themeplan, newmbc)
+        # logging.info(logpre + "membics written, updating preb")
         userprebv = "add"
         if oldmbc:
             userprebv = "edit"
         prof = update_preb(muser, newmbc, userprebv)
+        dbacc.entcache.cache_put(prof)  # update cached reference
         res = util.safe_JSON(prof)
         for themeid, action in themeplan.items():
             memo = memos[themeid]
@@ -570,7 +589,5 @@ def membicsave():
             if ctxid and themeid == str(ctxid):
                 res += "," + util.safe_JSON(theme)
     except ValueError as e:
-        return srverr(str(e))
+        return util.srverr(str(e))
     return "[" + res + "]"
-    
-
