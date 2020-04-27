@@ -517,14 +517,17 @@ function dblogMessager () {
                 lfs += "\"" + logfld + "\""; });
             lfs += "]"; } });
     pyc += "    log_summary_flds = {" + lfs + "}\n";
-    pyc += "    if op != \"QRY\":\n";
-    pyc += "        res = [res]\n";
-    pyc += "    for obj in res:\n";
-    pyc += "        msg = \"db\" + op + \" \" + entity + \" \" + obj[\"dsId\"]\n";
-    pyc += "        if entity in log_summary_flds:\n";
-    pyc += "            for field in log_summary_flds[entity]:\n";
-    pyc += "                msg += \" \" + obj[field]\n";
-    pyc += "        logging.info(msg)\n";
+    pyc += "    if res:\n";
+    pyc += "        if op != \"QRY\":  # query is already a list, listify anything else\n";
+    pyc += "            res = [res]\n";
+    pyc += "        for obj in res:\n";
+    pyc += "            msg = \"db\" + op + \" \" + entity + \" \" + obj[\"dsId\"]\n";
+    pyc += "            if entity in log_summary_flds:\n";
+    pyc += "                for field in log_summary_flds[entity]:\n";
+    pyc += "                    msg += \" \" + obj[field]\n";
+    pyc += "            logging.info(msg)\n";
+    pyc += "    else:  # no res, probably a delete\n";
+    pyc += "        logging.info(\"db\" + op + \" \" + entity + \" -no obj details-\")\n";
     return pyc
 }
 

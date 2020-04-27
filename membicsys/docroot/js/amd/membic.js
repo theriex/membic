@@ -314,6 +314,13 @@ app.membic = (function () {
             var chgval = formElements[key].changed(cdx, membic);
             if(chgval) {
                 formElements[key].write(chgval, updm); } });
+        if(updm.details) {  //updating details, keep existing detail fields
+            var detflds = ["title", "name", "artist", "author", "publisher",
+                           "album", "starring", "address", "year"];
+            detflds.forEach(function (df) {
+                if(!updm.details.hasOwnProperty(df) &&  //not set or cleared
+                   membic.details[df]) {
+                    updm.details[df] = membic.details[df]; } }); }
         jt.log("updateMembic: " + JSON.stringify(updm));
         //Redisplay closed on successful completion.  If the update changed
         //the title or text, redisplaying closed is intuitive and smooth.
@@ -439,6 +446,12 @@ app.membic = (function () {
                 var pt = app.profile.myProfile().themes[tid];
                 pn = {ctmid:tid, name:pt.name, revid:0}; }
             return pn; },
+        redrawUpdatedThemes: function (cdx, pns) {
+            jt.out("postnotescontdiv" + cdx,
+                   tpmgr.themePostsHTML(cdx, true, pns, true));
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            kwmgr.redrawKeywords(cdx, membic,
+                                 kwmgr.selectedKeywords(cdx, membic)); },
         themepost: function (cdx, command, ctmid) {
             var pne = jt.byId("postnoteslabel" + cdx);
             pne.innerHTML = "Post to: ";  //clarify actions take effect on save
@@ -449,8 +462,7 @@ app.membic = (function () {
                 pns = pns.filter((pn) => pn.ctmid !== ctmid);
                 if(pne) {
                     pne.dataset.tidcsv = pne.dataset.tidcsv.csvremove(ctmid); }
-                jt.out("postnotescontdiv" + cdx,
-                       tpmgr.themePostsHTML(cdx, true, pns, true));
+                tpmgr.redrawUpdatedThemes(cdx, pns);
                 break;
             case "add":  //replace '+' with a list of options
                 jt.out("addthemepostdiv" + cdx,
@@ -460,8 +472,7 @@ app.membic = (function () {
                 ctmid = jt.byId("themepostsel" + cdx);
                 ctmid = ctmid.options[ctmid.selectedIndex].value;
                 pns.push(tpmgr.postNoteForThemeId(cdx, membic, ctmid));
-                jt.out("postnotescontdiv" + cdx,
-                       tpmgr.themePostsHTML(cdx, true, pns, true));
+                tpmgr.redrawUpdatedThemes(cdx, pns);
                 break; }
             app.membic.formInput(cdx); },  //note any changes
         themePostsHTML: function (cdx, editable, pns, activated) {
@@ -572,7 +583,7 @@ app.membic = (function () {
             Object.keys(detmgr.initNewDetailsObject()).forEach(function (key) {
                 var td = jt.byId("detail" + key + "valtd" + cdx);
                 if(td) {
-                    valobj[key] = td.innerHTML.trim(); } });
+                    valobj[key] = td.innerText.trim(); } });
             var input = jt.byId("detnewattrin" + cdx);
             if(input && input.value.trim()) {  //adding a detail attribute
                 var valin = jt.byId("detnewvalin" + cdx);
@@ -812,14 +823,16 @@ app.membic = (function () {
             kwsa = kwsa.toLowerCase().csvarray().sort().join(",");
             kwsb = kwsb.toLowerCase().csvarray().sort().join(",");
             return (kwsa === kwsb); },
+        redrawKeywords: function (cdx, membic, currkws) {
+            jt.out("mdkwscontentdiv" + cdx,
+                   kwmgr.keywordsHTML(cdx, membic, true, currkws)); },
         addNewKeywordOption: function (cdx) {
             var nkin = jt.byId("newkwin" + cdx);
             if(nkin && nkin.value) {
                 var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
                 var currkws = kwmgr.selectedKeywords(cdx, membic);
                 currkws = currkws.csvappend(nkin.value);
-                jt.out("mdkwscontentdiv" + cdx,
-                       kwmgr.keywordsHTML(cdx, membic, true, currkws));
+                kwmgr.redrawKeywords(cdx, membic, currkws);
                 app.membic.formInput(cdx); } }
     };
 

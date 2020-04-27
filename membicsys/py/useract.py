@@ -187,6 +187,7 @@ def verify_simple_html(val):
 
 # Read the specified argument values into the given object.
 def read_values(obj, fldspec):
+    updlo = {"dsType":obj["dsType"], "dsId":obj["dsId"]}
     obtype = obj["dsType"]
     for fld in fldspec["inflds"]:
         val = dbacc.reqarg(fld, obtype + "." + fld)
@@ -194,11 +195,14 @@ def read_values(obj, fldspec):
             if fld in fldspec["special"]:
                 if fldspec["special"][fld] == "simplehtml":
                     val = verify_simple_html(val)
-        logging.debug("   read_values " + fld + ": " + str(val))
+        # logging.debug("   read_values " + fld + ": " + str(val))
         if val and val.lower() == "unset_value":
+            updlo[fld] = ""
             obj[fld] = ""
         elif val:  # Unchanged unless value given
+            updlo[fld] = val
             obj[fld] = val
+    logging.debug("read_values: " + json.dumps(updlo))
 
 
 def verify_theme_name(prevnamec, theme):
@@ -352,6 +356,13 @@ def theme_membic_from_source_membic(theme, srcmbc):
 # If a theme membic is being deleted or edited, then the user had write
 # access to the theme, and is allowed to modify the content they previously
 # posted.  If they are adding, verify their theme membership first.
+#
+# note1: In the rare case that a previous processing crash resulted in a
+# membic being written without the corresponding theme membics being
+# updated, then the theme membics will be out of date and subsequent updates
+# will fail a version check.  Since theme membics are completely derivative,
+# a version check override won't clobber any data, and the integrity can be
+# recovered on a subsequent update.
 def write_theme_membics(themeplan, newmbc):
     for themeid, action in themeplan.items():
         if action == "add":
@@ -368,7 +379,7 @@ def write_theme_membics(themeplan, newmbc):
             dbacc.delete_entity("Membic", tmbc.get("dsId"))
         else: # edit or add
             # logging.info("write_theme_membics " + json.dumps(tmbc))
-            tmbc = dbacc.write_entity(tmbc, vck=tmbc["modified"])
+            tmbc = dbacc.write_entity(tmbc, vck="override")  #note1
             postctms.append({"ctmid": themeid, "name": theme["name"],
                              "revid": str(tmbc["dsId"])})
         memos[themeid] = {"theme":theme, "membic":tmbc}

@@ -817,14 +817,17 @@ def dblogmsg(op, entity, res):
         "MailNotice": ["name"],
         "ActivitySummary": ["refp", "tstart", "tuntil"],
         "ConnectionService": ["name"]}
-    if op != "QRY":
-        res = [res]
-    for obj in res:
-        msg = "db" + op + " " + entity + " " + obj["dsId"]
-        if entity in log_summary_flds:
-            for field in log_summary_flds[entity]:
-                msg += " " + obj[field]
-        logging.info(msg)
+    if res:
+        if op != "QRY":  # query is already a list, listify anything else
+            res = [res]
+        for obj in res:
+            msg = "db" + op + " " + entity + " " + obj["dsId"]
+            if entity in log_summary_flds:
+                for field in log_summary_flds[entity]:
+                    msg += " " + obj[field]
+            logging.info(msg)
+    else:  # no res, probably a delete
+        logging.info("db" + op + " " + entity + " -no obj details-")
 
 
 # Write a new MUser row, using the given field values or defaults.
