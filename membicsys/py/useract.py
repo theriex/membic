@@ -196,7 +196,7 @@ def read_values(obj, fldspec):
                 if fldspec["special"][fld] == "simplehtml":
                     val = verify_simple_html(val)
         # logging.debug("   read_values " + fld + ": " + str(val))
-        if val and val.lower() == "unset_value":
+        if val and str(val).lower() == "unset_value":
             updlo[fld] = ""
             obj[fld] = ""
         elif val:  # Unchanged unless value given
@@ -276,7 +276,8 @@ def cankey_for_membic(newmbc):
 
 def read_membic_data(muser):
     penname = muser["name"] or ("user" + muser["dsId"])
-    newmbc = {"dsType": "Membic", "penid": muser["dsId"], "ctmid": 0,
+    emptyid = ""  # A dbid is 0 in the db, and "" in the app.
+    newmbc = {"dsType": "Membic", "penid": muser["dsId"], "ctmid": emptyid,
               "penname": penname}
     paramfields = ["url", "rurl", "revtype", "details", "rating", "srcrev",
                    "text", "keywords", "svcdata", "imguri"]
@@ -292,6 +293,11 @@ def read_membic_data(muser):
     else: # new membic instance
         set_dispafter(newmbc, muser)
     read_values(newmbc, {"inflds": paramfields})
+    # showflds = ["dsType", "dsId", "ctmid", "penid", "srcrev"]
+    # logging.debug("read_membic_data showflds newmbc:")
+    # for fld in showflds:
+    #     logging.debug("    " + fld + ": " + str(newmbc[fld]) + " " +
+    #                   str(type(newmbc[fld])))
     newmbc["cankey"] = cankey_for_membic(newmbc)
     return newmbc, oldmbc
 
@@ -308,6 +314,11 @@ def make_theme_plan(newmbc, oldmbc):
             plan[str(postnote["ctmid"])] = "delete"
     sd = json.loads(newmbc.get("svcdata", "{}"))
     pts = sd.get("postctms", [])
+    # If the srcrev is -604, then it is marked as deleted.  For any negative
+    # value there should be no theme posts.  srcrev is an int in the db but
+    # a string here at app level.
+    if newmbc["srcrev"] and int(newmbc["srcrev"]) < 0:
+        pts = []
     for postnote in pts:
         ctmid = str(postnote["ctmid"])
         if plan.get(ctmid):
@@ -349,9 +360,9 @@ def theme_membic_from_source_membic(theme, srcmbc):
 # The themeplan provides the themes and actions as described by the data
 # passed from the client.  The id of the theme membic needs to be looked up
 # because it's not reasonable practice to simply trust what was sent from
-# the client.  Also not reasonable to use the theme preb for reference
+# the client.  Neither is it reasonable to use the theme preb for reference
 # because it is constructed from the source db records, so relying on it
-# here would be circular and potentially invalid.
+# here would be circular logic.
 #
 # If a theme membic is being deleted or edited, then the user had write
 # access to the theme, and is allowed to modify the content they previously
@@ -362,7 +373,7 @@ def theme_membic_from_source_membic(theme, srcmbc):
 # updated, then the theme membics will be out of date and subsequent updates
 # will fail a version check.  Since theme membics are completely derivative,
 # a version check override won't clobber any data, and the integrity can be
-# recovered on a subsequent update.
+# automatically recovered on a subsequent update.
 def write_theme_membics(themeplan, newmbc):
     for themeid, action in themeplan.items():
         if action == "add":
@@ -390,7 +401,7 @@ def write_theme_membics(themeplan, newmbc):
     return newmbc, memos
 
 
-# unpack the preb, find existing instance and update accordingly.  Not
+# unpack the preb, find the existing instance and update accordingly.  Not
 # expecting to have to walk into overflows much for this, but recurse into
 # those if found.  Create new overflow only if prepending, otherwise just
 # insert in place.
@@ -406,16 +417,22 @@ def update_preb(obj, membic, verb):
         if pbm["dsId"] == pm["dsId"] or pm["created"] > pbm["created"]:
             break  # at insertion point
         idx += 1
+    dlp = ("update_preb " + obj["dsType"] + str(obj["dsId"]) + " " + verb +
+           " idx: " + str(idx) + ", ")
     if pbm and pbm["dsId"] == pm["dsId"]:  # found existing instance
         if verb == "delete":
+            logging.debug(dlp + "existing popped")
             pbms.pop(idx)  # modify pbms removing indexed element
         else:  # "edit". Should not have found anything if "add" but treat same
+            logging.debug(dlp + "existing updated")
             pbms[idx] = pm
     else:  # no existing instance found
         if verb in ["add", "edit"]:
             if idx > 0:
+                logging.debug(dlp + "new inserted")
                 pbms.insert(idx, pm)
             else:
+                logging.debug(dlp + "new prepended (via util)")
                 util.add_membic_to_preb({"entity": obj["dsType"],
                                          "inst": obj,
                                          "pbms": pbms}, membic)
@@ -571,8 +588,8 @@ def uploadimg():
 # the db after the updates have been written.
 #
 # To minimize risk to data integrity, the algo first updates the Membic
-# data, then updates the affected MUser/Theme/Overflow preb data.  The preb
-# data can be rebuilt by a db admin if necessary.
+# data, then updates the affected MUser/Theme/Overflow preb data.  In the
+# event of a crash, the preb data can be rebuilt by a db admin.
 def membicsave():
     res = ""
     try:
@@ -586,6 +603,9 @@ def membicsave():
         if oldmbc:
             vck = oldmbc["modified"]
         newmbc = dbacc.write_entity(newmbc, vck)  # write main membic
+        # Updating the theme membics triggers a second membic update to
+        # record the themes it was posted to.  The themeId/themeMembic map
+        # is returned as memos for preb update reference.
         newmbc, memos = write_theme_membics(themeplan, newmbc)
         # logging.info(logpre + "membics written, updating preb")
         userprebv = "add"

@@ -318,6 +318,9 @@ app.pcd = (function () {
             if(ctx.actobj.itmatchf(item, ctx.fist)) {
                 ctx.fist.dc += 1;  //update the display count
                 odiv = jt.byId("pcdcontdiv");
+                if(!odiv) {  //display changed while waiting
+                    jt.log("appendNextMatchingItemToContent abort, no contdiv");
+                    break; }
                 elem = document.createElement("div");
                 elem.className = "pcditemdiv";
                 elem.id = "pcditemdiv" + (ctx.fist.idx - 1);

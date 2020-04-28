@@ -98,19 +98,23 @@ app.membic = (function () {
     }
 
 
+    //A theme post membic does not have all the same information as a source
+    //membic.  It's essentially a copy for bookkeeping purposes.  Editing a
+    //source membic from the theme seems like it could be convenient, but
+    //in practice tends to be confusing both in UI and code.
     function mayEdit (membic) {
         var prof = app.profile.myProfile();
-        if(prof && prof.dsId === membic.penid) {
+        if(prof && prof.dsId === membic.penid && !membic.ctmid) {
             return true; }
         return false;
     }
 
 
-    function safeInner (tagid) {
+    function safeInnerText (tagid) {
         var elem = jt.byId(tagid);
         if(!elem) {
             return ""; }
-        return elem.innerHTML;
+        return elem.innerText;
     }
 
 
@@ -125,6 +129,15 @@ app.membic = (function () {
     }
 
 
+    function clearCachedThemesForMembic (membic) {
+        var postctms = membic.svcdata.postctms || [];
+        postctms.forEach(function (pn) {
+            app.refmgr.uncache("Theme", pn.ctmid); });
+    }
+
+
+    //The caller is responsible for clearing any cached Themes that no longer
+    //contain the membic being saved.
     function saveMembic (savemembic, contf, failf) {
         savind = new Date().toISOString();  //indicate we are saving
         var url = app.login.authURL("/api/membicsave");
@@ -139,8 +152,7 @@ app.membic = (function () {
                     pots.forEach(function (pot) {  //deserialize so ready to use
                         app.refmgr.deserialize(pot); });
                     var srcmem = pots[0].preb[0];  //profile membic
-                    srcmem.svcdata.postctms.forEach(function (pn) {
-                        app.refmgr.uncache("Theme", pn.ctmid); }); //outdated
+                    clearCachedThemesForMembic(srcmem);  //outdated edit or add
                     pots.forEach(function (pot) {  //update all given data
                         app.refmgr.put(pot); });
                     expandedMembics[srcmem.dsId] = "expandedpostsave";
@@ -242,14 +254,6 @@ app.membic = (function () {
     }
 
 
-    function mayRemove (membic) {
-        var auth = app.login.authenticated();
-        if(auth && app.theme.memberlev(membic.ctmid) >= 2) {
-            return true; }
-        return false;
-    }
-
-
     function membicImgSrc (membic) {
         //upldpic is not supported anymore except for compatibility
         membic.svcdata = membic.svcdata || {};
@@ -321,6 +325,7 @@ app.membic = (function () {
                 if(!updm.details.hasOwnProperty(df) &&  //not set or cleared
                    membic.details[df]) {
                     updm.details[df] = membic.details[df]; } }); }
+        clearCachedThemesForMembic(membic);  //might have removed a theme post
         jt.log("updateMembic: " + JSON.stringify(updm));
         //Redisplay closed on successful completion.  If the update changed
         //the title or text, redisplaying closed is intuitive and smooth.
@@ -337,17 +342,37 @@ app.membic = (function () {
 
 
     //Mark the given membic as deleted, which will automatically trigger
-    //removal of any corresponding theme posts.
-    function markMembicDeleted (/*cdx*/) {
-        jt.err("markMembicDeleted not implemented yet.");
-    }
-
-
-    //Remove the theme from postctms and save.  This is the one special case
-    //where the founder/moderator can modify the membic.  The only thing
-    //they can do is remove the postnote for the theme they are managing.
-    function removeMembic (/*cdx*/) {
-        jt.err("removeMembic not implemented yet.");
+    //removal of any corresponding theme posts.  There is no undelete, but
+    //for testing it is possible to accomplish manually:
+    //  - find the Membic in the db and setting its srcrev to 0
+    //  - find the MUser for the membic and setting their preb to NULL
+    //  - find all themes the membic was posted to and set their preb to NULL
+    //  - restart the server to clear the cache
+    //  - sign in as an admin and run api/prebsweep
+    //Deleted membics are kept around because it helps with resolving log
+    //references and general integrity verification.  An undelete/recover
+    //option can possibly be supported later if it becomes a need.
+    function markMembicDeleted (cdx) {
+        var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+        var atps = "";
+        if(membic.svcdata.postctms && membic.svcdata.postctms.length) {
+            atps = " and associated theme posts"; }
+        var confmsg = "Permanently delete this membic" + atps + "?";
+        if(!confirm(confmsg)) {
+            return; }
+        jt.out("dlgbsmsgdiv" + cdx, "");
+        var bhtml = jt.byId("dlgbsbdiv" + cdx).innerHTML;
+        jt.out("dlgbsbdiv" + cdx, "Deleting...");
+        clearCachedThemesForMembic(membic);
+        var updm = {dsType:"Membic", dsId:membic.dsId, srcrev:"-604"};
+        saveMembic(updm,
+            function () {
+                expandedMembics[membic.dsId] = "";  //close (seems correct)
+                app.statemgr.redispatch(); },  //redraw content
+            function (code, txt) {
+                jt.out("dlgbsmsgdiv" + cdx, "Delete failed " + code + ": " +
+                       txt);
+                jt.out("dlgbsbdiv" + cdx, bhtml); });
     }
 
 
@@ -815,7 +840,7 @@ app.membic = (function () {
                 kwid = "m" + cdx + "g" + agi + "c" + pui;
                 newKeywordInput = jt.byId(kwid);
                 if(newKeywordInput && newKeywordInput.checked) {
-                    skws = skws.csvappend(safeInner(kwid + "label")); }
+                    skws = skws.csvappend(safeInnerText(kwid + "label")); }
                 pui += 1;
             } while(newKeywordInput);
             return skws; },
@@ -855,8 +880,11 @@ app.membic = (function () {
                      (membic.details.title || membic.details.name)]); },
             changed: function (cdx, membic) {
                 var mt = (membic.details.title || membic.details.name);
-                mt.trim();
-                var st = safeInner("mftitlespan" + cdx).trim();
+                mt = mt.trim();
+                var st = mt;  //unchanged if title not displayed yet
+                var elem = jt.byId("mftitlespan" + cdx);
+                if(elem) {  //have input area, even if they have cleared it out
+                    st = elem.innerText.trim(); }
                 return jt.toru(mt !== st, st); },
             write: function (chgval, updobj) {
                 updobj.details = updobj.details || {};
@@ -921,18 +949,11 @@ app.membic = (function () {
                                                     cdx + ")"), !edited),
                          formButton("Save", dispatchFStr(cdx, "dlgbs.save"),
                                     !edited)]); }
-                if(mayRemove(membic)) {
-                    return formActionButtonsHTML(cdx,
-                        ["a", {href:"#remove", title:"Remove Theme Post",
-                               onclick:dispatchFStr(cdx, "dlgbs.remove")},
-                         ["img", {cla:"masactbimg",
-                                  src:app.dr("img/trash.png")}]]); }
                 return ""; },
             changed: function () { return false; },
             write: function () { return; },
             save: function (cdx) { updateMembic(cdx); },
-            mrkdel: function (cdx) { markMembicDeleted(cdx); },
-            remove: function (cdx) { removeMembic(cdx); } },
+            mrkdel: function (cdx) { markMembicDeleted(cdx); } },
         picture: {
             closed: function (ignore /*cdx*/, membic) {
                 return jt.tac2html(
