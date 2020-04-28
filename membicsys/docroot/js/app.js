@@ -260,7 +260,6 @@ var jt = {};   //Global access to general utility methods
         html = jt.tac2html(html);
         jt.out("contentdiv", html);
         app.layout.closeDialog();
-        app.layout.cancelOverlay();
     };
 
 

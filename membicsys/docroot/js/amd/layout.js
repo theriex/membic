@@ -5,17 +5,11 @@
 app.layout = (function () {
     "use strict";
 
-    var typestate = {callback: null, typename: "all"};
-    var dnld = {mf:null, opts:[{format:"html", name:"Document (HTML)"},
-                               {format:"pdf", name:"Document (PDF)"},
-                               {format:"tsv", name:"Spreadsheet (TSV)"},
-                               {format:"json", name:"JavaScript (JSON)"}]};
     var dlgqueue = [];
     var tightLeftX = 10;
 
 
     function replaceDocComments (html) {
-        var txt;
         html = html.replace(/\.<!--\s\$ABOUTCONTACT\s-->/g,
             " or <a href=\"mailto:" + app.suppemail + "\">by email</a>.");
         return html;
@@ -148,83 +142,6 @@ app.layout = (function () {
     }
 
 
-    function closeModalSeparator () {
-        var mdiv = jt.byId("modalseparatordiv");
-        mdiv.style.width = "1px";
-        mdiv.style.height = "1px";
-    }
-
-
-    function openModalSeparator () {
-        var mdiv = jt.byId("modalseparatordiv");
-        mdiv.style.width = String(app.winw) + "px";
-        mdiv.style.height = String(app.winh) + "px";
-    }
-
-
-    function getHTMLDataURI (membics) {
-        var txt;
-        membics = membics || [];
-        txt = "<!doctype html>\n<html>\n<head>\n" +
-            "<meta http-equiv=\"Content-Type\"" + 
-            " content=\"text/html; charset=UTF-8\" />\n" +
-            "<title>Membics</title>\n" +
-            "<style>\n" +
-            ".printrevdiv { clear:both; margin-bottom:10px; }\n" +
-            ".fprevpicdiv { float:left; padding:0px 10px 0px 3px; }\n" +
-            ".revimg { max-width:125px; max-height:80px; min-width:50px; }\n" +
-            "</style>\n" +
-            "</head><body>";
-        membics.forEach(function (membic) {
-            var type = app.review.getReviewTypeByValue(membic.revtype);
-            var url = app.review.membicURL(type, membic);
-            var pic = "";
-            if(membic.imguri) {
-                pic = ["img", {cla:"revimg", src:membic.imguri}]; }
-            txt += "\n" + jt.tac2html(
-                ["div", {cla:"printrevdiv"},
-                 [["div", {cla:"fprevpicdiv"}, pic],
-                  ["a", {href: url},
-                   app.pcd.membicItemNameHTML(type, membic)],
-                  ["br"],
-                  jt.linkify(membic.text || "")]]); });
-        txt += "</body></html>\n";
-        return "data:text/html;charset=utf-8," + encodeURIComponent(txt);
-    }
-
-
-    function getTSVDataURI (membics) {
-        var txt = "";
-        membics = membics || [];
-        if(membics.length) {
-            var keys = Object.keys(membics[0]);  //use same keys for all
-            keys.forEach(function (field, idx) {
-                if(idx) {
-                    txt += "\t"; }
-                txt += field; });
-            txt += "\n";
-            membics.forEach(function (membic) {
-                keys.forEach(function (field, idx) {
-                    var fv = membic[field];
-                    if(field === "text") {
-                        fv = fv.replace(/\t/g, " ");
-                        fv = fv.replace(/\n/g, "  "); }
-                    if(idx) {
-                        txt += "\t"; }
-                    txt += fv; });
-                txt += "\n"; }); }
-        return "data:text/plain;charset=utf-8," + encodeURIComponent(txt);
-    }
-
-
-    function getJSONDataURI (membics) {
-        var txt;
-        membics = membics || [];
-        txt = JSON.stringify(membics);
-        return "data:text/plain;charset=utf-8," + encodeURIComponent(txt);
-    }
-
-
     function commonUtilExtensions () {
         jt.hasId = function (obj) {
             if(obj && obj.dsId && obj.dsId !== "0") {
@@ -320,11 +237,6 @@ return {
     },
 
 
-    getType: function () {
-        return typestate.typename;
-    },
-
-
     displayDoc: function (url, overlay) {
         if(!url) {
             jt.log("layout.displayDoc no url provided");
@@ -376,7 +288,6 @@ return {
     //clobbers existing dialog if already open
     openDialog: function (coords, html, initf, visf) {
         var dlgdiv = jt.byId("dlgdiv");
-        app.layout.cancelOverlay();  //close overlay if it happens to be up
         //window.scrollTo(0,0);  -- makes phone dialogs jump around. Don't.
         coords = coords || {};  //default x and y separately
         coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 100);
@@ -420,70 +331,6 @@ return {
                 ["div", {cla: "headingtxt"}, title],
                 html];
         return jt.tac2html(html);
-    },
-
-
-    placerel: function (domid, xadj, yadj) {
-        var coords = null; 
-        var elem = jt.byId(domid);
-        if(elem) {
-            coords = jt.geoPos(elem);
-            if(xadj) {
-                coords.x += xadj; }
-            if(yadj) {
-                coords.y += yadj; } }
-        return coords;
-    },
-
-
-    cancelOverlay: function (preserveEscape) {
-        var odiv;
-        closeModalSeparator();
-        odiv = jt.byId("overlaydiv");
-        if(odiv) {
-            jt.out("overlaydiv", "");
-            odiv.style.visibility = "hidden"; }
-        if(!preserveEscape) {
-            app.onescapefunc = null; }
-    },
-
-
-    openOverlay: function (coords, html, initf, visf, closefstr) {
-        var odiv;
-        openModalSeparator();
-        odiv = jt.byId("overlaydiv");
-        coords = coords || {};
-        coords.x = coords.x || Math.min(Math.round(app.winw * 0.1), 70);
-        coords.y = coords.y || 200;
-        if(coords.x > (app.winw / 2) || app.winw < 350) {
-            coords.x = tightLeftX; }
-        coords.y = coords.y + jt.byId("bodyid").scrollTop;  //logical height
-        odiv.style.left = String(coords.x) + "px";
-        odiv.style.top = String(coords.y) + "px";
-        app.escapefuncstack.push(app.onescapefunc);
-        app.onescapefunc = app.layout.cancelOverlay;
-        closefstr = closefstr || jt.fs("app.layout.cancelOverlay()");
-        html = [["div", {id: "closeline"},
-                 ["a", {id: "closeoverlay", href: "#close",
-                        onclick: closefstr},
-                  "&lt;close&nbsp;&nbsp;X&gt;"]],
-                html];
-        jt.out("overlaydiv", jt.tac2html(html));
-        if(initf) {
-            initf(); }
-        odiv.style.visibility = "visible";
-        if(visf) {
-            visf(); }
-    },
-
-
-    togdisp: function (divid) {
-        var div = jt.byId(divid);
-        if(div) {
-            if(div.style.display === "none") {
-                div.style.display = "block"; }
-            else {
-                div.style.display = "none"; } }
     },
 
 
@@ -534,74 +381,6 @@ return {
                              ["path", {d:"M22 4H2C.9 4 0 4.9 0 6v12c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM7.25 14.43l-3.5 2c-.08.05-.17.07-.25.07-.17 0-.34-.1-.43-.25-.14-.24-.06-.55.18-.68l3.5-2c.24-.14.55-.06.68.18.14.24.06.55-.18.68zm4.75.07c-.1 0-.2-.03-.27-.08l-8.5-5.5c-.23-.15-.3-.46-.15-.7.15-.22.46-.3.7-.14L12 13.4l8.23-5.32c.23-.15.54-.08.7.15.14.23.07.54-.16.7l-8.5 5.5c-.08.04-.17.07-.27.07zm8.93 1.75c-.1.16-.26.25-.43.25-.08 0-.17-.02-.25-.07l-3.5-2c-.24-.13-.32-.44-.18-.68s.44-.32.68-.18l3.5 2c.24.13.32.44.18.68z"}]]]]]);
                 break; } });
         return tac;
-    },
-
-
-    //With a single direct download link, the link would initially have
-    //href="" which would then be set to an appropriate data URI in an
-    //onclick handler before letting the click event percolate up to be
-    //taken care of by the browser.  With all options in a dialog, the data
-    //URI can be calculated when the radio button is selected.
-    showDownloadOptions: function (membicsfunction) {
-        var html = [];
-        dnld.mf = membicsfunction;
-        html.push(["div", {id:"dloptseltitlediv"}, "File Format"]);
-        dnld.opts.forEach(function (opt, idx) {
-            html.push(
-                ["div", {cla:"dloptseldiv"},
-                 [["input", {type:"radio", name:"dloptr", value:opt.format,
-                             id:"dldrad" + opt.format, checked:jt.toru(!idx),
-                             onchange:jt.fs("app.layout.dldrad(" + idx +")")}],
-                  ["label", {fo:"dldrad" + opt.format, cla:"dlformatlabel"},
-                   opt.name]]]); });
-        html.push(["div", {id:"downloadactiondiv"}]);
-        html = ["div", {id:"downloadoptsdiv"}, html];
-        app.layout.openOverlay(jt.geoPos(jt.byId("downloadlink")), html,
-                               function () { app.layout.dldrad(0); });
-    },
-
-
-    dldrad: function (dloptidx) {
-        var dlopt = dnld.opts[dloptidx];
-        switch(dlopt.format) {
-        case "html":
-            jt.out("downloadactiondiv", jt.tac2html(
-                ["a", {id:"downloadactionlink", href:getHTMLDataURI(dnld.mf()),
-                       download:"membics.html",
-                       onclick:jt.fsd("app.layout.cancelOverlay()")},
-                 [["img", {src: "img/download.png"}],
-                  ["span", {id:"downloadactiontextspan"}, 
-                   "Download HTML"]]]));
-            break;
-        case "pdf":
-            jt.out("downloadactiondiv", jt.tac2html(
-                ["a", {id:"downloadactionlink", href:"#printToPDF",
-                       onclick:jt.fs("app.layout.cancelOverlay();" +
-                                     "window.print();")},
-                 [["img", {src: "img/download.png"}],
-                  ["span", {id:"downloadactiontextspan"}, 
-                   "Print to PDF"]]]));
-            break;
-        case "tsv":
-            jt.out("downloadactiondiv", jt.tac2html(
-                ["a", {id:"downloadactionlink", href:getTSVDataURI(dnld.mf()),
-                       download:"membics.tsv",
-                       onclick:jt.fsd("app.layout.cancelOverlay()")},
-                 [["img", {src: "img/download.png"}],
-                  ["span", {id:"downloadactiontextspan"}, 
-                   "Download TSV"]]]));
-            break;
-        case "json":
-            jt.out("downloadactiondiv", jt.tac2html(
-                ["a", {id:"downloadactionlink", href:getJSONDataURI(dnld.mf()),
-                       download:"membics.json",
-                       onclick:jt.fsd("app.layout.cancelOverlay()")},
-                 [["img", {src: "img/download.png"}],
-                  ["span", {id:"downloadactiontextspan"}, 
-                   "Download JSON"]]]));
-            break;
-        default:
-            jt.out("downloadactiondiv", "Unknown Format"); }
     },
 
 
