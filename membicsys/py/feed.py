@@ -304,13 +304,13 @@ def feed_object_from_path(path):
         elif pes[0] == "theme":
             ob = dbacc.cfbk("Theme", "dsId", pes[1], required=True)
         else:
-            return util.srverr("RSS type must be profile or theme")
+            return util.srverr("feed url first part must be profile or theme")
     else:  # find as hashtag
         ob = dbacc.cfbk("Theme", "hashtag", pes[0])
         if not ob:
             ob = dbacc.cfbk("MUser", "hashtag", pes[0])
         if not ob:
-            return util.srverr("Unknown RSS hashtag: " + path)
+            return util.srverr("Unknown feed hashtag: " + path)
     return ob
         
 

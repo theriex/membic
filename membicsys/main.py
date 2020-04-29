@@ -103,11 +103,6 @@ def prebsweep():
 # - url: .*/newacct.*
 #   script: src.py.muser.app
 
-# ## Email password reset access link
-# ## POST params: email
-# - url: .*/mailpwr.*
-#   script: src.py.muser.app
-
 # ## Change native account password
 # ## POST params: password, authparams
 # - url: .*/updacc.*

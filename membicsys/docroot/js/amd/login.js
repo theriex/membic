@@ -79,8 +79,8 @@ app.login = (function () {
                   [" and should arrive in a few minutes.  If it doesn't" + 
                    " show up, please"]]],
                 ["ol",
-                 [["li", "Make sure your email address is spelled correctly"],
-                  ["li", "Check your spam folder"],
+                 [["li", "Make sure your email address is spelled correctly."],
+                  ["li", "Check your spam folder."],
                   ["li", "Confirm the email address you entered is the same" +
                         " one you used when you created your account."]]],
                 ["div", {cla: "dlgbuttonsdiv"},
@@ -199,8 +199,8 @@ return {
         var html = [
             ["p", txt],
             ["ol",
-             [["li", "Make sure your email address is spelled correctly"],
-              ["li", "Check your spam folder"]]],
+             [["li", "Make sure your email address is spelled correctly."],
+              ["li", "Check your spam folder."]]],
             ["div", {id:"dlgmsgdiv"}],
             ["div", {cla:"dlgbuttonsdiv", id:"suppbuttonsdiv"},
              [["button", {type:"button", title:"Resend Activation Code",
@@ -359,7 +359,7 @@ return {
         jt.out("topmessagelinediv", "Creating account.."); 
         jt.byId("topsectiondiv").style.cursor = "wait";
         var data = jt.objdata({emailin:emaddr, passin:password});
-        jt.call("POST", app.dr("api/newacct"), data,
+        jt.call("POST", app.dr("/api/newacct"), data,
                 function (result) {
                     jt.byId("topsectiondiv").style.cursor = "default";
                     successfulSignIn(result); },
@@ -378,7 +378,7 @@ return {
             return; }
         errmsg("Sending...");
         var data = "emailin=" + jt.enc(emaddr);
-        jt.call("POST", "mailpwr", data,
+        jt.call("POST", app.dr("/api/mailpwr"), data,
                 function (ignore /*objs*/) {
                     errmsg("");
                     displayEmailSent(); },

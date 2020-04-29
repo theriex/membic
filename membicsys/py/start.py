@@ -340,21 +340,24 @@ def obidstr_or_empty(obj):
     return idstr
 
 
-def feed_link(ctm, apptype, feedformat):
-    ctmid = ctm["dsId"]
+def feed_link(fsrc, apptype):
     html = "<link rel=\"alternate\" type=\"" + apptype + "\""
-    html += " href=\"" + util.site_home + "/rsscoop?coop=" + ctmid
-    if feedformat:
-        html += "&format=" + feedformat
-    html += "\" />"
+    html += " href=\"" + util.site_home() + fsrc + "\" />"
     return html
 
 
 def feedlinks_for_object(obj):
-    if not obj or obj["dsType"] != "Theme":
+    fsrc = None
+    if obj:
+        if obj["dsType"] == "Theme":
+            fsrc = "theme"
+        elif obj["dsType"] == "MUser":
+            fsrc = "profile"
+    if not fsrc:
         return ""
-    linkhtml = feed_link(obj, "application/rss+xml", "")
-    linkhtml += "\n  " + feed_link(obj, "application/json", "json")
+    fsrc = "/feed/" + fsrc + "/" + str(obj["dsId"])
+    linkhtml = feed_link(fsrc, "application/rss+xml")
+    linkhtml += "\n  " + feed_link(fsrc + "?ff=json", "application/json")
     return linkhtml
 
 

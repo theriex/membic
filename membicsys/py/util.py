@@ -15,8 +15,6 @@ import random
 import urllib.parse     # to be able to use urllib.parse.quote
 
 
-site_home = "https://membic.org"
-
 def respond(contentstr, mimetype="text/html"):
     # flask.Response defaults to HTML mimetype, so just returning a string
     # from a flask endpoint will probably work.  Best to route everything
@@ -43,6 +41,20 @@ def serveValueError(ve, quiet=False):
     if not quiet:
         logging.exception("serveValueError")
     return srverr(str(ve))
+
+
+# No terminating '/', caller always specifies for clarity.  It is probable
+# that flask is running on its own port, with the web server providing proxy
+# access to it, so port information is removed.
+def site_home():
+    url = flask.request.url
+    elements = url.split("/")[0:3]
+    if ":" in elements[2]:
+        elements[2] = elements[2].split(":")[0]  # strip port info
+    # replace port for local development.  Makes testing easier.
+    if elements[2] in ["127.0.0.1", "localhost"]:
+        elements[2] += ":8080"
+    return "/".join(elements)
 
 
 def is_development_server():
@@ -355,8 +367,9 @@ def make_auth_obj(muser, srvtok):
     return authobj
 
 
-def my_profile_url(muser):
-    return (site_home + "/profile/" + muser["dsId"] + "?an=" + muser["email"] +
+def my_login_url(muser):
+    return (site_home() + "/profile/" + muser["dsId"] +
+            "?an=" + muser["email"] +
             "&at=" + token_for_user(muser))
 
 
@@ -365,7 +378,7 @@ def send_activation_code(muser):
               "Welcome to Membic!\n\nYour activation code is\n\n" +
               muser["actcode"] + "\n\n" +
               "Paste this code into the activation area or go to " +
-              my_profile_url(muser) + "&actcode=" + muser["actcode"])
+              my_login_url(muser) + "&actcode=" + muser["actcode"])
     sendnote = dbacc.nowISO() + ";" + muser["email"]
     if muser["actsends"]:
         muser["actsends"] = sendnote + "," + muser["actsends"]
@@ -391,12 +404,12 @@ def mailpwr():
         muser = dbacc.cfbk("MUser", "email", emaddr)
         if muser:
             body += "Use this link to access the settings for your profile: "
-            body += my_profile_url(muser) + "\n\n"
+            body += my_login_url(muser) + "\n\n"
         else:
             body += "You do not have a profile set up for " + emaddr + ". "
             body += "Either you have not signed up yet, or you used "
             body += "a different email address.  To create a profile "
-            body += "visit " + site_home + "\n\n"
+            body += "visit " + site_home() + "\n\n"
         subj = "Membic.org profile password reset"
         send_mail(emaddr, subj, body)
     except ValueError as e:
