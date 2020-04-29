@@ -225,6 +225,8 @@ app.pcd = (function () {
     }
 
 
+    //Queued membics (membic.dispafter > fist.ts) are not provided from
+    //the RSS feed, but they display normally from within the app.
     function membicSearchMatch (membic, fist) {
         var contextobj = fist.actobj.contextobj;
         if(membic.dsType === "Overflow") {  //ran out of items, fault in more
@@ -241,10 +243,6 @@ app.pcd = (function () {
             return false; }  //don't display overflow elements
         if(membic.srcrev === "-604") {
             return false; }  //marked as deleted
-        if((membic.dispafter > fist.ts) &&
-           (!((membic.ctmid && app.coop.membershipLevel(contextobj)) ||
-              (membic.penid === app.profile.myProfId())))) {
-            return false; }  //queued, and not visible to general public yet
         if(fist.qstr) {
             var toks = fist.qstr.toLowerCase().split(/\s+/);
             verifySearchFilterText(membic);
@@ -272,7 +270,7 @@ app.pcd = (function () {
 
     function displayPTObj (obj, extra) {
         var sf = "";
-        if(app.profile.myProfile()) {  //signed in and user info loaded
+        if(app.login.myProfile()) {  //signed in and user info loaded
             sf = "app.pcd.settings()"; }
         app.pcd.setPageDescription({picsrc:picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
@@ -458,7 +456,7 @@ app.pcd = (function () {
 
 
     function writePersonalSettings (divid) {
-        var prof = app.profile.myProfile();
+        var prof = app.login.myProfile();
         jt.out(divid, jt.tac2html(
             [["div", {id:"settingsmenudiv"},
               [["button", {id:"cntb", title:"Create New Theme",
@@ -638,7 +636,7 @@ app.pcd = (function () {
 
     function ownerEnableEdit () {
         var obj = ctx.actobj.contextobj;
-        if(obj && ((app.samePO(obj, app.profile.myProfile())) ||
+        if(obj && ((app.samePO(obj, app.login.myProfile())) ||
                    (app.theme.association(obj) === "Founder"))) {
             jt.on("pcdpicdiv", "click", togglePicUpload);
             jt.byId("pcdpicdiv").style.cursor = "pointer";
@@ -696,14 +694,6 @@ return {
     },
 
 
-    upsub: function () {
-        var upldbutton = jt.byId("upldsub");
-        upldbutton.disabled = true;
-        upldbutton.value = "Uploading...";
-        jt.byId("picuploadform").submit();
-    },
-
-
     togshare: function () {
         jt.byId("pcdsettingsdiv").style.display = "none";
         var sharediv = jt.byId("pcdsharediv");
@@ -711,20 +701,6 @@ return {
             sharediv.style.display = "none"; }
         else {
             sharediv.style.display = "block"; }
-    },
-
-
-    membicItemNameHTML: function (type, membic) {
-        var linktxt = "";
-        if(membic.details && typeof(membic.details) === "string") {
-            app.refmgr.deserialize(membic); }
-        var dets = membic.details || {};
-        if(type.subkey) {
-            linktxt = "<i>" + jt.ellipsis(dets[type.key], 60) + "</i> " +
-                jt.ellipsis(dets[type.subkey], 40); }
-        else {
-            linktxt = jt.ellipsis(dets[type.key], 60); }
-        return linktxt;
     },
 
 
@@ -817,7 +793,7 @@ return {
         //Rebuilding everything via app.statemgr.redispatch is heavyhanded,
         //but it doesn't happen often, and rebuilding ensures editable
         //displays are returned to their original state with proper info.
-        var updfs = {"MUser":app.profile.update, "Theme":app.theme.update};
+        var updfs = {"MUser":app.login.updateProfile, "Theme":app.theme.update};
         updfs[updobj.dsType](updobj,
             function () {
                 app.fork({descr:"saveDesripChanges success", ms:100,

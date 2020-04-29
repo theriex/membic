@@ -23,7 +23,7 @@ app.statemgr = (function () {
                         onclick:jt.fs("app.statemgr.setState('MUser','" +
                                       authobj.authId + "')")},
                   ["img", {src:app.dr("img/navprofile.png")}]];
-        var prof = app.profile.myProfile()
+        var prof = app.login.myProfile();
         if(state.dsType === "MUser" && prof && prof.dsId === state.dsId) {
             nl = ["a", {href:"#connect", title:"Connect",
                         onclick:jt.fs("app.statemgr.setState('activetps','" +

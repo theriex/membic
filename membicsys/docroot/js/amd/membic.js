@@ -103,7 +103,7 @@ app.membic = (function () {
     //source membic from the theme seems like it could be convenient, but
     //in practice tends to be confusing both in UI and code.
     function mayEdit (membic) {
-        var prof = app.profile.myProfile();
+        var prof = app.login.myProfile();
         if(prof && prof.dsId === membic.penid && !membic.ctmid) {
             return true; }
         return false;
@@ -177,7 +177,7 @@ app.membic = (function () {
                              func:function () {
                                  mergeURLReadInfoIntoSavedMembic(membic); }}); }
         //not currently saving, find target membic in profile
-        var tm = app.profile.myProfile()
+        var tm = app.login.myProfile()
             .preb.find((cand) => cand.rurl === membic.rurl);
         tm.url = membic.url || membic.rurl;
         tm.details = membic.details || {};
@@ -224,7 +224,7 @@ app.membic = (function () {
 
     //Return the preb field index (iterator state index) for the membic.
     function pfiForMembic (membic) {
-        return app.profile.myProfile()
+        return app.login.myProfile()
             .preb.findIndex((cand) => cand.dsId === membic.dsId);
     }
 
@@ -247,7 +247,7 @@ app.membic = (function () {
               ["div", {cla:"nmformlinediv"},
                ["div", {id:"ambuttonsdiv"},
                 [["a", {href:"#codehelp", title:"Activation Code Help",
-                        onclick:jt.fs("app.profile.actCodeHelp()")},
+                        onclick:jt.fs("app.login.actCodeHelp()")},
                   "no code?"],
                  ["button", {type:"submit"}, "Activate Account"]]]]]]));
         jt.on("newmembicform", "submit", app.membic.actcode);
@@ -426,14 +426,14 @@ app.membic = (function () {
                                            ",'select')")},
                  tpmgr.themePostOptionsHTML(cdx)]); },
         verifyThemePostTimes: function () {
-            var themes = app.profile.myProfile().themes;
+            var themes = app.login.myProfile().themes;
             var havePosts = true;
             Object.keys(themes).forEach(function (ctmid) {
                 if(!themes[ctmid].lastPost) {
                     havePosts = false;
                     themes[ctmid].lastPost = "1234-12-12T00:00:00Z"; } });
             if(!havePosts) {
-                app.profile.myProfile().preb.forEach(function (membic) {
+                app.login.myProfile().preb.forEach(function (membic) {
                     if(membic.svcdata.postctms) {
                         membic.svcdata.postctms.forEach(function (pn) {
                             if(membic.created > themes[pn.ctmid].lastPost) {
@@ -444,7 +444,7 @@ app.membic = (function () {
             var pnlab = jt.byId("postnoteslabel" + cdx);
             if(pnlab) {
                 tidcsv = pnlab.dataset.tidcsv; }
-            var uts = app.profile.myProfile().themes;
+            var uts = app.login.myProfile().themes;
             var avtis = Object.keys(uts)
                 .filter((tid) => !tidcsv.csvcontains(tid));
             tpmgr.verifyThemePostTimes();
@@ -468,7 +468,7 @@ app.membic = (function () {
         postNoteForThemeId: function (ignore /*cdx*/, membic, tid) {
             var pn = membic.svcdata.postctms.find((cn) => cn.ctmid === tid);
             if(!pn) {  //no previously existing post
-                var pt = app.profile.myProfile().themes[tid];
+                var pt = app.login.myProfile().themes[tid];
                 pn = {ctmid:tid, name:pt.name, revid:0}; }
             return pn; },
         redrawUpdatedThemes: function (cdx, pns) {
@@ -773,7 +773,7 @@ app.membic = (function () {
             var mt = membicTypes.find((md) => md.type === membic.revtype);
             var keygrps = [{name:"", kwcsv:mt.dkwords.join(",")}];
             tpmgr.selectedPostThemes(cdx, membic).forEach(function (pn) {
-                var proftheme = app.profile.myProfile().themes[pn.ctmid];
+                var proftheme = app.login.myProfile().themes[pn.ctmid];
                 keygrps.push({name:proftheme.name,
                               kwcsv:proftheme.keywords}); });
             var knownkws = keygrps.reduce((acc, kg) => 
@@ -920,7 +920,7 @@ app.membic = (function () {
                              title:"Visit " + membic.penname,
                              onclick:jt.fs("app.statemgr.setState('MUser','" +
                                            membic.penid + "')")},
-                       [["img", {src:app.profile.profimgsrc(membic.penid)}],
+                       [["img", {src:app.login.profimgsrc(membic.penid)}],
                         ["span", {cla:"penlight"}, membic.penname]]]]]); },
             changed: function () { return false; },
             write: function () { return; } },
@@ -1144,7 +1144,7 @@ return {
             return; }  //not an error and doesn't require explanation
         jt.out("amprocmsgdiv", "Activating account...");
         jt.byId("ambuttonsdiv").style.display = "none";
-        app.profile.update({actcode:code},
+        app.login.updateProfile({actcode:code},
             function () { //updated auth and account already cached
                 jt.out("amprocmsgdiv", "Account Activated!");
                 app.fork({descr:"End account activation form", ms:800,

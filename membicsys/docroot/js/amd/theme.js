@@ -10,7 +10,7 @@ app.theme = (function () {
 
 
     function profassoc (dsType, dsId) {
-        var prof = app.profile.myProfile() || {};
+        var prof = app.login.myProfile() || {};
         var themes = prof.themes || {};
         var tid = dsId;
         if(dsType === "MUser") {
@@ -81,7 +81,7 @@ app.theme = (function () {
                 var pisrc = app.dr("/api/obimg?dt=MUser&di=" + pid);
                 var name = setctx.tpo.people[pid] || pid;
                 var fst = jt.fs("app.statemgr.setState('MUser','" + pid + "')");
-                if(pid !== app.profile.myProfile().dsId) {
+                if(pid !== app.login.myProfile().dsId) {
                     html.push(["div", {cla:"tmemlinediv"},
                                ["a", {href:"#profile",
                                       title:"View profile for " + name,
@@ -222,7 +222,7 @@ return {
         var data = jt.objdata(
             {an:authobj.email, at:authobj.token,          //user ident
              aot:setctx.tpo.dsType, aoi:setctx.tpo.dsId,  //association obj
-             pid:app.profile.myProfile().dsId,            //association prof
+             pid:app.login.myProfile().dsId,            //association prof
              assoc:setctx.assoc, fm:setctx.fm});          //assoc and mech
         jt.call("POST", app.dr("/api/associate"), data,
                 function (result) {  //prof, followed by theme if updated
@@ -246,7 +246,7 @@ return {
             return jt.out("invlinkspan", ""); }
         var subj = "Membership invitation for " + setctx.tpo.name;
         var body = "This is an invitation from $MYNAME to join $MYTHEME as a contributing member.  As a member, you will be able to post membics from your own account to $MYTHEME.  Click this link to get membership access:\n\n$ACCLINK";
-        body = body.replace(/\$MYNAME/g, app.profile.myProfile().name);
+        body = body.replace(/\$MYNAME/g, app.login.myProfile().name);
         body = body.replace(/\$MYTHEME/g, setctx.tpo.name);
         var authobj = app.login.authenticated();
         body = body.replace(/\$ACCLINK/g, app.dr(

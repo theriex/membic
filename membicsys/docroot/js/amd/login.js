@@ -11,7 +11,7 @@ app.login = (function () {
 
 
     function fullProfile() {
-        var prof = app.profile.myProfile();
+        var prof = app.login.myProfile();
         prof.email = authobj.email;
         prof.status = authobj.status;
         prof.altinmail = authobj.altinmail;
@@ -189,6 +189,55 @@ return {
     },
 
 
+    //display the account activation code help dialog.
+    actCodeHelp: function () {
+        var subj = "Need help with activation code";
+        var body = "Hi,\n\nI've waited several minutes, and checked my spam folder, but I still haven't received any activation code for my account.  Can you please look into this and help me get started?\n\nThanks\n";
+        var txt = "An activation code was sent to " +
+            app.login.authenticated().email + " when your email changed.  " +
+            "If it's been a few minutes and you haven't received anything";
+        var html = [
+            ["p", txt],
+            ["ol",
+             [["li", "Make sure your email address is spelled correctly"],
+              ["li", "Check your spam folder"]]],
+            ["div", {id:"dlgmsgdiv"}],
+            ["div", {cla:"dlgbuttonsdiv", id:"suppbuttonsdiv"},
+             [["button", {type:"button", title:"Resend Activation Code",
+                          onclick:jt.fs("app.login.resendActivationCode()")},
+               "Resend&nbsp;Code"],
+              ["a", {href:"mailto:" + app.suppemail + "?subject=" +
+                     jt.dquotenc(subj) + "&body=" + jt.dquotenc(body) +
+                     "%0A%0A"}, "Contact Support"]]],
+            ["div", {cla:"dlgbuttonsdiv"},
+             ["button", {type:"button", id:"okbutton",
+                         onclick:jt.fs("app.layout.closeDialog()")},
+              "OK"]]];
+        html = app.layout.dlgwrapHTML("Account Activation Help", html);
+        app.layout.openDialog({y:40}, jt.tac2html(html), null,
+                              function () {
+                                  jt.byId("okbutton").focus(); });
+    },
+
+
+    //Any account update while the account status is not active will
+    //trigger an activation message.
+    resendActivationCode: function () {
+        jt.byId("suppbuttonsdiv").style.display = "none";
+        jt.out("dlgmsgdiv", "Resending activation code...");
+        app.login.updateProfile({actcode:"requestresend"},
+            function () { //updated auth and account already cached
+                jt.out("dlgmsgdiv", "Activation code sent to " +
+                       app.login.authenticated().email);
+                app.fork({descr:"End account activation form", ms:800,
+                          func:app.layout.closeDialog}); },
+            function (code, errtxt) {
+                jt.out("dlgmsgdiv", "Resend failed: " + code + " " +
+                       errtxt);
+                jt.byId("suppbuttonsdiv").style.display = "block"; });
+    },
+
+
     //If you are not logged in, then authobj is null.  Can be used as an
     //"isLoggedIn" check and/or for access to personal info.
     authenticated: function () { return authobj; },
@@ -200,11 +249,62 @@ return {
         return app.dr(apiurl) + "?an=" + authobj.email + "&at=" + authobj.token;
     },
     fullProfile: function () { return fullProfile(); },
+    myProfile: function () { 
+        if(!authobj) {
+            return null; }
+        return app.refmgr.cached("MUser", authobj.authId);
+    },
+
+
+    profimgsrc: function (muser) {
+        var userid = "";
+        if(!muser) {  //assume for self if nothing passed in
+            var auth = app.login.authenticated();
+            if(auth) {
+                muser = app.refmgr.cached("MUser", auth.authId); } }
+        else if(muser && typeof muser === "string") {
+            userid = muser;
+            muser = app.refmgr.cached("MUser", muser); }
+        //Not having a user for a given id may simply mean they're not
+        //cached.  Better to take a chance they have a pic uploaded.
+        if(userid) {
+            return "/api/obimg?dt=MUser&di=" + userid + jt.ts("&cb=", "hour"); }
+        return app.pcd.picImgSrc(muser);
+    },
 
 
     rebuildContext: function () {
         app.membic.addMembic();    //update account activation area
         app.statemgr.redispatch(); //rebuild pcd display and settings context
+    },
+
+
+    //obj is NOT the current profile object, it consists of the identifying
+    //object information (dsType and dsId) together with only the profile
+    //fields and values to be updated.
+    updateProfile: function (obj, succf, failf) {
+        if(!obj) {
+            jt.log("login.updateProfile called without update object");
+            if(failf) {
+                return failf(400, "No profile object to update"); }
+            return; }  //nothing to do
+        obj.dsType = "MUser";   //verify set in case creating new
+        if(authobj) {
+            obj.dsId = authobj.authId; }
+        var url = app.login.authURL("/api/accupd");
+        jt.call("POST", url, app.refmgr.postdata(obj),
+                function (objs) { //authobj, MUser
+                    app.login.setAuthentication(objs[0]);
+                    app.refmgr.put(app.refmgr.deserialize(objs[1]));
+                    //might have changed profile/theme follow/membership
+                    app.refmgr.uncache("activetps", "411");
+                    if(succf) {
+                        succf(objs[1]); } },
+                function (code, errtxt) {
+                    jt.log("updateProfile " + code + " " + errtxt);
+                    if(failf) {
+                        failf(code, errtxt); } },
+                jt.semaphore("login.updateProfile"));
     },
 
 
@@ -227,7 +327,7 @@ return {
         app.pcd.readCommonSettingsFields(pu, prof);
         jt.out("settingsinfdiv", "Updating...");
         jt.byId("settingsupdbutton").disabled = true;
-        app.profile.update(pu,
+        app.login.updateProfile(pu,
             function () { //updated account already cached
                 jt.out("settingsinfdiv", "Profile updated.");
                 app.fork({descr:"Close account settings display", ms:800,

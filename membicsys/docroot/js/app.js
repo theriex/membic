@@ -72,13 +72,6 @@ var jt = {};   //Global access to general utility methods
     };
 
 
-    //Cancel any ongoing registered loops with timeouts.
-    app.stopLoopers = function () {
-        while(app.loopers.length > 0) {
-            app.loopers.pop().cancelled = true; }
-    };
-
-
     app.redirectToSecureServer = function (params) {
         var state = {};
         if(history && history.state) {
@@ -94,49 +87,13 @@ var jt = {};   //Global access to general utility methods
     };
 
 
-    app.redirectIfNeeded = function () {
-        var href = window.location.href;
-        if(href.indexOf(app.mainsvr) >= 0 &&
-           href.indexOf("authtoken=") < 0 &&
-           href.indexOf("at=") < 0 &&
-           href.indexOf("AltAuth") < 0 &&
-           (!jt.cookie(app.authcookname))) {
-            app.redirectToSecureServer(jt.parseParams());
-            return true; }
-    };
-
-
     app.redirect = function (href) {
         window.location.href = href;
     };
 
 
-    app.verifyHome = function () {
-        if(window.location.pathname !== "/" || 
-           window.location.href.indexOf("?") >= 0 ||
-           window.location.href.indexOf("#") >= 0) {
-            window.location.href = "/"; }
-    };
-
-
     app.solopage = function () {
         return app.embedded;
-    };
-
-
-    app.haveReferrer = function () {
-        var knownaddrs = [{sub: "membic.org", maxidx: 12},
-                          {sub: "membicsys.appspot.com", maxidx: 8}];
-        var ref = document.referrer || "";
-        ref = ref.toLowerCase();
-        if(ref) {
-            knownaddrs.every(function (ka) {
-                var refidx = ref.indexOf(ka.sub);
-                if(refidx >= 0 && refidx <= ka.maxidx) {
-                    ref = "";
-                    return false; }
-                return true; }); }
-        return ref;
     };
 
 
@@ -155,7 +112,7 @@ var jt = {};   //Global access to general utility methods
             //membic, needs to be handled after initial login
             //authentication.  Save the initial params for reference before
             //clearing the URL through setState.
-            app.startParams = jt.parseParams("String")
+            app.startParams = jt.parseParams("String");
             app.layout.init();
             app.fork({descr:"lightweight authentication",
                       func:app.login.init, ms:10});
@@ -191,12 +148,11 @@ var jt = {};   //Global access to general utility methods
 
     app.init = function () {
         var href = window.location.href;
-        //The ordering of the modules will encourage, but not guarantee, that
-        //earlier modules will be available for reference across modules.  So
-        //best not to reference other modules within top level module vars.
-        var modules = [ "js/amd/connect", "js/amd/profile", "js/amd/membic",
+        //Earlier loaded modules may not have finished loading before
+        //later loaded modules.  No load-time interdependencies.
+        var modules = [ "js/amd/login", "js/amd/connect", "js/amd/membic",
                         "js/amd/layout", "js/amd/refmgr", "js/amd/statemgr",
-                        "js/amd/login", "js/amd/pcd", "js/amd/theme",
+                        "js/amd/pcd", "js/amd/theme",
                         //"js/amd/ext/amazon", (not used right now)
                         "js/amd/ext/jsonapi",
                         "js/amd/ext/readurl" ];
@@ -301,25 +257,8 @@ var jt = {};   //Global access to general utility methods
         var emref = "mailto:" + app.suppemail + "?subject=" + 
             jt.dquotenc(subj) + "&body=" + jt.dquotenc(body);
         return jt.tac2html(
-            [msg + ". ",
+            [errmsg + ". ",
              ["a", {href:emref}, "Please tell the dev team."]]);
-    };
-
-
-    app.typeOrBlank = function (typename) {
-        if(typename && typename !== "all") {
-            return typename; }
-        return "";
-    };
-
-
-    app.toggledivdisp = function (divid) {
-        var div = jt.byId(divid);
-        if(div) {
-            if(div.style.display === "block") {
-                div.style.display = "none"; }
-            else {
-                div.style.display = "block"; } }
     };
 
 

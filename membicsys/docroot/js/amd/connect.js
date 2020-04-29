@@ -7,16 +7,17 @@ app.connect = (function () {
     var mdefhtml = "";
 
 
+    //The last element in the static server content is a definition of
+    //"Membic (noun): A link with a reason why it is memorable".  That's
+    //good descriptive info, and it makes a good footer indicating the end
+    //of content.  With a dynamic display, it can be annoying to have the
+    //definition show up by itself as if it is the only thing matching a
+    //search string, so it is not being used right now.  Leaving the method
+    //here in case there is a need for it.
     function keepMembicDef () {
         var defdiv = jt.byId("membicdefinitiondiv");
         if(!mdefhtml && defdiv) {
             mdefhtml = defdiv.innerHTML; }
-    }
-
-
-    function inSummary (ctmid, summaries) {
-        return summaries.find(function (tpsum) {
-            return tpsum.dsId === ctmid; });
     }
 
 
@@ -54,8 +55,8 @@ app.connect = (function () {
                   hashtag:uinf.hashtag || "",
                   pic:uinf.pic,
                   name:uinf.name,
-                  description:""}  //no description in user info
-            if(obtype === "theme") {
+                  description:""};  //no description in user info
+            if(obinf.obtype === "theme") {
                 si.founders = "";
                 si.moderators = "";
                 si.members = "";
@@ -63,7 +64,7 @@ app.connect = (function () {
                 case 3: si.founders = user.dsId; break;
                 case 2: si.moderators = user.dsId; break;
                 case 1: si.members = user.dsId; break; } }
-            var cached = app.refmgr.cached(dsType, dsId);
+            var cached = app.refmgr.cached(obinf.dsType, obinf.dsId);
             if(cached) {  //override the guessed values with cached values
                 var copyfields = ["picture", "modified", "lastwrite", 
                                   "hashtag", "name", "description"];
@@ -109,7 +110,7 @@ app.connect = (function () {
     function decorateAndSort () {
         var tps = app.refmgr.cached("activetps", "411").jtps;
         var decos = tps;
-        var user = app.profile.myProfile();
+        var user = app.login.myProfile();
         if(user && user.themes) {  //include personal stuff.  See note.
             decos = [];
             var allobjs = {};
@@ -141,7 +142,7 @@ app.connect = (function () {
         case "Moderator": img ="tsmoderator.png"; break;
         case "Member": img = "tsmember.png"; break;
         case "Following": img = "tsfollowing.png"; break; }
-        var prof = app.profile.myProfile();
+        var prof = app.login.myProfile();
         if(prof && prof.dsId === tp.dsId && tp.obtype === "profile") {
             img = "tsfounder.png"; }
         img = app.dr("img/" + img);
@@ -229,6 +230,7 @@ app.connect = (function () {
     return {
         display: function display () { displayMainContent(); },
         show: function show (ty, id, cmd) { showListing(ty, id, cmd); },
+        //not currently used, but keep for now.  See function comment.
         keepdef: function keepdef () { keepMembicDef(); }
     };
 }());
