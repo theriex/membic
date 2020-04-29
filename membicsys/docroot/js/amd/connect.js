@@ -26,7 +26,8 @@ app.connect = (function () {
         var atr = app.refmgr.cached("activetps", "411");
         if(!atr) {  //no recent, go get it
             //jt.log("fetching activetps");
-            jt.call("GET", "/api/recentactive" + jt.ts("?cb=", "minute"), null,
+            var url = app.dr("/api/recentactive") + jt.ts("?cb=", "minute");
+            jt.call("GET", url, null,
                     function (racs) {
                         jt.log("activetps cached from api/recentactive");
                         app.refmgr.put(racs[0]);

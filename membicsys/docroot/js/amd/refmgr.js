@@ -155,8 +155,8 @@ return {
         if(persistentTypes.indexOf(dsType) < 0) {
             jt.log("refmgr.getFull: unknown dsType " + dsType);
             console.trace(); }
-        var url = app.refmgr.serverurl() + "/api/fetchobj?dt=" + dsType +
-            "&di=" + dsId + jt.ts("&cb=", "second");
+        var url = app.dr("/api/fetchobj?dt=" + dsType + "&di=" + dsId +
+                         jt.ts("&cb=", "second"));
         jt.call("GET", url, null,
                 function (objs) {
                     var retobj = null;
@@ -189,12 +189,6 @@ return {
         var dat = jt.objdata(obj);
         deserialize(obj);
         return dat;
-    },
-
-
-    serverurl: function () { 
-        var url = window.location.href;
-        return url.split("/").slice(0, 3).join("/");
     }
 
 }; //end of returned functions

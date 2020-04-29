@@ -174,7 +174,14 @@ var jt = {};   //Global access to general utility methods
     };
 
 
+    //app.docroot is initialized with a terminating '/' so it can be
+    //concatenated directly with a relative path, but remembering and
+    //relying on whether a slash is required is annoying.  Double slashes
+    //are usually handled properly but can be a source of confusion, so this
+    //strips off any preceding slash in the relpath.
     app.dr = function (relpath) {
+        if(relpath.startsWith("/")) {
+            relpath = relpath.slice(1); }
         return app.docroot + relpath;
     };
 

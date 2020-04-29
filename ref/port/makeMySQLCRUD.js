@@ -943,8 +943,8 @@ function createJSServerAcc () {
     jsc += "        if(persistentTypes.indexOf(dsType) < 0) {\n";
     jsc += "            jt.log(\"refmgr.getFull: unknown dsType \" + dsType);\n";
     jsc += "            console.trace(); }\n";
-    jsc += "        var url = app.refmgr.serverurl() + \"/api/fetchobj?dt=\" + dsType +\n";
-    jsc += "            \"&di=\" + dsId + jt.ts(\"&cb=\", \"second\");\n";
+    jsc += "        var url = app.dr(\"/api/fetchobj?dt=\" + dsType + \"&di=\" + dsId +\n";
+    jsc += "                         jt.ts(\"&cb=\", \"second\"));\n";
     jsc += "        jt.call(\"GET\", url, null,\n";
     jsc += "                function (objs) {\n";
     jsc += "                    var retobj = null;\n";
@@ -977,12 +977,6 @@ function createJSServerAcc () {
     jsc += "        var dat = jt.objdata(obj);\n";
     jsc += "        deserialize(obj);\n";
     jsc += "        return dat;\n";
-    jsc += "    },\n";
-    jsc += "\n";
-    jsc += "\n";
-    jsc += "    serverurl: function () { \n";
-    jsc += "        var url = window.location.href;\n";
-    jsc += "        return url.split(\"/\").slice(0, 3).join(\"/\");\n";
     jsc += "    }\n";
     jsc += "\n";
     jsc += "}; //end of returned functions\n";
