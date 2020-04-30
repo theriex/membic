@@ -472,6 +472,18 @@ def prebsweep():
     return " <br>\n".join(msgs)
 
 
+def supphelp():
+    accurl = "Nope."
+    try:
+        administrator_auth()
+        emaddr = dbacc.reqarg("email", "MUser.email", required=True)
+        muser = dbacc.cfbk("MUser", "email", emaddr)
+        accurl = my_login_url(muser) + "\n\n"
+    except ValueError as e:
+        return serve_value_error(e)
+    return accurl
+
+
 def obimg():
     # The client might make a call to get a pic for a profile which might
     # not have one.  Better to return a blank than an error in that case.
