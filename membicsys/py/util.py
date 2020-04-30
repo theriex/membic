@@ -1,7 +1,15 @@
+""" General use functions not directly tied to specific user actions. """
+#pylint: disable=import-error
+#pylint: disable=wrong-import-position
+#pylint: disable=wrong-import-order
+#pylint: disable=line-too-long
+#pylint: disable=missing-function-docstring
+#pylint: disable=logging-not-lazy
+#pylint: disable=broad-except
+#pylint: disable=invalid-name
 import logging
 logging.basicConfig(level=logging.DEBUG)
 import flask
-import hashlib
 import hmac
 import re
 import json
@@ -37,9 +45,9 @@ def srverr(msg, code=400):
     return resp
 
 
-def serveValueError(ve, quiet=False):
+def serve_value_error(ve, quiet=False):
     if not quiet:
-        logging.exception("serveValueError")
+        logging.exception("serve_value_error")
     return srverr(str(ve))
 
 
@@ -59,7 +67,7 @@ def site_home():
 
 def is_development_server():
     url = flask.request.url
-    if re.search("\:\d{4}", url):
+    if re.search(r"\:\d{4}", url):
         return True
     return False
 
@@ -68,7 +76,7 @@ def secure(func):
     url = flask.request.url
     logging.debug("secure url: " + url)
     if url.startswith('https') or is_development_server():
-        return func();
+        return func()
     return srverr("Request must be over https", 405)
 
 
@@ -149,7 +157,7 @@ def authenticate():
     if not emaddr:
         emaddr = dbacc.reqarg("emailin", "MUser.email")
     if not emaddr:
-        raise ValueError("'an' or 'emailin' parameter required");
+        raise ValueError("'an' or 'emailin' parameter required")
     emaddr = normalize_email(emaddr)
     muser = dbacc.cfbk("MUser", "email", emaddr)
     if not muser:
@@ -209,7 +217,7 @@ def in_terms_vio(entity, dsId, data=None):
 def make_preb_membic(membic):
     memsum = {}
     mflds = ["dsId", "dsType", "created", "modified", "url", "rurl", "revtype",
-             "details", "penid", "ctmid", "rating", "srcrev", "cankey", "text", 
+             "details", "penid", "ctmid", "rating", "srcrev", "cankey", "text",
              "keywords", "svcdata", "imguri", "dispafter", "penname", "reacdat"]
     for mfld in mflds:
         memsum[mfld] = membic[mfld]
@@ -323,7 +331,6 @@ blank4x4imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x
 # it is possible to get a lot of these errors, but resource fetching works
 # differently when running locally anyway so that's tolerable.
 def fetch_image_data(inst, imgsrc):
-    pre = inst["dsType"] + " " + str(inst["dsId"]) + " "
     try:
         resp = requests.get(imgsrc)
         reqc = resp.status_code
@@ -344,7 +351,7 @@ def fetch_image_data(inst, imgsrc):
             inst["icwhen"] = dbacc.nowISO() + "_failed_" + str(reqc)
     except Exception as e:
         inst["icwhen"] = dbacc.nowISO() + "_unavailable_" + str(e)
-    inst["icwhen"] = inst["icwhen"][0:120];  # truncate long errors
+    inst["icwhen"] = inst["icwhen"][0:120]  # truncate long errors
     dbacc.write_entity(inst, inst["modified"])
 
 
@@ -390,6 +397,17 @@ def send_activation_code(muser):
     return muser
 
 
+# Return a dict of custom headers for the jsonget request based on the url.
+def jsonget_api_headers(url):
+    hd = None
+    # client should have passed a proper URL, but match to verify.
+    match = re.match(r"https://api.vimeo.com/videos/\d+", url)
+    if match:
+        cs = get_connection_service("vimeoAPI")
+        if cs["secret"]:
+            hd = {"Authorization": "bearer " + cs["secret"]}
+    return hd
+
 
 ##################################################
 #
@@ -413,19 +431,19 @@ def mailpwr():
         subj = "Membic.org profile password reset"
         send_mail(emaddr, subj, body)
     except ValueError as e:
-        return serveValueError(e)
+        return serve_value_error(e)
     return respJSON("[]")
 
 
 def prebsweep():
     try:
-        admin = administrator_auth()
-        maxPerSweep = 20
-        where = "WHERE preb IS NULL LIMIT " + str(maxPerSweep)
+        administrator_auth()
+        max_per_sweep = 20
+        where = "WHERE preb IS NULL LIMIT " + str(max_per_sweep)
         msgs = []
         musers = dbacc.query_entity("MUser", where)
         for muser in musers:  # do users first so themes are more recent
-            if len(msgs) >= maxPerSweep:
+            if len(msgs) >= max_per_sweep:
                 break
             logging.info("prebsweep MUser " + muser["dsId"] + " " +
                          muser["modified"])
@@ -437,7 +455,7 @@ def prebsweep():
                         muser["email"])
         themes = dbacc.query_entity("Theme", where)
         for theme in themes:
-            if len(msgs) >= maxPerSweep:
+            if len(msgs) >= max_per_sweep:
                 break
             context = {"entity":"Theme", "inst":theme, "pbms":[], "creb":""}
             rebuild_prebuilt(context)
@@ -445,12 +463,12 @@ def prebsweep():
             dbacc.write_entity(theme, vck=theme["modified"])
             msgs.append("Rebuilt Theme.preb " + str(theme["dsId"]) + " " +
                         theme["name"])
-        if len(msgs) >= maxPerSweep:
+        if len(msgs) >= max_per_sweep:
             msgs.append("SweepPrebuilt pass completed, run again")
         else:
             msgs.append("SweepPrebuilt completed")
     except ValueError as e:
-        return serveValueError(e)
+        return serve_value_error(e)
     return " <br>\n".join(msgs)
 
 
@@ -469,7 +487,7 @@ def obimg():
             imgdat = inst[picfldmap[dsType]]
             imgdat = base64.b64decode(imgdat)
     except ValueError as e:
-        return serveValueError(e)
+        return serve_value_error(e)
     resp = flask.make_response(imgdat)
     resp.mimetype = "image/png"
     return resp
@@ -485,7 +503,7 @@ def fetchobj():
             raise ValueError(dsType + " " + dsId + " not found")
         oj = safe_JSON(inst)
     except ValueError as e:
-        return serveValueError(e)
+        return serve_value_error(e)
     return respJSON("[" + oj + "]")
 
 
@@ -501,7 +519,7 @@ def imagerelay():
             svcdata = json.loads(inst["svcdata"])
             if "picdisp" in svcdata:
                 if svcdata["picdisp"] != "sitepic":
-                    raise ValueError(pre + "picdisp not sitepic: " + 
+                    raise ValueError(pre + "picdisp not sitepic: " +
                                      svcdata["picdisp"])
         imguri = inst["imguri"]
         if not inst["icdata"] and not ("_failed_" in inst["icwhen"] or
@@ -512,7 +530,7 @@ def imagerelay():
         imgdat = inst["icdata"]
         imgdat = base64.b64decode(imgdat)
     except ValueError as e:
-        return serveValueError(e)
+        return serve_value_error(e)
     resp = flask.make_response(imgdat)
     resp.mimetype = "image/png"
     return resp
@@ -525,8 +543,8 @@ def signin():
         authobj = make_auth_obj(muser, srvtok)
         oj = json.dumps(authobj)
     except ValueError as e:
-        logging.info("signin failed: " + str(e));
-        return serveValueError(e, quiet=True)
+        logging.info("signin failed: " + str(e))
+        return serve_value_error(e, quiet=True)
     return respJSON("[" + oj + "]")
 
 
@@ -555,22 +573,41 @@ def newacct():
         authobj = make_auth_obj(muser, token_for_user(muser))
         oj = json.dumps(authobj)
     except ValueError as e:
-        logging.info("newacct failed: " + str(e));
-        return serveValueError(e, quiet=True)
+        logging.info("newacct failed: " + str(e))
+        return serve_value_error(e, quiet=True)
     return respJSON("[" + oj + "]")
 
 
 def urlcontents():
     ench = ""
     try:
-        muser, srvtok = authenticate()  # must be signed in to fetch url info
+        authenticate()  # must be signed in to fetch url info
         url = dbacc.reqarg("url", "string", required=True)
+        logging.info("urlcontents " + url)
         resp = requests.get(url)
         if resp.status_code != 200:
             srverr(resp.text, resp.status_code)
         ench = "{\"content\":\"" + urllib.parse.quote(resp.text) + "\"}"
     except ValueError as e:
-        logging.info("urlcontents failed: " + str(e));
-        return serveValueError(e)
+        logging.info("urlcontents failed: " + str(e))
+        return serve_value_error(e)
     return respJSON("[" + ench + "]")
 
+
+def jsonget():
+    ench = ""
+    try:
+        authenticate()  # must be signed in to fetch url info
+        url = dbacc.reqarg("url", "string", required=True)
+        headerdict = jsonget_api_headers(url)
+        if not headerdict:
+            raise ValueError("No API headers known for " + url)
+        logging.info("jsonget " + url)
+        resp = requests.get(url, headers=headerdict)
+        if resp.status_code != 200:
+            srverr(resp.text, resp.status_code)
+        ench = resp.text
+    except ValueError as e:
+        logging.info("jsonget failed: " + str(e))
+        return serve_value_error(e)
+    return respJSON(ench)

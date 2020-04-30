@@ -1,8 +1,10 @@
+""" Main API switchboard with all entrypoints """
+#pylint: disable=invalid-name
+#pylint: disable=missing-function-docstring
 import flask
 import py.useract as useract
 import py.util as util
 import py.start as start
-import py.useract as useract
 import py.feed as feed
 
 # Create a default entrypoint for the app.
@@ -67,6 +69,10 @@ def associate(): #params: an, at, aot, aoi, pid, assoc, fm[, fid, mtok]
 @app.route('/api/urlcontents')
 def urlcontents():  # params: an, at, url
     return util.urlcontents()
+
+@app.route('/api/jsonget')
+def jsonget():  # params: an, at, url
+    return util.jsonget()
 
 @app.route('/feed/', defaults={'path': ''})
 @app.route('/feed/<path:path>')
@@ -355,4 +361,3 @@ def prebsweep():
 # interface like Gunicorn or Passenger serves the app.
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
-

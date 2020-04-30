@@ -136,14 +136,22 @@ app.membic = (function () {
     }
 
 
-    //The caller is responsible for clearing any cached Themes that no longer
-    //contain the membic being saved.
-    function saveMembic (savemembic, contf, failf) {
+    //The caller is responsible for clearing any cached Themes that no
+    //longer contain the membic being saved.  On return, this will display
+    //the user profile, with the membic open for further editing.  The top
+    //form allows for adding a new membic from anywhere on the site, but you
+    //can only edit from your profile display.  Any calls received before a
+    //call is finished are ignored, in order to avoid any possibility of
+    //multiple events causing the addition of a duplicate new membic.  If
+    //that results in the site seizing up due to a previous call never
+    //returning, that is still far preferable to duplicate data.
+    function saveMembic (logmsg, savemembic, contf, failf) {
+        jt.log("saveMembic logmsg: " + logmsg);
+        if(savind) {  //default call will retry. Debounce extra event calls
+            return jt.log("saveMembic in progress, ignoring spurious call"); }
         savind = new Date().toISOString();  //indicate we are saving
+        savemembic.dsType = "Membic";  //verify for param serialization
         var url = app.login.authURL("/api/membicsave");
-        var pcdo = app.pcd.getDisplayContext().actobj.contextobj;
-        if(pcdo.dsType === "Theme") {
-            url += "&themecontext=" + pcdo.dsId; }
         jt.call("POST", url, app.refmgr.postdata(savemembic),
                 //The updated MUser is always the first item returned,
                 //followed by the display context Theme if specified.
@@ -156,8 +164,7 @@ app.membic = (function () {
                     pots.forEach(function (pot) {  //update all given data
                         app.refmgr.put(pot); });
                     expandedMembics[srcmem.dsId] = "expandedpostsave";
-                    var dispobj = pots[pots.length - 1];
-                    app.pcd.fetchAndDisplay(dispobj.dsType, dispobj.dsId);
+                    app.pcd.fetchAndDisplay(pots[0].dsType, pots[0].dsId);
                     if(contf) {
                         contf(srcmem); } },
                 function (code, errtxt) {
@@ -184,7 +191,7 @@ app.membic = (function () {
         tm.revtype = membic.revtype || "article";
         tm.rating = ratmgr.rati.dfltv;
         tm.keywords = "";
-        saveMembic(tm);
+        saveMembic("mergeURLReadInfoIntoSavedMembic", tm);
     }
 
 
@@ -219,13 +226,6 @@ app.membic = (function () {
         app.fork({descr:"app." + readername + ": " + addmem.rurl, ms:100,
                   func:function () {
                       app[readername].getInfo(membic, membic.rurl); }});
-    }
-
-
-    //Return the preb field index (iterator state index) for the membic.
-    function pfiForMembic (membic) {
-        return app.login.myProfile()
-            .preb.findIndex((cand) => cand.dsId === membic.dsId);
     }
 
 
@@ -332,7 +332,7 @@ app.membic = (function () {
         //If the update changed other things, redisplaying closed still
         //provides a sense of confirmation of updated info on re-expansion.
         //If an error occurs, leave expanded with message.
-        saveMembic(updm,
+        saveMembic("updateMembic", updm,
             function (srcmembic) {
                 expandedMembics[srcmembic.dsId] = ""; },  //close
             function (code, txt) {
@@ -365,7 +365,7 @@ app.membic = (function () {
         jt.out("dlgbsbdiv" + cdx, "Deleting...");
         clearCachedThemesForMembic(membic);
         var updm = {dsType:"Membic", dsId:membic.dsId, srcrev:"-604"};
-        saveMembic(updm,
+        saveMembic("markMembicDeleted", updm,
             function () {
                 expandedMembics[membic.dsId] = "";  //close (seems correct)
                 app.statemgr.redispatch(); },  //redraw content
@@ -373,23 +373,6 @@ app.membic = (function () {
                 jt.out("dlgbsmsgdiv" + cdx, "Delete failed " + code + ": " +
                        txt);
                 jt.out("dlgbsbdiv" + cdx, bhtml); });
-    }
-
-
-    function formActionButtonsHTML (cdx, tac) {
-        return jt.tac2html(
-            [["div", {cla:"dlgbsmsgdiv", id:"dlgbsmsgdiv" + cdx}],
-             ["div", {cla:"dlgbsbdiv", id:"dlgbsbdiv" + cdx},
-              tac]]);
-    }
-
-
-    function formButton (name, ocstr, disabled) {
-        var bas = {type:"button", cla:"membicformbutton", onclick:ocstr};
-        if(disabled) {
-            bas.disabled = true;
-            bas.cla = "membicformbuttondisabled"; }
-        return jt.tac2html(["button", bas, name]);
     }
 
 
@@ -865,6 +848,10 @@ app.membic = (function () {
     formElements = {
         title: {
             closed: function (ignore /*cdx*/, membic) {
+                if(!membic.details) {
+                    jt.log("formElements.title.closed no membic details: " +
+                           JSON.stringify(membic));
+                }
                 var html = jt.tac2html(
                     ["a", {href:membic.url, title:membic.url,
                            onclick:jt.fs("window.open('" + membic.url + "')")},
@@ -932,6 +919,7 @@ app.membic = (function () {
                      ratmgr.getHTML(cdx, membic)]); },
             changed: function (cdx, membic) {
                 var rat = ratmgr.ratingValue(cdx);
+                //jt.log("rat: " + rat + ", membic.rating: " + membic.rating);
                 return jt.toru(membic.rating !== rat, rat); },
             write: function (chgval, updobj) {
                 updobj.rating = chgval; } },
@@ -939,19 +927,35 @@ app.membic = (function () {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {
                 if(mayEdit(membic)) {
-                    var edited = membicEdited(cdx, membic);
-                    return formActionButtonsHTML(cdx, 
+                    return formElements.dlgbs.actionAreaWrap(cdx,
                         [["a", {href:"#delete", title:"Delete Membic",
                                 onclick:dispatchFStr(cdx, "dlgbs.mrkdel")},
                           ["img", {cla:"masactbimg",
                                    src:app.dr("img/trash.png")}]],
-                         formButton("Cancel", jt.fs("app.membic.toggleMembic(" +
-                                                    cdx + ")"), !edited),
-                         formButton("Save", dispatchFStr(cdx, "dlgbs.save"),
-                                    !edited)]); }
+                         formElements.dlgbs.actionButtons(cdx, membic)]); }
                 return ""; },
             changed: function () { return false; },
             write: function () { return; },
+            actionAreaWrap: function (cdx, html) {
+                return jt.tac2html(
+                    [["div", {cla:"dlgbsmsgdiv", id:"dlgbsmsgdiv" + cdx}],
+                     ["div", {cla:"dlgbsbdiv", id:"dlgbsbdiv" + cdx},
+                      html]]); },
+            actionButtons: function (cdx, membic) {
+                var edited = membicEdited(cdx, membic);
+                var mkb = formElements.dlgbs.makeActionButton;
+                if(edited) {
+                    return [mkb("Cancel",
+                                jt.fs("app.membic.toggleMembic(" + cdx + ")")),
+                            mkb("Save", dispatchFStr(cdx, "dlgbs.save"))]; }
+                return [mkb("Done Editing", 
+                            jt.fs("app.membic.toggleMembic(" + cdx + ")"))]; },
+            makeActionButton: function (name, fstr, disabled) {
+                var bas = {type:"button", cla:"membicformbutton", onclick:fstr};
+                if(disabled) {
+                    bas.disabled = true;
+                    bas.cla = "membicformbuttondisabled"; }
+                return jt.tac2html(["button", bas, name]); },
             save: function (cdx) { updateMembic(cdx); },
             mrkdel: function (cdx) { markMembicDeleted(cdx); } },
         picture: {
@@ -1021,7 +1025,8 @@ app.membic = (function () {
                 return kwmgr.keywordsHTML(cdx, membic, mayEdit(membic)); },
             changed: function (cdx, membic) {
                 var kws = kwmgr.selectedKeywords(cdx, membic);
-                return jt.toru(!kwmgr.equivKwrds(membic.keywords, kws), kws); },
+                return jt.toru(!kwmgr.equivKwrds(membic.keywords, kws),
+                               kws || "unset_value"); },
             write: function (chgval, updobj) {
                 updobj.keywords = chgval; },
             addnew: function (cdx) {
@@ -1109,13 +1114,13 @@ return {
         case "addit":
             if(!jt.byId("newmembicform").checkValidity()) {
                 return; }  //fix why memorable if needed
-            addmem.text = jt.byId("whymemin");
+            addmem.text = jt.byId("whymemin").value;
+            addmem.rating = ratmgr.rati.dfltv;
             jt.out("amprocmsgdiv", "Writing membic...");
             jt.byId("ambuttonsdiv").style.display = "none";
-            saveMembic(addmem, 
-                function (membic) {
+            saveMembic("addMembic addit", addmem, 
+                function () {
                     addmem = null;  //reset for next membic creation
-                    app.membic.toggleMembic(pfiForMembic(membic), "expand");
                     app.membic.addMembic("start"); },
                 function (code, errtxt) {
                     jt.log("saveMembic failed " + code + " " + errtxt);
@@ -1165,6 +1170,7 @@ return {
         var le = ur.log[ur.log.length - 1];
         le.end = new Date().toISOString();
         le.msg = msg;
+        jt.log("membic.readerFinish " + JSON.stringify(ur));
         if(addmem && !savind && //still working off addmem and not saved yet
            addmem.rurl === membic.rurl) {  //and not way out of sync
             return; }  //url read data will be recorded on save.

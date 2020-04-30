@@ -187,7 +187,8 @@ def verify_simple_html(val):
 
 # Read the specified argument values into the given object.
 def read_values(obj, fldspec):
-    updlo = {"dsType":obj["dsType"], "dsId":obj["dsId"]}
+    # Make an update log object just to show what the server actually got
+    updlo = {"dsType":obj["dsType"], "dsId":obj.get("dsId", "")}
     obtype = obj["dsType"]
     for fld in fldspec["inflds"]:
         val = dbacc.reqarg(fld, obtype + "." + fld)
@@ -224,13 +225,13 @@ def set_dispafter(newmbc, muser):
         raise ValueError("set_dispafter reset of existing value")
     preb = json.loads(muser.get("preb", "[]"))
     if len(preb) == 0:  # first membic, no wait.
-        newmbc.dispafter = dbacc.nowISO()
+        newmbc["dispafter"] = dbacc.nowISO()
     else:  # set dispafter to be 24 hours after next most recent post
         disp = preb[0]["dispafter"] or preb[0]["created"]
         disp = dbacc.ISO2dt(disp)
         disp += datetime.timedelta(hours=24)
         disp = dbacc.dt2ISO(disp)
-        newmbc.dispafter = max(disp, dbacc.nowISO())
+        newmbc["dispafter"] = max(disp, dbacc.nowISO())
 
 
 def cankey_for_membic(newmbc):
@@ -317,7 +318,7 @@ def make_theme_plan(newmbc, oldmbc):
     # If the srcrev is -604, then it is marked as deleted.  For any negative
     # value there should be no theme posts.  srcrev is an int in the db but
     # a string here at app level.
-    if newmbc["srcrev"] and int(newmbc["srcrev"]) < 0:
+    if newmbc.get("srcrev") and int(newmbc["srcrev"]) < 0:
         pts = []
     for postnote in pts:
         ctmid = str(postnote["ctmid"])

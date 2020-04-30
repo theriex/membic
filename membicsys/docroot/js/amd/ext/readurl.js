@@ -432,7 +432,7 @@ app.readurl = (function () {
     ////////////////////////////////////////
 return {
 
-    getInfo: function  (membic, url) {
+    getInfo: function (membic, url) {
         jt.log("app.readurl fetching " + url);
         var apiurl = app.login.authURL("/api/urlcontents") +
             "&url=" + jt.enc(url) + jt.ts("&cb=", "second");
