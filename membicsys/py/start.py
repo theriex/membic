@@ -1,7 +1,14 @@
-# Provide an index page for the specified hashtag, or the default page for
-# the app.  This page has to be generated dynamically so a static fetch will
+""" Return appropriate start page content """
+# This page has to be generated dynamically so a static fetch will
 # have the appropriate title, description and pic references.
-
+#pylint: disable=import-error
+#pylint: disable=wrong-import-order
+#pylint: disable=unused-import
+#pylint: disable=invalid-name
+#pylint: disable=missing-function-docstring
+#pylint: disable=logging-not-lazy
+#pylint: disable=unidiomatic-typecheck
+#pylint: disable=too-many-return-statements
 import flask
 import json
 import logging
@@ -155,7 +162,7 @@ tplinkhtml = """
 
 def pub_featurable(entity, obj, vios):
     preb = obj["preb"] or ""
-    # logging.debug("pub_featurable " + obj["dsType"] + obj["dsId"] + 
+    # logging.debug("pub_featurable " + obj["dsType"] + obj["dsId"] +
     #               " len(preb): " + str(len(preb)))
     if len(preb) <= 3:
         return False  # Only featuring if have posted Membics
@@ -213,7 +220,7 @@ def fetch_recent_themes_and_profiles():
             break
     return "[" + jtxt + "]"
 
-    
+
 # cache fetch most recently modified 50 themes and 50 profiles.
 def get_recent_themes_and_profiles():
     # Previously cached under "activecontent"
@@ -262,7 +269,6 @@ def membics_from_prebuilt(obj):
     if type(mems) != list:
         logging.warning(logmsg + " mems is " + str(type(mems)))
     # logging.debug("membics_from_prebuilt: " + str(mems))
-    objidstr = obj["dsId"]
     for idx, membic in enumerate(mems):
         if type(membic) != dict:
             logging.warning(logmsg + " mems[" + str(idx) + "] type " +
@@ -273,7 +279,6 @@ def membics_from_prebuilt(obj):
         rh = rh.replace("$RID", membic["dsId"])
         rh = rh.replace("$RTYPE", membic["revtype"])
         rh = rh.replace("$RURL", membic["url"] or "")
-        details = membic["details"]
         rh = rh.replace("$RTIT", title_for_membic(membic))
         rh = rh.replace("$RAT", str(membic["rating"]) or "75")
         rh = rh.replace("$DESCR", membic["text"] or "")
@@ -346,13 +351,18 @@ def feed_link(fsrc, apptype):
     return html
 
 
-def feedlinks_for_object(obj):
+def feed_source_type_for_ob(obj):
     fsrc = None
     if obj:
         if obj["dsType"] == "Theme":
             fsrc = "theme"
         elif obj["dsType"] == "MUser":
             fsrc = "profile"
+    return fsrc
+
+
+def feedlinks_for_object(obj):
+    fsrc = feed_source_type_for_ob(obj)
     if not fsrc:
         return ""
     fsrc = "/feed/" + fsrc + "/" + str(obj["dsId"])
@@ -372,13 +382,39 @@ def write_start_page(obj, refer, reldocroot=""):
     html = html.replace("$REFER", refer)
     html = html.replace("$EMBED", embed_spec_objson(obj))
     html = html.replace("$VANID", obidstr_or_empty(obj))
-    html = html.replace("$INTERIMCONT", noscripthtml + content);
+    html = html.replace("$INTERIMCONT", noscripthtml + content)
     html = html.replace("$FEEDLINKS", feedlinks_for_object(obj))
     html = html.replace("$PREFETCHOBJSON", pfoj)
     return html
 
 
+def sitemap_url(loc, lastmod):
+    xml = "<url>\n"
+    xml += "  <loc>" + loc + "</loc>\n"
+    xml += "  <lastmod>" + lastmod + "</lastmod>\n"
+    xml += "</url>\n"
+    return xml
+
+
+def write_sitemap_xml():
+    docroot = util.site_home()
+    xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    xml += "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
+    xml += sitemap_url(docroot + "/docs/privacy.html", "2017-05-30")
+    xml += sitemap_url(docroot + "/docs/terms.html", "2017-05-20")
+    ods = json.loads(get_recent_themes_and_profiles())
+    for od in ods:
+        objpath = od["obtype"] + "/" + str(od["dsId"])
+        if od.get("hashtag"):
+            objpath = od["hashtag"]
+        xml += sitemap_url(docroot + "/" + objpath,
+                           od["lastwrite"][0:10])
+    xml += "</urlset>\n"
+    return xml
+
+
 # Aside from the default, the following urls are accepted:
+#   /sitemap.xml    Returns basic
 #   /profile/1234   Returns start page for MUser 1234
 #   /theme/1234     Returns start page for Theme 1234
 #   /connect        Returns the default start page
@@ -392,26 +428,26 @@ def start_html_for_path(path, refer):
         return write_start_page(None, refer)
     # dsIds are not unique across object types.  Hashtags are.  It should
     # be possible to have a numeric hashtag.
-    hashtag = util.first_group_match("(\w+)", path).lower()
+    hashtag = util.first_group_match(r"(\w+)", path).lower()
+    if hashtag == "sitemap":  # sitemap.xml (generous match ok)
+        return write_sitemap_xml()
     if hashtag == "connect":
         logging.info("start_html_for_path writing default connect page")
         return write_start_page(None, refer)
-    elif hashtag == "theme":
-        obid = util.first_group_match("theme/(\d+)", path)
+    if hashtag == "theme":
+        obid = util.first_group_match(r"theme/(\d+)", path)
         logging.info("start_html_for_path Theme " + obid)
         return write_start_page(dbacc.cfbk("Theme", "dsId", obid), refer, "../")
-    elif hashtag == "profile":
-        obid = util.first_group_match("profile/(\d+)", path)
+    if hashtag == "profile":
+        obid = util.first_group_match(r"profile/(\d+)", path)
         logging.info("start_html_for_path MUser " + obid)
         return write_start_page(dbacc.cfbk("MUser", "dsId", obid), refer, "../")
-    else:
-        inst = dbacc.cfbk("Theme", "hashtag", hashtag)
-        if not inst:
-            inst = dbacc.cfbk("MUser", "hashtag", hashtag)
-        if not inst:
-            return util.srverr("Unknown hashtag: " + hashtag, code="404")
-        return write_start_page(inst, refer)
-    return util.srverr("start_html_for_path fell through. path: " + path)
+    inst = dbacc.cfbk("Theme", "hashtag", hashtag)
+    if not inst:
+        inst = dbacc.cfbk("MUser", "hashtag", hashtag)
+    if not inst:
+        return util.srverr("Unknown hashtag: " + hashtag, code="404")
+    return write_start_page(inst, refer)
 
 
 ##################################################
@@ -421,7 +457,7 @@ def start_html_for_path(path, refer):
 ##################################################
 
 def recentactive():
-    content, pfoj = recent_active_content()
+    _, pfoj = recent_active_content()
     return util.respJSON("[" + pfoj + "]")
 
 

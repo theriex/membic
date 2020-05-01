@@ -97,15 +97,6 @@ def supphelp():
     ## Return an access url for the given email
     return util.secure(util.supphelp)
 
-# ## Tech support help for ?user=email
-# - url: .*/supphelp.*
-#   script: src.py.mailsum.app
-#   login: admin
-
-# ## Fetch the sitemap for indexing crawler reference
-# - url: .*/sitemap.xml
-#   script: src.py.sitemap.app
-
 # ## Send a general notice
 # - url: .*/sendnote.*
 #   script: src.py.mailsum.app
