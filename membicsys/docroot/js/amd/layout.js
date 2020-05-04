@@ -1,4 +1,4 @@
-/*global window, document, app, jt, d3, d3ckit */
+/*global window, document, app, jt */
 
 /*jslint browser, white, fudge, for, long */
 
