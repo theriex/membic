@@ -22,10 +22,6 @@ var jt = {};   //Global access to general utility methods
     //app.embedded is set in start.py
     app.winw = 0;  //adjusted in app.layout
     app.winh = 0;
-    //app.hardhome = "https://membicsys.appspot.com";
-    app.hardhome = "https://membic.org";
-    app.secsvr = "https://" + window.location.hostname;
-    app.mainsvr = "http://" + window.location.hostname;
     app.authcookname = "membicauth";
     app.suppemail = "membicsystem" + "@" + "gmail" + "." + "com";
     app.profdev = "epinova.com";
@@ -72,26 +68,6 @@ var jt = {};   //Global access to general utility methods
     };
 
 
-    app.redirectToSecureServer = function (params) {
-        var state = {};
-        if(history && history.state) {
-            state = history.state; }
-        var href = app.secsvr + "#returnto=" + jt.enc(app.mainsvr) + 
-            "&logout=true";
-        href = href.replace(/membic.com/ig, "membic.org");
-        if(state && state.view === "profile" && state.profid) {
-            href += "&reqprof=" + state.profid; }
-        href += "&" + jt.objdata(params);
-        jt.out("contentdiv", "Redirecting to secure server...");
-        window.location.href = href;
-    };
-
-
-    app.redirect = function (href) {
-        window.location.href = href;
-    };
-
-
     app.solopage = function () {
         return app.embedded;
     };
@@ -129,44 +105,27 @@ var jt = {};   //Global access to general utility methods
     };
 
 
-    app.secureURL = function (url) {
-        var secbase = app.hardhome;
-        if(url.indexOf(secbase) === 0 || url.search(/:\d080/) >= 0) {
-            return url; }
-        var idx = url.indexOf("/", 9);  //endpoint specified
-        if(idx >= 0) {
-            return secbase + url.slice(idx); }
-        idx = url.indexOf("?");  //query specified
-        if(idx >= 0) {
-            return secbase + url.slice(idx); }
-        idx = url.indexOf("#");  //hash specified
-        if(idx >= 0) {
-            return secbase + url.slice(idx); }
-        return secbase;  //nothing specified, return plain site
-    };
-
-
     app.init = function () {
-        var href = window.location.href;
-        //Earlier loaded modules may not have finished loading before
-        //later loaded modules.  No load-time interdependencies.
+        //Server setup should already have redirected http to https, but
+        //double check in case that setup fails.  No insecure pw forms.
+        var ox = window.location.href;
+        if((ox.toLowerCase().indexOf("https:") !== 0) &&
+           (ox.search(/:\d080/) < 0)) {  //local dev
+            window.location.href = "https:" + ox.slice(ox.indexOf("/"));
+            return; }  //stop and let the redirect happen.
+        app.docroot = ox.split("/").slice(0, 3).join("/") + "/";
+        jtminjsDecorateWithUtilities(jt);
+        if(app.solopage()) {  //hide framing content if embedded or standalone
+            jt.byId("topsectiondiv").style.display = "none";
+            jt.byId("bottomnav").style.display = "none";
+            jt.byId("topsectiondiv").style.display = "none"; }
+        //No load-time interdependencies between modules.
         var modules = [ "js/amd/login", "js/amd/connect", "js/amd/membic",
                         "js/amd/layout", "js/amd/refmgr", "js/amd/statemgr",
                         "js/amd/pcd", "js/amd/theme",
                         //"js/amd/ext/amazon", (not used right now)
                         "js/amd/ext/jsonapi",
                         "js/amd/ext/readurl" ];
-        var securl = app.secureURL(href);
-        if(securl !== href) {
-            window.location.href = securl;  //redirect
-            return; }  //don't fire anything else off
-        jtminjsDecorateWithUtilities(jt);
-        app.originalhref = href;
-        app.docroot = href.split("/").slice(0, 3).join("/") + "/";
-        if(app.solopage()) {
-            jt.byId("topsectiondiv").style.display = "none";
-            jt.byId("bottomnav").style.display = "none";
-            jt.byId("topsectiondiv").style.display = "none"; }
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };

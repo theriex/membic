@@ -813,7 +813,7 @@ def dblogmsg(op, entity, res):
         "Theme": ["name"],
         "AdminLog": ["letype", "leid", "adminname", "action", "targid"],
         "Membic": ["url", "penname", "penid", "ctmid"],
-        "Overflow": ["dbkind", "dbkeyid", "penid", "ctmid"],
+        "Overflow": ["dbkind", "dbkeyid"],
         "MailNotice": ["name"],
         "ActivitySummary": ["refp", "tstart", "tuntil"],
         "ConnectionService": ["name"]}

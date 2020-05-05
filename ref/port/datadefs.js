@@ -198,7 +198,7 @@ module.exports = (function () {
         {f:"dbkeyid", d:"req dbid", c:"id of source MUser or Theme"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
      cache:{minutes:0},  //not commonly referenced
-     logflds:["dbkind", "dbkeyid", "penid", "ctmid"]},
+     logflds:["dbkind", "dbkeyid"]},
         
     {entity:"MailNotice", descr:"Broadcast email tracking", fields:[
         {f:"name", d:"req unique string", c:"query access identifier"},
