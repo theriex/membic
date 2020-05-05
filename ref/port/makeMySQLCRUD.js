@@ -2,7 +2,7 @@
 
 var ddefs = require("./datadefs");
 var srcdir = "../../membicsys/py";
-var jsdir = "../../membicsys/docroot/js/amd";
+var jsdir = "../../membicsys/public/js/amd";
 var fs = require("fs");
 
 ////////////////////////////////////////
@@ -317,9 +317,9 @@ function helperFunctions () {
     pyc += "def get_mysql_connector():\n";
     pyc += "    cnx = None\n";
     pyc += "    try:\n";
-    pyc += "        cnx = mysql.connector.connect(user=\"root\", # password=\"\",\n";
-    pyc += "                                      host=\"127.0.0.1\",\n";
-    pyc += "                                      database=\"membic_database\")\n";
+    pyc += "        sr = {\"u\":\"root\", \"p\":None, \"h\":\"127.0.0.1\", \"d\":\"membic_database\"}\n";
+    pyc += "        cnx = mysql.connector.connect(user=sr[\"u\"], password=sr[\"p\"],\n";
+    pyc += "                                      host=sr[\"h\"], database=sr[\"d\"])\n";
     pyc += "    except Exception as e:\n";
     pyc += "        raise ValueError(\"Connection failed: \" + str(e))\n";
     pyc += "    return cnx\n";

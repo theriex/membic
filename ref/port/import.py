@@ -3,7 +3,8 @@ logging.basicConfig(level=logging.DEBUG)
 import os
 import json
 import base64
-# These imports require ln -s ../../membicsys/py py
+# For local dev, these imports require ln -s ../../membicsys/py py
+# For server, from dbsetup folder: ln -s ../py py
 import py.dbacc as dbacc
 import py.util as util
 
@@ -87,10 +88,11 @@ def import_Theme(datdir, jd):
         "rejects", "cliset", "keywords"])
     memcsvs = ["founders", "moderators", "members", "seeking", "rejects"]
     for fld in memcsvs:
-        upd[fld] = remap_idcsv(upd[fld])
-        userids = util.csv_to_list(upd[fld])
-        for userid in userids:
-            upd = util.verify_theme_muser_info(upd, userid)
+        if upd.get(fld):  # field defined in upd object and has value
+            upd[fld] = remap_idcsv(upd[fld])
+            userids = util.csv_to_list(upd[fld])
+            for userid in userids:
+                upd = util.verify_theme_muser_info(upd, userid)
 
 
 def copy_membic_fields(impd, jd, datdir):
@@ -283,6 +285,7 @@ def data_import(datdir, entities):
     show_postctms_orphans()
     logging.info(str(stats))
 
-
-data_import("/general/dev/membicport", ["MUser", "Theme", "Membic"])
+# impfiles_root = "/general/dev/membicport"
+impfiles_root = "/home/theriex/epinova.work/dbsetup"
+data_import(impfiles_root, ["MUser", "Theme", "Membic"])
 

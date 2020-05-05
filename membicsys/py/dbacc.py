@@ -323,9 +323,9 @@ def cfbk(entity, field, value, required=False):
 def get_mysql_connector():
     cnx = None
     try:
-        cnx = mysql.connector.connect(user="root", # password="",
-                                      host="127.0.0.1",
-                                      database="membic_database")
+        sr = {"u":"root", "p":None, "h":"127.0.0.1", "d":"membic_database"}
+        cnx = mysql.connector.connect(user=sr["u"], password=sr["p"],
+                                      host=sr["h"], database=sr["d"])
     except Exception as e:
         raise ValueError("Connection failed: " + str(e))
     return cnx
