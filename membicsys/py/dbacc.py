@@ -335,6 +335,7 @@ def get_mysql_connector():
 # If unique is true, then treat values of "null" or "None" as "".
 def trim_string_val(val, unique=False):
     val = val or ""
+    val = str(val)
     val = val.strip()
     if val and unique:
         lowval = val.lower()
@@ -398,6 +399,7 @@ def db2app_fieldval(entity, field, inst):
     if pt in ["email", "string"]:
         if not val:  # A null value gets set to the empty string
             val = ""
+        val = str(val)  # db interface might have autoconverted to int
     elif pt == "image":
         if not val:  # A null value gets set to the empty string
             val = ""

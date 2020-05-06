@@ -21,6 +21,8 @@ from PIL import Image   # Only need Image from Pillow
 import string
 import random
 import urllib.parse     # to be able to use urllib.parse.quote
+from email.mime.text import MIMEText
+from subprocess import Popen, PIPE  # smtplib does not work
 
 
 def respond(contentstr, mimetype="text/html"):
@@ -92,6 +94,7 @@ def val_in_csv(val, csv):
     if not csv:
         return False
     val = str(val)
+    csv = str(csv)
     if csv == val:
         return True
     if csv.startswith(val + ","):
@@ -103,7 +106,10 @@ def val_in_csv(val, csv):
 
 
 def csv_to_list(csv):
-    if not csv or not csv.strip():  # trim string val just in case
+    if not csv:
+        return []
+    csv = str(csv)
+    if not csv.strip():  # was all whitespace. treat as empty
         return []
     return csv.split(",")
 
@@ -361,7 +367,16 @@ def send_mail(emaddr, subj, body):
                      "\nsubj: " + subj +
                      "\nbody: " + body)
         return
-    raise ValueError("send_mail not connected to server mail")
+    # On server, so avoid logging anything containing auth info.
+    domain = flask.request.url.split("/")[2]
+    suppaddr = "@".join(["support", domain])
+    msg = MIMEText(body)
+    msg["Subject"] = subj
+    msg["From"] = suppaddr
+    msg["To"] = emaddr
+    smp = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE,
+                universal_newlines=True)
+    smp.communicate(msg.as_string())
 
 
 def make_auth_obj(muser, srvtok):

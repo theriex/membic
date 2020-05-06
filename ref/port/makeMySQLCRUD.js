@@ -329,6 +329,7 @@ function helperFunctions () {
     pyc += "# If unique is true, then treat values of \"null\" or \"None\" as \"\".\n";
     pyc += "def trim_string_val(val, unique=False):\n";
     pyc += "    val = val or \"\"\n";
+    pyc += "    val = str(val)\n";
     pyc += "    val = val.strip()\n";
     pyc += "    if val and unique:\n";
     pyc += "        lowval = val.lower()\n";
@@ -392,6 +393,7 @@ function helperFunctions () {
     pyc += "    if pt in [\"email\", \"string\"]:\n";
     pyc += "        if not val:  # A null value gets set to the empty string\n";
     pyc += "            val = \"\"\n";
+    pyc += "        val = str(val)  # db interface might have autoconverted to int\n";
     pyc += "    elif pt == \"image\":\n";
     pyc += "        if not val:  # A null value gets set to the empty string\n";
     pyc += "            val = \"\"\n";
