@@ -417,7 +417,7 @@ app.membic = (function () {
                     themes[ctmid].lastPost = "1234-12-12T00:00:00Z"; } });
             if(!havePosts) {
                 app.login.myProfile().preb.forEach(function (membic) {
-                    if(membic.svcdata.postctms) {
+                    if(membic.svcdata && membic.svcdata.postctms) {
                         membic.svcdata.postctms.forEach(function (pn) {
                             if(membic.created > themes[pn.ctmid].lastPost) {
                                 themes[pn.ctmid].lastPost = membic.created; }
@@ -1050,6 +1050,37 @@ app.membic = (function () {
     }
 
 
+    //A membic starts from the rurl field being filled out, then the url
+    //reader fills out the url field with a canonical value.  The rurl is
+    //not used for display, it is only for reference and reader processing.
+    //This function ensures a url field value that won't break the display.
+    function sanitizeMembicURLFields (membic) {
+        if(!membic.url && membic.rurl) {
+            return jt.log("Membic " + membic.dsId + " awaiting reader."); }
+        if(!membic.url) {
+            return jt.log("Membic " + membic.dsId + " has no url"); }
+        var xi = membic.url.search(/["<>]/g);
+        if(xi >= 0) {  //have bad chars in url
+            membic.details = membic.details || {};
+            var fixtn = ((membic.details.title === membic.url) ||
+                         (membic.details.name === membic.url));
+            var hi = membic.url.search(/http/i);
+            if(hi >= 0) {
+                if(hi < xi) {
+                    membic.url = membic.url.slice(hi, xi); }
+                else {
+                    membic.url = membic.url.slice(hi);
+                    xi = membic.url.search(/["<>]/g);
+                    if(xi >= 0) {
+                        membic.url = membic.url.slice(0, xi); } } }
+            else {  //no "http" in url, take the first clean part
+                membic.url = membic.url.slice(0, xi); }
+            if(fixtn) {
+                membic.details.title = membic.url;
+                membic.details.name = membic.url; } }
+    }
+
+
     ////////////////////////////////////////
     // published functions
     ////////////////////////////////////////
@@ -1179,6 +1210,7 @@ return {
 
 
     formHTML: function (cdx, membic) {
+        sanitizeMembicURLFields(membic);
         return jt.tac2html(
             //include membic data for debugging. 
             ["div", {cla:"mdouterdiv", "data-dsId":membic.dsId,
