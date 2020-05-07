@@ -118,6 +118,15 @@ app.membic = (function () {
     }
 
 
+    function editableWithPlaceholder (cdx, idbase, placetxt) {
+        return {cla:idbase, id:idbase + cdx, contenteditable:"true",
+                "data-placetext":placetxt,
+                oninput:jt.fs("app.membic.formInput(" + cdx + ")"),
+                onfocus:jt.fs("app.membic.placeholdercheck(event)"),
+                onblur:jt.fs("app.membic.placeholdercheck(event)")};
+    }
+
+
     //The profile membic dsId is used to indicate membic expansion.  The
     //membic display is expanded or condensed across the profile and all
     //themes to make it easier to track what you are focusing on.
@@ -848,10 +857,9 @@ app.membic = (function () {
     formElements = {
         title: {
             closed: function (ignore /*cdx*/, membic) {
-                if(!membic.details) {
+                if(!membic.details) {  //Shouldn't happen, log for debugging.
                     jt.log("formElements.title.closed no membic details: " +
-                           JSON.stringify(membic));
-                }
+                           JSON.stringify(membic)); }
                 var html = jt.tac2html(
                     ["a", {href:membic.url, title:membic.url,
                            onclick:jt.fs("window.open('" + membic.url + "')")},
@@ -861,9 +869,8 @@ app.membic = (function () {
                 if(!mayEdit(membic)) {
                     return formElements.title.closed(cdx, membic); }
                 return jt.tac2html(
-                    ["span", {id:"mftitlespan" + cdx, contenteditable:"true",
-                              oninput:jt.fs("app.membic.formInput(" + cdx +
-                                            ")")},
+                    ["span", editableWithPlaceholder(cdx, "mftitlespan",
+                                                     "Title for Membic"),
                      (membic.details.title || membic.details.name)]); },
             changed: function (cdx, membic) {
                 var mt = (membic.details.title || membic.details.name);
@@ -983,11 +990,11 @@ app.membic = (function () {
             expanded: function (cdx, membic) {
                 if(!mayEdit(membic)) {
                     return formElements.text.closed(cdx, membic); }
+                var placetext = "Why was this memorable?";
                 return jt.tac2html(
-                    ["div", {cla:"mdtxtdiv", contenteditable:"true",
-                             id:"mdtxtdiv" + cdx,
-                             oninput:jt.fs("app.membic.formInput(" + cdx +
-                                           ")")}, membic.text]); },
+                    ["div", editableWithPlaceholder(cdx, "mdtxtdiv",
+                                                    placetext),
+                     (membic.text || placetext)]); },
             changed: function (cdx, membic) {
                 var mt = membic.text.trim();
                 var dt = jt.byId("mdtxtdiv" + cdx).innerHTML.trim();
@@ -1255,6 +1262,13 @@ return {
             jt.out("mfdlgbs" + cdx, formElements.dlgbs[disp](cdx, membic)); }});
     },
 
+    placeholdercheck: function (event) {
+        if(event.type === "blur" && !event.target.innerText) {
+            event.target.innerText = event.target.dataset.placetext; }
+        else if(event.type === "focus" &&
+                event.target.innerText === event.target.dataset.placetext) {
+            event.target.innerHTML = ""; }
+    },
 
     ratingEventDispatch: function (event) { ratmgr.handleEvent(event); },
     typesel: function (c, t, e) { typemgr.typesel(c, t, e); },
