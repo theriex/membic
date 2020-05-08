@@ -10,6 +10,7 @@ app.membic = (function () {
     var expandedMembics = {};  //currently expanded membics (by src membic id)
     var formElements = null;  //forward declare to avoid circular func refs
     var rto = null;  //input reaction timeout
+    var apto = null;  //automated processing timeout
 
     // Membic Type Definition guidelines:
     // 1. Too many fields makes entry tedious.  The goal is adequate
@@ -186,6 +187,31 @@ app.membic = (function () {
     }
 
 
+    //Membics may have been added through direct server side mechanisms like
+    //mail-in processing.  These membics will not have made it through the
+    //client-side interactive reader processing and are incomplete.  Return
+    //true if the membic needs a reader pass, false otherwise.
+    function membicDetailsUnread (membic) {
+        if(membic.dsId && !membic.rurl && membic.url) {
+            if(!membic.details) {
+                return true; }  //no info filled in at all
+            if(membic.details.artist ||
+               membic.details.author ||
+               membic.details.publisher ||
+               membic.details.album ||
+               membic.details.starring ||
+               membic.details.address ||
+               membic.details.year) {
+                return false; }  //some details filled out, assume read.
+            //If the title is set to the url, that's just a placeholder.
+            //The url may have been sanitized so look for it as a substring.
+            var wt = membic.details.title || membic.details.name || "";
+            if(!wt || wt.indexOf(membic.url) >= 0) {
+                return true; } }  //no title set, need details
+        return false;
+    }
+
+
     function mergeURLReadInfoIntoSavedMembic (membic) {
         if(savind) {  //currently saving, wait and retry
             return app.fork({descr:"Merge Details " + membic.rurl,
@@ -232,7 +258,7 @@ app.membic = (function () {
         reader.result = "partial";
         reader.log = reader.log || [];  //could be a log from a previous read
         reader.log.push({start:new Date().toISOString()});
-        app.fork({descr:"app." + readername + ": " + addmem.rurl, ms:100,
+        app.fork({descr:"app." + readername + ": " + membic.rurl, ms:100,
                   func:function () {
                       app[readername].getInfo(membic, membic.rurl); }});
     }
@@ -263,24 +289,18 @@ app.membic = (function () {
     }
 
 
+    //The membic image used to be driven by membic.svcdata.picdisp value:
+    //  - "upldpic": Use the uploaded image for the membic.  No longer
+    //    supported but kept for backward compatibility with older data.
+    //  - "sitepic": Use the site pic (if imguri available)
+    //  - "nopic": Don't display a pic even if there is one.  No longer
+    //    supported since it just looks like the reader failed.
     function membicImgSrc (membic) {
-        //upldpic is not supported anymore except for compatibility
-        membic.svcdata = membic.svcdata || {};
-        if(!membic.svcdata.picdisp) {
-            if(membic.imguri) {
-                membic.svcdata.picdisp = "sitepic"; }
-            else if(membic.revpic) {
-                membic.svcdata.picdisp = "upldpic"; }
-            else {
-                membic.svcdata.picdisp = "nopic"; } }
         var imgsrc = app.dr("img/blank.png");
-        switch(membic.svcdata.picdisp) {
-        case "sitepic":
-            imgsrc = "/api/imagerelay?membicid=" + membic.dsId;
-            break;
-        case "upldpic":
-            imgsrc = "/api/obimg?dt=Membic&di=" + membic.dsId;
-            break; }
+        if(membic.svcdata && membic.svcdata.picdisp === "upldpic") {
+            imgsrc = "/api/obimg?dt=Membic&di=" + membic.dsId; }
+        else if(membic.imguri) {
+            imgsrc = "/api/imagerelay?membicid=" + membic.dsId; }
         return imgsrc;
     }
 
@@ -955,6 +975,9 @@ app.membic = (function () {
                     return [mkb("Cancel",
                                 jt.fs("app.membic.toggleMembic(" + cdx + ")")),
                             mkb("Save", dispatchFStr(cdx, "dlgbs.save"))]; }
+                if(membicDetailsUnread(membic)) {
+                    return [mkb("Read Details",
+                                dispatchFStr(cdx, "dlgbs.read"))]; }
                 return [mkb("Done Editing", 
                             jt.fs("app.membic.toggleMembic(" + cdx + ")"))]; },
             makeActionButton: function (name, fstr, disabled) {
@@ -963,8 +986,13 @@ app.membic = (function () {
                     bas.disabled = true;
                     bas.cla = "membicformbuttondisabled"; }
                 return jt.tac2html(["button", bas, name]); },
+            mrkdel: function (cdx) { markMembicDeleted(cdx); },
             save: function (cdx) { updateMembic(cdx); },
-            mrkdel: function (cdx) { markMembicDeleted(cdx); } },
+            read: function (cdx) {
+                jt.out("dlgbsbdiv" + cdx, "Reading...");
+                var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+                membic.rurl = membic.rurl || membic.url;
+                startReader(membic); } },
         picture: {
             closed: function (ignore /*cdx*/, membic) {
                 return jt.tac2html(
@@ -1085,6 +1113,25 @@ app.membic = (function () {
             if(fixtn) {
                 membic.details.title = membic.url;
                 membic.details.name = membic.url; } }
+    }
+
+
+    //app.pcd does not have a display iteration completion hook, since that
+    //would require differentiating between "more", no results, or max items
+    //termination conditions.  So if further processing is needed, schedule
+    //it.  readerFinish -> merge and saveMembic -> redisplay -> here.  Track
+    //the scheduling timeout to avoid multiple simultaneous reads.
+    function scheduleFollowupProcessing (cdx, membic) {
+        if(cdx === 0) { //start of display pass through membics
+            if(apto) {  //clear any previously scheduled automation
+                clearTimeout(apto); }
+            apto = null; }
+        if(!apto && mayEdit(membic) && membicDetailsUnread(membic)) {
+            var des = "Follup read Membic " + membic.dsId;
+            apto = app.fork({descr:des, ms:800, func:function () {
+                //update the membic to ready for read, and to prevent looping
+                membic.rurl = membic.rurl || membic.url;
+                startReader(membic); }}); }
     }
 
 
@@ -1218,6 +1265,7 @@ return {
 
     formHTML: function (cdx, membic) {
         sanitizeMembicURLFields(membic);
+        scheduleFollowupProcessing(cdx, membic);
         return jt.tac2html(
             //include membic data for debugging. 
             ["div", {cla:"mdouterdiv", "data-dsId":membic.dsId,

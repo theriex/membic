@@ -310,10 +310,7 @@ def verify_theme_muser_info(theme, userid, lev=-1):
     theme = dbacc.write_entity(theme, vck=theme["modified"])
     return theme
 
-
-# hex values for a 4x4 transparent PNG created with GIMP:
-blank4x4imgstr = "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e\x7e\x00\x00\x00\x06\x62\x4b\x47\x44\x00\xff\x00\xff\x00\xff\xa0\xbd\xa7\x93\x00\x00\x00\x09\x70\x48\x59\x73\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07\x74\x49\x4d\x45\x07\xdd\x0c\x02\x11\x32\x1f\x70\x11\x10\x18\x00\x00\x00\x0c\x69\x54\x58\x74\x43\x6f\x6d\x6d\x65\x6e\x74\x00\x00\x00\x00\x00\xbc\xae\xb2\x99\x00\x00\x00\x0c\x49\x44\x41\x54\x08\xd7\x63\x60\xa0\x1c\x00\x00\x00\x44\x00\x01\x06\xc0\x57\xa2\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"
-
+B64ENCTRANSPARENT4X4PNG = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x04\x00\x00\x00\x04\x08\x06\x00\x00\x00\xa9\xf1\x9e~\x00\x00\x00\x0cIDATx\x9cc`\xa0\x1c\x00\x00\x00D\x00\x01\xd7\xe3H\xfd\x00\x00\x00\x00IEND\xaeB`\x82'
 
 # Fetch the image, convert to a thumbnail png, write base64 encoded value to
 # icdata, write timestamp to icwhen.  If the request fails, this writes a
@@ -502,7 +499,7 @@ def supphelp():
 def obimg():
     # The client might make a call to get a pic for a profile which might
     # not have one.  Better to return a blank than an error in that case.
-    imgdat = blank4x4imgstr
+    imgdat = B64ENCTRANSPARENT4X4PNG
     try:
         dsType = dbacc.reqarg("dt", "string", required=True)
         dsId = dbacc.reqarg("di", "string", required=True)
@@ -534,28 +531,31 @@ def fetchobj():
     return respJSON("[" + oj + "]")
 
 
+# If a previous attempt to relay the image failed, then do not automatically
+# repeat the attempted relay.  A development server not connected to the
+# internet will end up with broken images, but for the live site a failure
+# is typically due to server refusal, or a reference to a resource that is
+# no longer available.  Asking for it again without looking into the
+# situation further is not reasonable.
 def imagerelay():
-    imgdat = blank4x4imgstr
+    imgdat = B64ENCTRANSPARENT4X4PNG
     try:
         mid = dbacc.reqarg("membicid", "dbid", required=True)
         inst = dbacc.cfbk("Membic", "dsId", mid)
-        pre = "Membic " + str(mid) + " "
+        pre = "Membic " + str(mid)
         if not inst:
-            raise ValueError(pre + "not found")
-        if inst["svcdata"]:
-            svcdata = json.loads(inst["svcdata"])
-            if "picdisp" in svcdata:
-                if svcdata["picdisp"] != "sitepic":
-                    raise ValueError(pre + "picdisp not sitepic: " +
-                                     svcdata["picdisp"])
-        imguri = inst["imguri"]
+            logging.info("imagerelay " + pre + " not found")
+            raise ValueError(pre + " not found.")
+        imguri = inst.get("imguri")
+        if not imguri:
+            logging.info("imagerelay " + pre + " no imguri")
+            raise ValueError(pre + " no imguri to relay.")
         if not inst["icdata"] and not ("_failed_" in inst["icwhen"] or
                                        "_unavailable_" in inst["icwhen"]):
             fetch_image_data(inst, imguri)
-            if not inst["icdata"]:
-                raise ValueError(pre + "unable to relay data")
-        imgdat = inst["icdata"]
-        imgdat = base64.b64decode(imgdat)
+        if inst["icdata"]:
+            imgdat = inst["icdata"]
+            imgdat = base64.b64decode(imgdat)
     except ValueError as e:
         return serve_value_error(e)
     resp = flask.make_response(imgdat)
