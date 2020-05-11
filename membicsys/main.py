@@ -18,6 +18,10 @@ app = flask.Flask(__name__)
 def appversion():
     return "2.3"
 
+@app.route('/api/devserver')
+def devserver():
+    return str(util.is_development_server(verbose=True))
+
 @app.route('/api/mailpwr', methods=['GET', 'POST'])
 def mailpwr():  # params: emailin
     return util.secure(util.mailpwr)

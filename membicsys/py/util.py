@@ -23,6 +23,7 @@ import random
 import urllib.parse     # to be able to use urllib.parse.quote
 from email.mime.text import MIMEText
 from subprocess import Popen, PIPE  # smtplib does not work
+import os
 
 
 def respond(contentstr, mimetype="text/html"):
@@ -67,10 +68,20 @@ def site_home():
     return "/".join(elements)
 
 
-def is_development_server():
-    url = flask.request.url
-    if re.search(r"\:\d{4}", url):
+def is_development_server(verbose=False):
+    if flask.has_request_context():
+        if re.search(r"\:\d{4}", flask.request.url):
+            if verbose:
+                logging.info("is_development_server: True (flask.request.url " +
+                             "has a 4 digit port number)")
+            return True
+    elif os.environ["HOME"] != "/home/theriex":
+        if verbose:
+            logging.info("is_development_server: True (\"HOME\" env var \"" +
+                         os.environ["HOME"] + "\" != \"/home/theriex\")")
         return True
+    if verbose:
+        logging.info("is_development_server: False")
     return False
 
 
@@ -358,15 +369,18 @@ def fetch_image_data(inst, imgsrc):
     dbacc.write_entity(inst, inst["modified"])
 
 
-def send_mail(emaddr, subj, body):
+# If the caller is outside of the context of a web request, then the domain
+# must be passed in.  The support address must be set up in the hosting env.
+def send_mail(emaddr, subj, body, domain=None):
+    domain = domain or flask.request.url.split("/")[2]
+    suppaddr = "@".join(["support", domain])
+    emaddr = emaddr or suppaddr
     if is_development_server():
         logging.info("send_mail ignored dev server send to " + emaddr +
                      "\nsubj: " + subj +
                      "\nbody: " + body)
         return
     # On server, so avoid logging anything containing auth info.
-    domain = flask.request.url.split("/")[2]
-    suppaddr = "@".join(["support", domain])
     msg = MIMEText(body)
     msg["Subject"] = subj
     msg["From"] = suppaddr
