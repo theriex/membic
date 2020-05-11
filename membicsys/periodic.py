@@ -13,7 +13,8 @@ import json
 
 
 def nd_as_string(nd):
-    txt = "membics:\n"
+    txt = "notifications_data " + nd["start"] + " to " + nd["end"] + "\n"
+    txt += "membics:\n"
     for key, membic in nd["membics"].items():
         txt += "    " + membic["dsId"] + ": " + membic["url"] + "\n"
     txt += "sources:\n"
@@ -85,7 +86,7 @@ def find_users_to_notify(nd):
 
 # Return a dict with new membics and the users to be emailed.
 def fetch_notifications_data(sts, ets):
-    nd = {"membics":{}, "sources":{}, "musers":{}}
+    nd = {"start":sts, "end":ets, "membics":{}, "sources":{}, "musers":{}}
     where = "WHERE created > \"" + sts + "\" AND created <= \"" + ets + "\""
     where += " AND ctmid = 0 ORDER BY created DESC"
     for membic in dbacc.query_entity("Membic", where):
