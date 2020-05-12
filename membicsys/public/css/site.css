@@ -260,6 +260,8 @@ dialog look ok, but breaks the Email input in the invite dialog. */
   background-image:url('../img/e6e7e9p80.png'); }
 .mdinnerdiv { min-height:100px; }
 .mftitle { display:inline; }
+.mfshare { text-align:center; }
+.mfshare .resp-sharing-button { padding:0.2em 0.4em; margin-right:1.2em; }
 .mdheaderline { text-align:center; }
 .mfrevtype { float:left; }
 .revtseldiv a { padding:0px 5px 0px 0px; }
