@@ -463,7 +463,7 @@ app.pcd = (function () {
                            onclick:jt.fs("app.theme.createTheme('" + divid +
                                          "')")},
                 "Create&nbsp;Theme"],
-               ["button", {title:"Sign Out And Clear Cookie",
+               ["button", {title:"Sign Out And Clear Personal Info",
                            onclick:jt.fs("app.login.logout()")},
                 "Sign Out"]]],
              ["div", {id:"cpidiv"},

@@ -6,7 +6,6 @@ app.login = (function () {
     "use strict";
 
     var initialTopActionHTML = "";
-    var cookdelim = "..membicauth..";
     var authobj = null;  //email, token, authId, status, altinmail, signInTS
 
 
@@ -41,35 +40,55 @@ app.login = (function () {
     }
 
 
-    function readAuthentCookie () {
-        var ret = null;
-        var cval = jt.cookie(app.authcookname);
-        if(cval && cval.indexOf(cookdelim) < 0) {  //invalid delimiter
-            jt.log("readAuthentCookie bad cookdelim, nuked cookie.");
-            jt.cookie(app.authcookname, "", -1);
-            cval = ""; }
-        if(cval) {
-            var mtn = cval.split(cookdelim);
-            mtn[0] = mtn[0].replace("%40", "@");
-            if(mtn[0].indexOf("@") < 0 || mtn[1].length < 20) {
-                //might have been "undefined" or other bad value
-                jt.log("readAuthentCookie bad name/token, nuked cookie.");
-                jt.cookie(app.authcookname, "", -1);
-                cval = ""; }
-            else {
-                ret = {authname:mtn[0], authtoken:mtn[1]}; } }
-        return ret;
-    }
-
-
-    function setAuthentCookie (remove) {
-        if(remove) {
-            jt.cookie(app.authcookname, "", -1); }
-        else {
-            var cval = authobj.email + cookdelim + authobj.token;
-            jt.cookie(app.authcookname, cval, 365); }
-    }
-
+    //Not using window.localStorage because it is insecure.  Both a
+    //SameSite=Strict cookie and localStorage may fail on localhost:8080.
+    var authPersist = {
+        delim: "..membicauth..",
+        sname: "membicauth",
+        save: function () {
+            try {
+                jt.cookie(authPersist.sname,
+                          authobj.email + authPersist.delim + authobj.token,
+                          //The cookie is rewritten each login.  Good to
+                          //expire if inactive as the security and storage
+                          //options continue to evolve.
+                          30);
+                jt.log("authPersist.save success");
+            } catch (e) {
+                jt.log("authPersist.save exception: " + e); } },
+        read: function () {
+            var ret = null;
+            try {
+                ret = jt.cookie(authPersist.sname);  //ret null if not found
+                if(ret) {
+                    if(ret.indexOf(authPersist.delim) < 0) {
+                        jt.log("authPersist.read clearing " + ret + ": " +
+                               authPersist.delim + " delimiter not found.");
+                        authPersist.clear();
+                        ret = null; }
+                    else {
+                        ret = ret.split(authPersist.delim);
+                        ret[0] = ret[0].replace("%40", "@");
+                        if(!jt.isProbablyEmail(ret[0]) || ret[1].length < 20) {
+                            jt.log("authPersist.read clearing bad values: " +
+                                   ret[0] + ", " + ret[1]);
+                            authPersist.clear();
+                            ret = null; }
+                        else {
+                            jt.log("authPersist.read success");
+                            ret = {authname:ret[0], authtoken:ret[1]}; } } }
+            } catch (e) {
+                jt.log("authPersist.read exception: " + e);
+                ret = null;
+            }
+            return ret; },
+        clear: function () {
+            try {
+                jt.cookie(authPersist.sname, "", -1);
+            } catch (e) {
+                jt.log("authPersist.clear exception: " + e); } }
+    };
+        
 
     function displayEmailSent () {
         var html;
@@ -101,9 +120,7 @@ app.login = (function () {
 
 
     //This works in conjunction with the static undecorated form created by
-    //start.py, decorating to provide login without page reload.  Submission
-    //via the server is inneficient, but if necessary can be handled server
-    //side by setting a cookie.
+    //start.py, decorating to provide login without page reload.
     function initLoginForm (restore) {
         if(initialTopActionHTML && !restore) {
             return; }  //login form was already set up, nothing to do.
@@ -123,7 +140,7 @@ app.login = (function () {
 
     function successfulSignIn (resultarray) {
         authobj = resultarray[0];
-        setAuthentCookie();
+        authPersist.save();
         jt.out("topmessagelinediv", "");
         jt.out("topactiondiv", jt.tac2html(
             [["div", {id:"topnavdiv"}],
@@ -144,8 +161,8 @@ return {
         //checking that again here.  Save the initial login form so it
         //can be restored on logout as needed.
         initLoginForm();
-        //Always make the call to sign in.  If bad cookie or other issues
-        //then deal with that immediately.
+        //Always make the call to sign in.  If the authentication did not
+        //persist or there are other issues, deal with that immediately.
         app.login.signIn();
     },
 
@@ -158,7 +175,7 @@ return {
 
     signIn: function () {
         jt.out("topmessagelinediv", "");  //clear any previous login error
-        var sav = readAuthentCookie() || {};
+        var sav = authPersist.read() || {};
         var ps = {an:app.startParams.an || sav.authname || "",
                   at:app.startParams.at || sav.authtoken || "",
                   emailin:jt.safeget("emailin", "value") || "",
@@ -243,7 +260,7 @@ return {
     authenticated: function () { return authobj; },
     setAuthentication: function (obj) { 
         authobj = obj;
-        setAuthentCookie();
+        authPersist.save();
     },
     authURL: function (apiurl) {
         return app.dr(apiurl) + "?an=" + authobj.email + "&at=" + authobj.token;
@@ -340,7 +357,7 @@ return {
 
 
     logout: function () {
-        jt.cookie(app.authcookname, "", -1);
+        authPersist.clear();
         authobj = null;  //clears all personal info, cache is public only
         initLoginForm(true);
         app.statemgr.redispatch();
@@ -389,4 +406,3 @@ return {
 
 };  //end of returned functions
 }());
-
