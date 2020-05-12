@@ -409,6 +409,7 @@ def write_theme_membics(themeplan, newmbc):
 def update_preb(obj, membic, verb):
     pm = util.make_preb_membic(membic)
     pbms = json.loads(obj.get("preb", "[]"))
+    pbm = None
     idx = 0
     while idx < len(pbms):
         pbm = pbms[idx]
