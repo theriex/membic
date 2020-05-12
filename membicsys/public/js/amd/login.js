@@ -267,7 +267,7 @@ return {
             muser = app.refmgr.cached("MUser", muser); }
         //Not having a user for a given id may simply mean they're not
         //cached.  Better to take a chance they have a pic uploaded.
-        if(userid) {
+        if(!muser && userid) {
             return "/api/obimg?dt=MUser&di=" + userid + jt.ts("&cb=", "hour"); }
         return app.pcd.picImgSrc(muser);
     },
