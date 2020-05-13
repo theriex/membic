@@ -841,8 +841,9 @@ app.membic = (function () {
                 kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
                     var kwid = "m" + cdx + "g" + idx + "c" + csvidx;
                     var kwi = jt.byId(kwid);
-                    if(!kwi) {  //UI not set up, return original keywords
-                        skws = membic.keywords; }
+                    if(!kwi) {  //UI for one or more kwrds not ready yet.
+                        //use what we already found, or had originally.
+                        skws = skws || membic.keywords; }
                     else if(kwi.checked) {
                         skws = skws.csvappend(kwd); } }); });
             var agi = kwgs.length - 1;  //additional keywords group index
