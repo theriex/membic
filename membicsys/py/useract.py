@@ -304,8 +304,7 @@ def read_membic_data(muser):
 
 
 # Walk the old and new svcdata postctms to determine which themes should be
-# affected and how.  If adding a new membic, and the themecontext parameter
-# is specified, it is treated as an implicit add.
+# affected and how.
 def make_theme_plan(newmbc, oldmbc):
     plan = {}
     if oldmbc and oldmbc["svcdata"]:
@@ -326,12 +325,7 @@ def make_theme_plan(newmbc, oldmbc):
             plan[ctmid] = "edit"
         else:
             plan[ctmid] = "add"
-    ctxid = 0
-    if not oldmbc:  # adding a new membic
-        ctxid = dbacc.reqarg("themecontext", "dbid")
-        if ctxid:
-            plan[str(ctxid)] = "add"
-    return plan, ctxid
+    return plan
 
 
 # The source membic will already have been written to the db.  There may or
@@ -440,6 +434,31 @@ def update_preb(obj, membic, verb):
                                          "pbms": pbms}, membic)
     obj["preb"] = json.dumps(pbms)
     return dbacc.write_entity(obj, vck=obj["modified"])
+
+
+def update_membic_and_preb(muser, newmbc, oldmbc=None):
+    themeplan = make_theme_plan(newmbc, oldmbc)
+    # logpre = "membicsave dsId: " + str(newmbc["dsId"]) + " "
+    # logging.info(logpre + "themeplan " + json.dumps(themeplan))
+    vck = None
+    if oldmbc:
+        vck = oldmbc["modified"]
+    newmbc = dbacc.write_entity(newmbc, vck)  # write main membic
+    # Updating the theme membics triggers a second membic update to
+    # record the themes it was posted to.  The themeId/themeMembic map
+    # is returned as memos for preb update reference.
+    newmbc, memos = write_theme_membics(themeplan, newmbc)
+    # logging.info(logpre + "membics written, updating preb")
+    userprebv = "add"
+    if oldmbc:
+        userprebv = "edit"
+    prof = update_preb(muser, newmbc, userprebv)
+    dbacc.entcache.cache_put(prof)  # update cached reference
+    res = util.safe_JSON(prof)
+    for themeid, action in themeplan.items():
+        memo = memos[themeid]
+        update_preb(memo["theme"], memo["membic"], action)
+    return res
 
 
 ##################################################
@@ -579,15 +598,11 @@ def uploadimg():
     return util.respond("Done: " + updobj["modified"], mimetype="text/plain")
 
 
-# This endpoint returns the authorized MUser with their updated preb.  If
-# the "themecontext" parameter is passed in, the Theme matching that dsId is
-# also returned.  It is up to the caller to refetch any other themes that
-# may have been affected.  It's not performant to send back more than two
-# objects given the size of the preb data.
-#
-# The Themes to be posted to (if any) are read from svcdata.postctms, which
-# is then completely rebuilt to ensure it accurately reflects the state of
-# the db after the updates have been written.
+# This endpoint returns the authorized MUser with their updated preb.  It is
+# up to the caller to refetch any outdated themes.  The Themes to be posted
+# to (if any) are read from svcdata.postctms, which is then completely
+# rebuilt to ensure it accurately reflects the state of the db after the
+# updates have been written.
 #
 # To minimize risk to data integrity, the algo first updates the Membic
 # data, then updates the affected MUser/Theme/Overflow preb data.  In the
@@ -597,30 +612,7 @@ def membicsave():
     try:
         muser, _ = util.authenticate()
         newmbc, oldmbc = read_membic_data(muser)
-        themeplan, ctxid = make_theme_plan(newmbc, oldmbc)
-        # logpre = "membicsave dsId: " + str(newmbc["dsId"]) + " "
-        # logging.info(logpre + "themeplan " + json.dumps(themeplan) +
-        #              ", ctxid: " + str(ctxid))
-        vck = None
-        if oldmbc:
-            vck = oldmbc["modified"]
-        newmbc = dbacc.write_entity(newmbc, vck)  # write main membic
-        # Updating the theme membics triggers a second membic update to
-        # record the themes it was posted to.  The themeId/themeMembic map
-        # is returned as memos for preb update reference.
-        newmbc, memos = write_theme_membics(themeplan, newmbc)
-        # logging.info(logpre + "membics written, updating preb")
-        userprebv = "add"
-        if oldmbc:
-            userprebv = "edit"
-        prof = update_preb(muser, newmbc, userprebv)
-        dbacc.entcache.cache_put(prof)  # update cached reference
-        res = util.safe_JSON(prof)
-        for themeid, action in themeplan.items():
-            memo = memos[themeid]
-            theme = update_preb(memo["theme"], memo["membic"], action)
-            if ctxid and themeid == str(ctxid):
-                res += "," + util.safe_JSON(theme)
+        res = update_membic_and_preb(muser, newmbc, oldmbc)
     except ValueError as e:
         return util.srverr(str(e))
     return "[" + res + "]"

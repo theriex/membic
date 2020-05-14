@@ -55,7 +55,7 @@ def newacct(): #params: emailin, passin
     return util.secure(util.newacct)
 
 @app.route('/api/membicsave', methods=['GET', 'POST'])
-def membicsave(): #params an, at, Membic(, themecontext)
+def membicsave(): #params an, at, Membic
     return useract.membicsave()
 
 @app.route('/api/accupd', methods=['GET', 'POST'])

@@ -371,10 +371,10 @@ def fetch_image_data(inst, imgsrc):
 
 # If the caller is outside of the context of a web request, then the domain
 # must be passed in.  The support address must be set up in the hosting env.
-def send_mail(emaddr, subj, body, domain=None):
+def send_mail(emaddr, subj, body, domain=None, sender="support"):
     domain = domain or flask.request.url.split("/")[2]
-    suppaddr = "@".join(["support", domain])
-    emaddr = emaddr or suppaddr
+    fromaddr = "@".join([sender, domain])
+    emaddr = emaddr or fromaddr
     if is_development_server():
         logging.info("send_mail ignored dev server send to " + emaddr +
                      "\nsubj: " + subj +
@@ -383,7 +383,7 @@ def send_mail(emaddr, subj, body, domain=None):
     # On server, so avoid logging anything containing auth info.
     msg = MIMEText(body)
     msg["Subject"] = subj
-    msg["From"] = suppaddr
+    msg["From"] = fromaddr
     msg["To"] = emaddr
     smp = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE,
                 universal_newlines=True)
