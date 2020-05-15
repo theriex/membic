@@ -400,8 +400,9 @@ def make_auth_obj(muser, srvtok):
     return authobj
 
 
-def my_login_url(muser):
-    return (site_home() + "/profile/" + muser["dsId"] +
+def my_login_url(muser, home=None):
+    home = home or site_home()
+    return (home + "/profile/" + muser["dsId"] +
             "?an=" + muser["email"] +
             "&at=" + token_for_user(muser))
 

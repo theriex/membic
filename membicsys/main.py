@@ -106,20 +106,11 @@ def supphelp():
 #   script: src.py.mailsum.app
 #   login: admin
 
-# ## Inbound email handler
-# - url: /_ah/mail/.+
-#   script: src.py.mailsum.app
-#   login: admin
-
 # ## Email bounce handler
 # - url: /_ah/bounce
 #   script: src.py.mailsum.app
 #   login: admin
 
-# ## Nightly periodic processing, reminders and such.
-# - url: .*/periodic.*
-#   script: src.py.mailsum.app
-#   login: admin
 
 
 # Hook for calling the app directly using python on the command line, which

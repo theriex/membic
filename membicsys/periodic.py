@@ -16,7 +16,8 @@ def nd_as_string(nd):
     txt = "notifications_data " + nd["start"] + " to " + nd["end"] + "\n"
     txt += "membics:\n"
     for key, membic in nd["membics"].items():
-        txt += "    " + membic["dsId"] + ": " + membic["url"] + "\n"
+        url = membic["url"] or membic["rurl"]
+        txt += "    " + membic["dsId"] + ": " + url + "\n"
     txt += "sources:\n"
     for key, src in nd["sources"].items():
         txt += "    " + key + ": " + str(src["membics"].keys()) + "\n"

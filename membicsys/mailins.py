@@ -22,31 +22,34 @@ MAILINADDR, MAILINPASS = "e@b.org", "foo"
 
 # The processing here needs to use the same core processing as membicsave.
 def make_mail_in_membic(msg):
-    restxt = ""
+    mimres = {}
     muser = dbacc.cfbk("MUser", "email", msg["emaddr"])
     if not muser:
         muser = dbacc.cfbk("MUser", "altinmail", msg["emaddr"])
         if not muser:
             raise ValueError("Email address " + msg["emaddr"] + " not found.")
+    mimres["muser"] = muser
     msg["userid"] = muser["dsId"]
     membic = {"dsType":"Membic", "ctmid":"", "penid":muser["dsId"],
               "penname":muser["name"], "url":msg["url"], "revtype":"article",
               "text":msg["whymem"], "details":json.dumps({"title":msg["url"]})}
+    mimres["tags"] = {}
     postctms = []
     for themetag in msg["themetags"]:
         if themetag.startswith("#"):
             themetag = themetag[1:]
         theme = dbacc.cfbk("Theme", "hashtag", themetag)
         if theme:
-            restxt += "Posted to " + theme["name"] + " (#" + themetag + ")\n"
-            postctms.append({"ctmid": theme["dsId"], "name": theme["name"],
-                             "revid": ""})
+            pn = {"ctmid": theme["dsId"], "name": theme["name"], "revid": ""}
+            mimres["tags"]["themetag"] = pn
+            postctms.append(pn)
         else:
-            restxt += "No Theme found for #" + themetag + ". Ignored.\n"
+            mimres["tags"]["themetag"] = None
     membic["svcdata"] = json.dumps({"postctms": postctms})
     membic["cankey"] = useract.cankey_for_membic(membic)
-    useract.update_membic_and_preb(muser, membic)
-    return restxt
+    spf = useract.update_membic_and_preb(muser, membic)
+    mimres["prebmembic"] = json.loads(json.loads(spf)["preb"])[0]
+    return mimres
 
 
 def ellipsis(text, maxlen=60):
@@ -55,13 +58,24 @@ def ellipsis(text, maxlen=60):
     return text
 
 
-def confirm_receipt(restxt, msg):
-    logging.info("confirm_receipt " + restxt + " msg: " + str(msg))
+def confirm_receipt(msg, mimres):
+    logging.info("confirm_receipt Membic " + mimres["prebmembic"]["dsId"] +
+                 " msg: " + str(msg))
     # send confirmation response letting them know it posted
-    subj = "Membic added " + ellipsis(msg["url"])
-    body = "Membic added: " + msg["url"] + "\n"
-    body += msg["whymem"] + "\n"
-    body += restxt + "\n"
+    subj = "Membic created for " + ellipsis(msg["url"])
+    body = "Mail-In Membic " + mimres["prebmembic"]["dsId"] + " created:\n"
+    # reference the original message url in case the membic creation process
+    # moves the membic url to rurl.
+    body += " [url]: " + msg["url"] + "\n"
+    body += "[text]: " + mimres["prebmembic"]["text"] + "\n"
+    for tag, pn in mimres["tags"].items():
+        stat = "Ignored"
+        if pn:
+            stat = pn["name"]
+        body += "    #" + tag + ": " + stat + "\n"
+    body += "\n"
+    body += "You can view or edit this membic from your profile at "
+    body += util.my_login_url(mimres["muser"], "https://membic.org") + "\n"
     util.send_mail(msg["emaddr"], subj, body, domain="membic.org",
                    sender=MAILINADDR.split("@")[0])
 
@@ -70,6 +84,7 @@ def reject_email(msg, errtxt):
     logging.info("reject_email " + errtxt + " msg: " + str(msg))
     if not msg["userid"]:
         return  # Not a membic user.  Probably spam.  Ignore.
+    muser = dbacc.cfbk("MUser", "dsId", msg["userid"])
     subj = "Mail-In Membic failure for " + ellipsis(msg["url"])
     body = "Your Mail-In Membic didn't post.\n"
     body += "   [url]: " + msg["url"] + "\n"
@@ -78,12 +93,13 @@ def reject_email(msg, errtxt):
     body += "You sent:\n"
     body += "[subject]: " + msg["subject"] + "\n"
     body += "[content]: " + msg["body"] + "\n\n"
-    body += "If the error message doesn't make sense, please forward this email to support@membic.org along with your questions or comments.\n"
+    body += "If this error message doesn't make sense to you, please forward this email to support@membic.org so we can look into it. You can also create the membic directly from your profile at "
+    body += util.my_login_url(muser, "https://membic.org") + "\n"
     util.send_mail(msg["emaddr"], subj, body, domain="membic.org",
                    sender=MAILINADDR.split("@")[0])
 
 
-# msg = {"from": "Eric Parker <eric@epinova.com>",
+# msg = {"from": "Membic User <test@example.com>",
 #        "subject": "Reason why memorable #mytheme #othertheme",
 #        "body": "Post a link to https://epinova.com when you read this"}
 # "ugly html headers <body>example.com</body></html>"
@@ -95,7 +111,7 @@ def process_email_message(msg):
     msg["url"] = ""
     msg["userid"] = ""
     try:
-        # e.g. "Eric Parker <eric@epinova.com>"
+        # e.g. "Membic Writer <test@example.com>"
         emaddrs = re.findall(r"\S+@\S+\.\S+", msg["from"])
         if not emaddrs or len(emaddrs) == 0:
             raise ValueError("No email address found.")
@@ -125,10 +141,32 @@ def process_email_message(msg):
         if len(urls) == 0:
             raise ValueError("No URL provided")
         msg["url"] = urls[0]
-        restxt = make_mail_in_membic(msg)
-        confirm_receipt(restxt, msg)
+        mimres = make_mail_in_membic(msg)
+        confirm_receipt(msg, mimres)
     except Exception as e:
         reject_email(msg, str(e))
+
+
+# Unfortunately it is not possible to just get("from") and have things work.
+# 15may20 Sending mail via Thunderbird 68.8 using foo@gmail.com account, with
+# bar@example.com as the default identity, and sending as baz@other.org.
+# Dumping msg.items() shows:
+#    Return-Path: <foo@gmail.com>
+#    Sender: Account Email <foo@gmail.com>
+#    From: Default Identity <bar.example.com>
+#    X-Google-Original-From: Sending Address <baz.other.org>
+# As the headers show, "From" is the worst possible choice out of the three
+# options: it is an arbitrary identity, but not the chosen send address.
+# Apparently this is what Google does when the sending address is not set up
+# as an "account you own", and that setup may not be possible if
+# baz@other.org simply forwards to foo@gmail.com.  In terms of mail-in
+# membics, the only reasonable choice in this case is to go with the
+# original sending address.  Why mail-ins are not enabled by default.
+def find_from_address(msg):
+    sender = msg.get("X-Google-Original-From")
+    if not sender:
+        sender = msg.get("From")
+    return sender
 
 
 def process_inbound_mail():
@@ -149,7 +187,7 @@ def process_inbound_mail():
                 # Convenience parse method recommends always specifying policy
                 msg = email.message_from_bytes(response_part[1],
                                                policy=policy.SMTP)
-                process_email_message({"from": msg.get("from"),
+                process_email_message({"from": find_from_address(msg),
                                        "subject": msg.get("subject"),
                                        "body": msg.get_content()})
         msvr.store(mailid, "+FLAGS", "\\Deleted")
