@@ -1,11 +1,17 @@
-""" Start point for cron jobs """
+""" Start point for periodic work, typical daily summary type stuff """
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
 #pylint: disable=invalid-name
 #pylint: disable=missing-function-docstring
 #pylint: disable=logging-not-lazy
 import logging
-logging.basicConfig(level=logging.DEBUG)
+import logging.handlers
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(levelname)s %(module)s %(asctime)s %(message)s',
+    handlers=[logging.handlers.TimedRotatingFileHandler(
+        "plg_periodic.log", when='D', backupCount=10)])
+logger = logging.getLogger(__name__)
 import py.util as util
 import py.dbacc as dbacc
 import datetime
@@ -14,14 +20,14 @@ import json
 
 def nd_as_string(nd):
     txt = "notifications_data " + nd["start"] + " to " + nd["end"] + "\n"
-    txt += "membics:\n"
+    txt += "membics created in this timeframe:\n"
     for key, membic in nd["membics"].items():
         url = membic["url"] or membic["rurl"]
         txt += "    " + membic["dsId"] + ": " + url + "\n"
-    txt += "sources:\n"
+    txt += "MUsers and Themes associated with these membics:\n"
     for key, src in nd["sources"].items():
         txt += "    " + key + ": " + str(src["membics"].keys()) + "\n"
-    txt += "musers:\n"
+    txt += "MUsers notified by email:\n"
     for key, muser in nd["musers"].items():
         srcs = [(s["dsType"] + str(s["dsId"])) for s in muser["sources"]]
         txt += "    " + key + ": " + str(srcs) + "\n"
@@ -102,7 +108,7 @@ def fetch_notifications_data(sts, ets):
                 note_source(nd["sources"], "Theme", pn["ctmid"], pn["name"],
                             membic)
     find_users_to_notify(nd)
-    logging.info("fetch_notifications_data nd_as_string\n" + nd_as_string(nd))
+    logger.info("fetch_notifications_data nd_as_string\n" + nd_as_string(nd))
     return nd
 
 
@@ -158,7 +164,7 @@ def daily_notices():
     notice_subj = "Activity Summary from " + sts + " to " + ets
     mn = dbacc.cfbk("MailNotice", "name", notice_name)
     if mn:
-        logging.info(notice_name + " already exists, not resending.")
+        logger.info(notice_name + " already exists, not resending.")
         return
     nd = fetch_notifications_data(sts, ets)
     mn = dbacc.write_entity({"dsType": "MailNotice",
@@ -167,7 +173,7 @@ def daily_notices():
     send_follower_notifications(nd, mn)
     # note updated uidcsv and last send timestamp
     dbacc.write_entity(mn, vck=mn["modified"])
-    logging.info("daily_notices completed " + dbacc.nowISO())
+    logger.info("daily_notices completed " + dbacc.nowISO())
 
 
 # run it

@@ -1,6 +1,14 @@
 """ Main API switchboard with all entrypoints """
 #pylint: disable=invalid-name
 #pylint: disable=missing-function-docstring
+#pylint: disable=wrong-import-position
+import logging
+import logging.handlers
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s %(module)s %(asctime)s %(message)s',
+    handlers=[logging.handlers.TimedRotatingFileHandler(
+        "plg_application.log", when='D', backupCount=10)])
 import flask
 import py.useract as useract
 import py.util as util
