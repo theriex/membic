@@ -14,7 +14,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(levelname)s %(module)s %(asctime)s %(message)s',
     handlers=[logging.handlers.TimedRotatingFileHandler(
-        "plg_mailins.log", when='D', backupCount=10)])
+        REPL[0], when='D', backupCount=10)])
 logger = logging.getLogger(__name__)
 import imaplib
 import email
