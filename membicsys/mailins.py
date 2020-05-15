@@ -7,12 +7,18 @@
 #pylint: disable=line-too-long
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
+import logging
+import logging.handlers
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(levelname)s %(module)s %(asctime)s %(message)s',
+    handlers=[logging.handlers.TimedRotatingFileHandler(
+        "plg_mailins.log", when='D', backupCount=10)])
+logger = logging.getLogger(__name__)
 import imaplib
 import email
 from email import policy
 import re
-import logging
-logging.basicConfig(level=logging.DEBUG)
 import py.dbacc as dbacc
 import py.useract as useract
 import py.util as util
@@ -59,8 +65,8 @@ def ellipsis(text, maxlen=60):
 
 
 def confirm_receipt(msg, mimres):
-    logging.info("confirm_receipt Membic " + mimres["prebmembic"]["dsId"] +
-                 " msg: " + str(msg))
+    logger.info("confirm_receipt Membic " + mimres["prebmembic"]["dsId"] +
+                " msg: " + str(msg))
     # send confirmation response letting them know it posted
     subj = "Membic created for " + ellipsis(msg["url"])
     body = "Mail-In Membic " + mimres["prebmembic"]["dsId"] + " created:\n"
@@ -81,7 +87,7 @@ def confirm_receipt(msg, mimres):
 
 
 def reject_email(msg, errtxt):
-    logging.info("reject_email " + errtxt + " msg: " + str(msg))
+    logger.info("reject_email " + errtxt + " msg: " + str(msg))
     if not msg["userid"]:
         return  # Not a membic user.  Probably spam.  Ignore.
     muser = dbacc.cfbk("MUser", "dsId", msg["userid"])
@@ -194,5 +200,7 @@ def process_inbound_mail():
         msvr.expunge()
     msvr.close()
     msvr.logout()
+    logger.info("process_inbound_mail completed")
+
 
 process_inbound_mail()

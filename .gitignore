@@ -6,3 +6,4 @@ src/build/module-source.js
 src/build/compiler-latest
 googlee*
 ref/port/py
+plg_*
