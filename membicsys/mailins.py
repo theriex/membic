@@ -9,6 +9,7 @@
 #pylint: disable=wrong-import-order
 import logging
 import logging.handlers
+REPL = ["plg_mailins.log", "e@m.org", "foo"]
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(levelname)s %(module)s %(asctime)s %(message)s',
@@ -24,7 +25,8 @@ import py.useract as useract
 import py.util as util
 import json
 
-MAILINADDR, MAILINPASS = "e@b.org", "foo"
+MAILINADDR = REPL[1]
+MAILINPASS = REPL[2]
 
 # The processing here needs to use the same core processing as membicsave.
 def make_mail_in_membic(msg):
