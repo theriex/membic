@@ -311,7 +311,13 @@ def feed_object_from_path(path):
         else:
             return util.srverr("feed url first part must be profile or theme")
     else:  # find as hashtag
-        ob = dbacc.cfbk("Theme", "hashtag", pes[0])
+        ob = None
+        if pes[0] == "rsscoop":  # legacy feed
+            coopid = flask.request.args.get("coop", "")
+            if coopid:
+                ob = dbacc.cfbk("Theme", "importid", coopid)
+        if not ob:
+            ob = dbacc.cfbk("Theme", "hashtag", pes[0])
         if not ob:
             ob = dbacc.cfbk("MUser", "hashtag", pes[0])
         if not ob:
@@ -329,9 +335,10 @@ def feed_object_from_path(path):
 # parameters, see the FeedInfo class notes for details.
 def webfeed(path):
     path = path or ""
-    logging.info("webfeed: " + path)
     ob = feed_object_from_path(path.lower())
     fi = feed_info_for_object(ob)
+    logging.info("webfeed for " + fi.dbtype + fi.dbid + " " + fi.feedform +
+                 ", ts: " + fi.titlespec + ", ds: " + fi.descspec)
     if fi.feedform == "rss":
         content, ctype = rss_content(fi)
     elif fi.feedform == "rdf":

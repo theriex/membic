@@ -14,6 +14,7 @@ import json
 import logging
 import py.util as util
 import py.dbacc as dbacc
+import py.feed as feed
 
 # This cache bust value is updated via membic/build/cachev.js which keeps
 # all the cache bust values updated and in sync across the sourcebase.  Do
@@ -464,5 +465,7 @@ def recentactive():
 # path is everything *after* the root url slash.
 def startpage(path, refer):
     path = path or ""
+    if path.startswith("rsscoop"):
+        return feed.webfeed(path)
     html = start_html_for_path(path.lower(), refer)
     return util.respond(html)
