@@ -22,7 +22,6 @@
 #pylint: disable=too-many-locals
 #pylint: disable=unused-argument
 import logging
-logging.basicConfig(level=logging.DEBUG)
 import flask
 import re
 import datetime

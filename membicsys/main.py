@@ -4,11 +4,16 @@
 #pylint: disable=wrong-import-position
 import logging
 import logging.handlers
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s %(module)s %(asctime)s %(message)s',
-    handlers=[logging.handlers.TimedRotatingFileHandler(
-        "plg_application.log", when='D', backupCount=10)])
+# logging may or may not have been set up, depending on environment.
+logging.basicConfig(level=logging.INFO)
+# Tune logging so it works the way it should, even if set up elsewhere
+handler = logging.handlers.TimedRotatingFileHandler(
+    "logs/plg_application.log", when='D', backupCount=10)
+handler.setFormatter(logging.Formatter(
+    '%(levelname)s %(module)s %(asctime)s %(message)s'))
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 import flask
 import py.useract as useract
 import py.util as util
@@ -26,9 +31,9 @@ app = flask.Flask(__name__)
 def appversion():
     return "2.3"
 
-@app.route('/api/devserver')
-def devserver():
-    return str(util.is_development_server(verbose=True))
+@app.route('/api/envinfo')
+def envinfo():
+    return str(util.envinfo())
 
 @app.route('/api/mailpwr', methods=['GET', 'POST'])
 def mailpwr():  # params: emailin

@@ -9,7 +9,7 @@
 #pylint: disable=wrong-import-order
 import logging
 import logging.handlers
-REPL = ["plg_mailins.log", "e@m.org", "foo"]
+REPL = ["logs/plg_mailins.log", "e@m.org", "foo"]
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(levelname)s %(module)s %(asctime)s %(message)s',
@@ -179,30 +179,33 @@ def find_from_address(msg):
 
 def process_inbound_mail():
     """ Read inbound email, create membics and clear from inbox. """
-    msvr = imaplib.IMAP4_SSL("imap.dreamhost.com")  # port defaults to 993
-    msvr.login(MAILINADDR, MAILINPASS)
-    msvr.select("inbox")  # case doesn't seem to matter
-    _, data = msvr.search(None, "ALL")   # returns list of 32bit mail ids
-    # data will look something like [b'1 2 3'], so data[0] is b'1 2 3'
-    mailids = data[0].split()   # now have something like [b'1', b'2', b'3']
-    for mailid in mailids:
-        # fetch 1st param can take a number, a range, or csv of ranges
-        _, msgd = msvr.fetch(mailid, "(RFC822)")  # raw msg data
-        # e.g. len(msgd) 2, msgd[0]: msg content, msgd[1]: closing paren
-        for response_part in msgd:
-            if isinstance(response_part, tuple):  # have content
-                # e.g. response_part[0]: RFC822 id, [1]: binary text content
-                # Convenience parse method recommends always specifying policy
-                msg = email.message_from_bytes(response_part[1],
-                                               policy=policy.SMTP)
-                process_email_message({"from": find_from_address(msg),
-                                       "subject": msg.get("subject"),
-                                       "body": msg.get_content()})
-        msvr.store(mailid, "+FLAGS", "\\Deleted")
-        msvr.expunge()
-    msvr.close()
-    msvr.logout()
-    logger.info("process_inbound_mail completed")
+    try:
+        msvr = imaplib.IMAP4_SSL("imap.dreamhost.com")  # port defaults to 993
+        msvr.login(MAILINADDR, MAILINPASS)
+        msvr.select("inbox")  # case doesn't seem to matter
+        _, data = msvr.search(None, "ALL")   # returns list of 32bit mail ids
+        # data will look something like [b'1 2 3'], so data[0] is b'1 2 3'
+        mailids = data[0].split()   # now have something like [b'1', b'2', b'3']
+        for mailid in mailids:
+            # fetch 1st param can take a number, a range, or csv of ranges
+            _, msgd = msvr.fetch(mailid, "(RFC822)")  # raw msg data
+            # e.g. len(msgd) 2, msgd[0]: msg content, msgd[1]: closing paren
+            for response_part in msgd:
+                if isinstance(response_part, tuple):  # have content
+                    # e.g. response_part[0]: RFC822 id, [1]: binary text content
+                    # parse method recommends always specifying policy
+                    msg = email.message_from_bytes(response_part[1],
+                                                   policy=policy.SMTP)
+                    process_email_message({"from": find_from_address(msg),
+                                           "subject": msg.get("subject"),
+                                           "body": msg.get_content()})
+            msvr.store(mailid, "+FLAGS", "\\Deleted")
+            msvr.expunge()
+        msvr.close()
+        msvr.logout()
+        logger.info("process_inbound_mail completed")
+    except Exception as e:
+        logging.exception("process_inbound_mail failed " + str(e))
 
 
 process_inbound_mail()

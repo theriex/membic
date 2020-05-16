@@ -1,8 +1,14 @@
+""" web feed endpoint handler, return appropriate content """
+#pylint: disable=invalid-name
+#pylint: disable=missing-function-docstring
+#pylint: disable=missing-class-docstring
+#pylint: disable=too-few-public-methods
+#pylint: disable=too-many-statements
+#pylint: disable=logging-not-lazy
+#pylint: disable=wrong-import-order
 import logging
-logging.basicConfig(level=logging.DEBUG)
 import flask
 import json
-import logging
 import py.util as util
 import py.dbacc as dbacc
 
@@ -21,7 +27,7 @@ import py.dbacc as dbacc
 # Some feeds require a contact email address.  Because email addresses in
 # membic are private, the general support email is provided.  Feeds are
 # described as public domain in terms of copyright.
-class FeedInfo(object):
+class FeedInfo():
     baseurl = ""          # e.g. https://membic.org
     nowts = ""            # timestamp for start of processing pass
     dbobj = None          # MUser or Theme instance
@@ -45,8 +51,8 @@ def membic_url(fi, membic):
     if "url" in membic:
         url = membic["url"]
         # pick up any stray unencoded ampersands and encode for valid xml
-        url = url.replace("&amp;", "&");
-        url = url.replace("&", "&amp;");
+        url = url.replace("&amp;", "&")
+        url = url.replace("&", "&amp;")
     if not url:  # readers need a url. Use the site url if membic has nothing.
         url = fi.siteurl.replace("&", "&amp;")
     return url
@@ -68,7 +74,7 @@ def htmlquot(txt):
 def membic_stars_text(membic):
     stars = ""
     rating = membic["rating"] or 0
-    for i in range(0, int(rating / 20)):
+    for _ in range(0, int(rating / 20)):
         stars += "*"
     return stars
 
@@ -143,7 +149,6 @@ def rss_content(fi):
 
 def rdf_content(fi):
     surl = fi.siteurl.replace("&", "&amp;")
-    desc = str(len(fi.membics)) + " recent membics"
     txt = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     txt += "\n"
     txt += "<rdf:RDF\n"
@@ -262,7 +267,7 @@ def set_fi_feed_membics(fi):
         if not "revtype" in m:
             continue  # filter out overflows or anything not a membic
         if m["dispafter"] > fi.nowts:
-            continue  # filter out anything queued for later 
+            continue  # filter out anything queued for later
         # Set the modified timestamp for the feed to be the creation
         # timestamp so membics don't suddently show up again at the top of a
         # feed reader display after being edited.  The created timestamp
@@ -276,7 +281,7 @@ def set_fi_feed_membics(fi):
 def feed_info_for_object(ob):
     fi = FeedInfo()
     fi.nowts = dbacc.nowISO()
-    fi.dbobj = ob;
+    fi.dbobj = ob
     fi.dbtype = ob["dsType"]
     fi.dbid = str(ob["dsId"])
     set_fi_urls_and_parameters(fi)
@@ -312,7 +317,7 @@ def feed_object_from_path(path):
         if not ob:
             return util.srverr("Unknown feed hashtag: " + path)
     return ob
-        
+
 
 ##################################################
 #
@@ -324,6 +329,7 @@ def feed_object_from_path(path):
 # parameters, see the FeedInfo class notes for details.
 def webfeed(path):
     path = path or ""
+    logging.info("webfeed: " + path)
     ob = feed_object_from_path(path.lower())
     fi = feed_info_for_object(ob)
     if fi.feedform == "rss":
@@ -333,6 +339,6 @@ def webfeed(path):
     elif fi.feedform == "json":
         content, ctype = json_content(fi)
     else:
-        return util.srverr("Unknown web feed type: " + ftype)
+        return util.srverr("Unknown web feed type: " + fi.feedform)
+    logging.info("webfeed " + fi.feedform + " content delivered")
     return util.respond(content, mimetype=ctype)
-

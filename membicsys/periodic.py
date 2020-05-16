@@ -10,8 +10,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(levelname)s %(module)s %(asctime)s %(message)s',
     handlers=[logging.handlers.TimedRotatingFileHandler(
-        "plg_periodic.log", when='D', backupCount=10)])
-logger = logging.getLogger(__name__)
+        "logs/plg_periodic.log", when='D', backupCount=10)])
 import py.util as util
 import py.dbacc as dbacc
 import datetime
@@ -108,7 +107,7 @@ def fetch_notifications_data(sts, ets):
                 note_source(nd["sources"], "Theme", pn["ctmid"], pn["name"],
                             membic)
     find_users_to_notify(nd)
-    logger.info("fetch_notifications_data nd_as_string\n" + nd_as_string(nd))
+    logging.info("fetch_notifications_data nd_as_string\n" + nd_as_string(nd))
     return nd
 
 
@@ -157,14 +156,14 @@ def send_follower_notifications(nd, mn):
 # Don't particularly care what time the server is using, or what time this
 # runs, as long as it is consistent.  Midnight to midnight ISO.
 def daily_notices():
-    util.is_development_server(verbose=True)
+    logging.info(str(util.envinfo()))
     ets = dbacc.nowISO()[0:10] + "T00:00:00Z"
     sts = dbacc.dt2ISO(dbacc.ISO2dt(ets) + datetime.timedelta(hours=-24))
     notice_name = "Daily Notice " + ets
     notice_subj = "Activity Summary from " + sts + " to " + ets
     mn = dbacc.cfbk("MailNotice", "name", notice_name)
     if mn:
-        logger.info(notice_name + " already exists, not resending.")
+        logging.info(notice_name + " already exists, not resending.")
         return
     nd = fetch_notifications_data(sts, ets)
     mn = dbacc.write_entity({"dsType": "MailNotice",
@@ -173,7 +172,7 @@ def daily_notices():
     send_follower_notifications(nd, mn)
     # note updated uidcsv and last send timestamp
     dbacc.write_entity(mn, vck=mn["modified"])
-    logger.info("daily_notices completed " + dbacc.nowISO())
+    logging.info("daily_notices completed " + dbacc.nowISO())
 
 
 # run it

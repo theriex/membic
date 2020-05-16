@@ -786,7 +786,6 @@ function createPythonDBAcc () {
     pyc += "#pylint: disable=too-many-locals\n";
     pyc += "#pylint: disable=unused-argument\n";
     pyc += "import logging\n";
-    pyc += "logging.basicConfig(level=logging.DEBUG)\n";
     pyc += "import flask\n";
     pyc += "import re\n";
     pyc += "import datetime\n";

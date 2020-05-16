@@ -8,7 +8,6 @@
 #pylint: disable=broad-except
 #pylint: disable=invalid-name
 import logging
-logging.basicConfig(level=logging.DEBUG)
 import flask
 import hmac
 import re
@@ -68,21 +67,30 @@ def site_home():
     return "/".join(elements)
 
 
-def is_development_server(verbose=False):
+def is_development_server():
+    info = {"isdev":False, "why":"No development conditions matched"}
     if flask.has_request_context():
         if re.search(r"\:\d{4}", flask.request.url):
-            if verbose:
-                logging.info("is_development_server: True (flask.request.url " +
-                             "has a 4 digit port number)")
-            return True
+            info["isdev"] = True
+            info["why"] = "flask.request.url has a 4 digit port number)"
     elif os.environ["HOME"] != "/home/theriex":
-        if verbose:
-            logging.info("is_development_server: True (\"HOME\" env var \"" +
-                         os.environ["HOME"] + "\" != \"/home/theriex\")")
-        return True
-    if verbose:
-        logging.info("is_development_server: False")
+        info["isdev"] = True
+        info["why"] = ("\"HOME\" env var \"" + os.environ["HOME"] +
+                       "\" != \"/home/theriex\")")  # deployment home dir
+    if info["isdev"]:
+        return info
     return False
+
+
+def envinfo():
+    # logging.debug("envinfo DEBUG level log test message")
+    # logging.info("envinfo INFO level log test message")
+    # logging.warning("envinfo WARNING test log message")
+    # logging.error("envinfo ERROR test log message")
+    loglev = logging.getLogger().getEffectiveLevel()
+    info = {"devserver": is_development_server(),
+            "loglev": {"levnum":loglev, "levname":logging.getLevelName(loglev)}}
+    return info
 
 
 def secure(func):

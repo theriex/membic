@@ -8,7 +8,6 @@
 #pylint: disable=logging-not-lazy
 #pylint: disable=too-many-locals
 import logging
-logging.basicConfig(level=logging.DEBUG)
 import flask
 import py.dbacc as dbacc
 import py.util as util

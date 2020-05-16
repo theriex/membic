@@ -1,9 +1,10 @@
 *~
 .DS_Store
 *.pyc
-docroot/downloads
+public/downloads
 src/build/module-source.js
 src/build/compiler-latest
 googlee*
 ref/port/py
 plg_*
+logs
