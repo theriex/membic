@@ -36,6 +36,10 @@ def make_mail_in_membic(msg):
         muser = dbacc.cfbk("MUser", "altinmail", msg["emaddr"])
         if not muser:
             raise ValueError("Email address " + msg["emaddr"] + " not found.")
+    cliset = json.loads(muser.get("cliset", "{}"))
+    mailins = cliset.get("mailins")
+    if mailins and mailins != "enabled":
+        raise ValueError("Mail-In Membics disabled")
     mimres["muser"] = muser
     msg["userid"] = muser["dsId"]
     membic = {"dsType":"Membic", "ctmid":"", "penid":muser["dsId"],

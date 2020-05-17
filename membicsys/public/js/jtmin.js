@@ -1105,7 +1105,7 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
             cval = escape(cval) + 
                 "; Expires=" + expiration.toUTCString() +
                 "; Path=/" +
-                "; SameSite=Strict";
+                "; SameSite=Lax";  //Strict breaks local dev page reload FF
             document.cookie = cname + "=" + cval;
         }
         cval = document.cookie;

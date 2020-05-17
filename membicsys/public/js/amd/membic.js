@@ -1094,7 +1094,8 @@ app.membic = (function () {
         if(!membic.url && membic.rurl) {
             return jt.log("Membic " + membic.dsId + " awaiting reader."); }
         if(!membic.url) {
-            return jt.log("Membic " + membic.dsId + " has no url"); }
+            //return jt.log("Membic " + membic.dsId + " has no url"); }
+            return; }
         var xi = membic.url.search(/["<>]/g);
         if(xi >= 0) {  //have bad chars in url
             membic.details = membic.details || {};

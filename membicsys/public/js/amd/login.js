@@ -337,6 +337,14 @@ return {
                           "Password required to change email."); }
         if(pu.email !== prof.email && !confirm("You will need to re-activate your account from your new email address " + pu.email)) {
             return; }  //continue editing.
+        var mic = jt.byId("mailincb").checked;
+        if(mic) {  //enable mail-ins
+            pu.cliset = prof.cliset;
+            pu.cliset.mailins = "enabled"; }
+        else {  //disable if previously set, otherwise leave unset
+            if(prof.cliset.mailins) {
+                pu.cliset = prof.cliset;
+                pu.cliset.mailins = "disabled"; } }
         pu.altinmail = jt.byId("altemin").value.trim();
         if(pu.altinmail && !jt.isProbablyEmail(pu.altinmail)) {
             return jt.out("settingsinfdiv", "Invalid alternate email"); }

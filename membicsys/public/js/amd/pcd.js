@@ -336,8 +336,38 @@ app.pcd = (function () {
     }
 
 
+    function mailinHelpHTML () {
+        var subj = "Why memorable";
+        var body = "Site URL";
+        var link = "mailto:me@membic.org?subject=" + jt.dquotenc(subj) +
+            "&body=" + jt.dquotenc(body) + "%0A%0A";
+        return jt.tac2html(
+            [["br"],
+             "Send to ",
+             ["a", {href:link}, "me@membic.org"]]);
+    }
+
+
+    function mailinHelp () {
+        var cb = jt.byId("mailincb");
+        if(cb && cb.checked) {
+            jt.out("mailinhelpspan", mailinHelpHTML());
+            jt.byId("altmaildiv").style.display = "block"; }
+        else {
+            jt.out("mailinhelpspan", "");
+            jt.byId("altmaildiv").style.display = "none"; }
+    }
+
+
     function personalInfoSettingsHTML () {
         var fp = app.login.fullProfile();
+        if(!fp.cliset.mailins) {
+            fp.cliset.mailins = "enabled"; }
+        var mih = "";
+        var altdisp = "none";
+        if(fp.cliset.mailins === "enabled") {
+            mih = mailinHelpHTML();
+            altdisp = "block"; }
         return jt.tac2html(
             [["div", {cla:"cbdiv"},
               [["label", {fo:"emailin", cla:"liflab"}, "Email"],
@@ -347,15 +377,24 @@ app.pcd = (function () {
               [["label", {fo:"updpin", cla:"liflab"}, "Password"],
                ["input", {type:"password", cla:"lifin", id:"updpin"}]]],
              ["div", {cla:"cbdiv"},
-              [["label", {fo:"altemin", cla:"liflab"}, "Alt&nbsp;Email"],
-               ["input", {type:"email", cla:"lifin", id:"altemin",
-                          value:fp.altinmail || "",
-                          placeholder:"alternate@example.com"}]]],
-             ["div", {cla:"cbdiv"},
               ["div", {cla:"infolinediv"},
                [["span", {cla:"statlineval"}, fp.status],
                 " updated " + jt.colloquialDate(fp.modified, "compress",
-                                                "nodaily z2loc")]]]]);
+                                                "nodaily z2loc")]]],
+             ["div", {cla:"cbdiv"},
+              ["div", {cla:"infolinediv"},
+               [["input", {type:"checkbox", id:"mailincb", value:"mailincb",
+                           checked:jt.toru(fp.cliset.mailins === "enabled"),
+                           onclick:jt.fsd("app.pcd.mailinHelp()")}],
+                [["label", {fo:"mailincb", id:"mailincblab"},
+                 "Enable Mail-In Membics"],
+                 ["span", {id:"mailinhelpspan"}, mih]]]]],
+             ["div", {cla:"cbdiv", id:"altmaildiv",
+                      style:"display:" + altdisp + ";"},
+              [["label", {fo:"altemin", cla:"liflab"}, "Alt&nbsp;Email"],
+               ["input", {type:"email", cla:"lifin", id:"altemin",
+                          value:fp.altinmail || "",
+                          placeholder:"alternate@example.com"}]]]]);
     }
 
 
@@ -432,8 +471,8 @@ app.pcd = (function () {
 
     function generalSettingsHTML (embobj, canmod) {
         return jt.tac2html(
-            [webfeedSetting(embobj),
-             hashtagSetting(embobj, canmod),
+            [hashtagSetting(embobj, canmod),
+             webfeedSetting(embobj),
              keywordsSetting(embobj, canmod),
              embedSetting(embobj, canmod)]);
     }
@@ -867,7 +906,8 @@ return {
         jt.byId("picuploadbutton").disabled = false; },
     picImgSrc: function (profOrThemeObj) { return picImgSrc(profOrThemeObj); },
     monitorImageUpload: function (cmd) { monitorImageUpload(cmd); },
-    togglePicUpload: function () { togglePicUpload(); }
+    togglePicUpload: function () { togglePicUpload(); },
+    mailinHelp: function () { mailinHelp(); }
 
 };  //end of returned functions
 }());

@@ -59,6 +59,7 @@ module.exports = (function () {
      logflds:["email", "name"]},
         ////////// Notes:
         // cliset: {flags:{archived:ISO},  //no new membics for theme if set
+        //          mailins:"enabled",     //must be "enabled" for Mail-Ins
         //          embcolors:{link:"#84521a", hover:"#a05705"},
         //          //No longer supported:
         //          maxPostsPerDay:1,  //prev max of 2
