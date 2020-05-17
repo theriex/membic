@@ -114,17 +114,6 @@ def supphelp():
     ## Return an access url for the given email
     return util.secure(util.supphelp)
 
-# ## Send a general notice
-# - url: .*/sendnote.*
-#   script: src.py.mailsum.app
-#   login: admin
-
-# ## Email bounce handler
-# - url: /_ah/bounce
-#   script: src.py.mailsum.app
-#   login: admin
-
-
 
 # Hook for calling the app directly using python on the command line, which
 # can be useful for unit testing.  In the deployed app, a WSGI browser

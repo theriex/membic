@@ -201,6 +201,11 @@ module.exports = (function () {
      cache:{minutes:0},  //not commonly referenced
      logflds:["dbkind", "dbkeyid"]},
         
+    //This is used to prevent duplicate sends of things like daily summaries.
+    //Broadcast email is completely unreliable, and it should be assumed to
+    //be routed directly to spam folders.  Only if the recipient has previously
+    //flagged a message as not being spam (possibly multiple times) will there
+    //be any hope of the recipient ever seeing it.
     {entity:"MailNotice", descr:"Broadcast email tracking", fields:[
         {f:"name", d:"req unique string", c:"query access identifier"},
         {f:"subject", d:"string", c:"the email subject for ease of reference"},
