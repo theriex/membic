@@ -446,7 +446,7 @@ def start_html_for_path(path, refer):
     inst = dbacc.cfbk("Theme", "hashtag", hashtag)
     if not inst:
         inst = dbacc.cfbk("MUser", "hashtag", hashtag)
-    if not inst:
+    if not inst and hashtag.isdigit():  # try legacy theme reference
         inst = dbacc.cfbk("Theme", "importid", hashtag)
     if not inst:
         return util.srverr("Unknown hashtag: " + hashtag, code="404")
@@ -467,7 +467,7 @@ def recentactive():
 # path is everything *after* the root url slash.
 def startpage(path, refer):
     path = path or ""
-    if path.startswith("rsscoop"):  # different MIME type
-        return feed.webfeed(path)
+    if path.startswith("rsscoop"):  # legacy feed reference
+        return feed.webfeed(path)   # respond using appropriate MIME type
     html = start_html_for_path(path.lower(), refer)
     return util.respond(html)

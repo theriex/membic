@@ -28,6 +28,18 @@ import datetime
 import pickle
 import mysql.connector
 
+# Notes:
+# (1) In general, all processing that might raise a mysql.connector.Error is
+# wrapped to raise a ValueError instead, to support callers working at a
+# higher level of CRUD abstraction.  The general processing contruct
+#    except mysql.connector.Error as e:
+#        raise ValueError from e
+# is not used for this purpose because it produces an undecorated ValueError
+# without the str(e) text, making it harder to track down what the problem
+# actually was.  The source can be found from the Error __context__, but
+# that is also set when raising a new Error, so the general use here is
+#        raise ValueError(str(e) or "No mysql error text")
+
 # Reserved database fields used for every instance:
 #  - dsId: a long int, possibly out of range of a javascript integer,
 #    possibly non-sequential, uniquely identifying an entity instance.
@@ -1291,8 +1303,7 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
             if entity == "ConnectionService":
                 return insert_new_ConnectionService(cnx, cursor, inst)
         except mysql.connector.Error as e:
-            logging.warning("dbacc.write_entity error: " + str(e))
-            raise ValueError from e
+            raise ValueError(str(e) or "No mysql error text")  # see note 1
         finally:
             cursor.close()
     finally:
@@ -1311,7 +1322,7 @@ def delete_entity(entity, dsId):
             cnx.commit()
             dblogmsg("DEL", entity + " " + str(dsId), None)
         except mysql.connector.Error as e:
-            raise ValueError from e
+            raise ValueError(str(e) or "No mysql error text")  # see note 1
         finally:
             cursor.close()
     finally:
@@ -1458,7 +1469,7 @@ def query_entity(entity, where):
             if entity == "ConnectionService":
                 return query_ConnectionService(cnx, cursor, where)
         except mysql.connector.Error as e:
-            raise ValueError from e
+            raise ValueError(str(e) or "No mysql error text")  # see note 1
         finally:
             cursor.close()
     finally:

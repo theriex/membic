@@ -625,8 +625,7 @@ function entityWriteFunction () {
         pyc += "            if entity == \"" + edef.entity + "\":\n";
         pyc += "                return insert_new_" + edef.entity + "(cnx, cursor, inst)\n"; });
     pyc += "        except mysql.connector.Error as e:\n";
-    pyc += "            logging.warning(\"dbacc.write_entity error: \" + str(e))\n"
-    pyc += "            raise ValueError from e\n";
+    pyc += "            raise ValueError(str(e) or \"No mysql error text\")  # see note 1\n"
     pyc += "        finally:\n";
     pyc += "            cursor.close()\n";
     pyc += "    finally:\n";
@@ -649,7 +648,7 @@ function entityDeleteFunction () {
     pyc += "            cnx.commit()\n"
     pyc += "            dblogmsg(\"DEL\", entity + \" \" + str(dsId), None)\n"
     pyc += "        except mysql.connector.Error as e:\n"
-    pyc += "            raise ValueError from e\n"
+    pyc += "            raise ValueError(str(e) or \"No mysql error text\")  # see note 1\n"
     pyc += "        finally:\n"
     pyc += "            cursor.close()\n"
     pyc += "    finally:\n"
@@ -706,12 +705,12 @@ function entityQueryFunction () {
     definitions.forEach(function (edef) {
         pyc += "            if entity == \"" + edef.entity + "\":\n";
         pyc += "                return query_" + edef.entity + "(cnx, cursor, where)\n"; });
-        pyc += "        except mysql.connector.Error as e:\n";
-        pyc += "            raise ValueError from e\n";
-        pyc += "        finally:\n";
-        pyc += "            cursor.close()\n";
-        pyc += "    finally:\n";
-        pyc += "        cnx.close()\n";
+    pyc += "        except mysql.connector.Error as e:\n";
+    pyc += "            raise ValueError(str(e) or \"No mysql error text\")  # see note 1\n"
+    pyc += "        finally:\n";
+    pyc += "            cursor.close()\n";
+    pyc += "    finally:\n";
+    pyc += "        cnx.close()\n";
     return pyc;
 }
 
@@ -792,6 +791,18 @@ function createPythonDBAcc () {
     pyc += "import pickle\n";
     pyc += "import mysql.connector\n";
     pyc += "\n";
+    pyc += "# Notes:\n"
+    pyc += "# (1) In general, all processing that might raise a mysql.connector.Error is\n"
+    pyc += "# wrapped to raise a ValueError instead, to support callers working at a\n"
+    pyc += "# higher level of CRUD abstraction.  The general processing contruct\n"
+    pyc += "#    except mysql.connector.Error as e:\n"
+    pyc += "#        raise ValueError from e\n"
+    pyc += "# is not used for this purpose because it produces an undecorated ValueError\n"
+    pyc += "# without the str(e) text, making it harder to track down what the problem\n"
+    pyc += "# actually was.  The source can be found from the Error __context__, but\n"
+    pyc += "# that is also set when raising a new Error, so the general use here is\n"
+    pyc += "#        raise ValueError(str(e) or \"No mysql error text\")\n"
+    pyc += "\n"
     pyc += "# Reserved database fields used for every instance:\n";
     pyc += "#  - dsId: a long int, possibly out of range of a javascript integer,\n";
     pyc += "#    possibly non-sequential, uniquely identifying an entity instance.\n";
