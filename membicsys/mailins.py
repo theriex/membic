@@ -29,39 +29,28 @@ MAILINADDR = REPL[1]
 MAILINPASS = REPL[2]
 
 # The processing here needs to use the same core processing as membicsave.
-def make_mail_in_membic(msg):
-    mimres = {}
-    muser = dbacc.cfbk("MUser", "email", msg["emaddr"])
-    if not muser:
-        muser = dbacc.cfbk("MUser", "altinmail", msg["emaddr"])
-        if not muser:
-            raise ValueError("Email address " + msg["emaddr"] + " not found.")
-    cliset = json.loads(muser.get("cliset", "{}"))
-    mailins = cliset.get("mailins")
-    if mailins and mailins != "enabled":
-        raise ValueError("Mail-In Membics disabled")
-    mimres["muser"] = muser
-    msg["userid"] = muser["dsId"]
+def make_mail_in_membic(mimp):
+    muser = mimp["muser"]
     membic = {"dsType":"Membic", "ctmid":"", "penid":muser["dsId"],
-              "penname":muser["name"], "url":msg["url"], "revtype":"article",
-              "text":msg["whymem"], "details":json.dumps({"title":msg["url"]})}
-    mimres["tags"] = {}
+              "penname":muser["name"], "url":mimp["url"], "revtype":"article",
+              "details":json.dumps({"title":mimp["url"]}),
+              "text":mimp["whymem"]}
+    mimp["tags"] = {}
     postctms = []
-    for themetag in msg["themetags"]:
+    for themetag in mimp["themetags"]:
         if themetag.startswith("#"):
             themetag = themetag[1:]
         theme = dbacc.cfbk("Theme", "hashtag", themetag)
         if theme:
             pn = {"ctmid": theme["dsId"], "name": theme["name"], "revid": ""}
-            mimres["tags"]["themetag"] = pn
+            mimp["tags"]["themetag"] = pn
             postctms.append(pn)
         else:
-            mimres["tags"]["themetag"] = None
+            mimp["tags"]["themetag"] = None
     membic["svcdata"] = json.dumps({"postctms": postctms})
     membic["cankey"] = useract.cankey_for_membic(membic)
     spf = useract.update_membic_and_preb(muser, membic)
-    mimres["prebmembic"] = json.loads(json.loads(spf)["preb"])[0]
-    return mimres
+    mimp["prebmembic"] = json.loads(json.loads(spf)["preb"])[0]
 
 
 def ellipsis(text, maxlen=60):
@@ -70,80 +59,103 @@ def ellipsis(text, maxlen=60):
     return text
 
 
-def confirm_receipt(msg, mimres):
-    logger.info("confirm_receipt Membic " + mimres["prebmembic"]["dsId"] +
-                " msg: " + str(msg))
+def mimp_summary(mimp):
+    mid = mimp.get("prebmembic")
+    if mid:
+        mid = mid["dsId"]
+    txt = "From: " + mimp["from"] + ", Membic: " + str(mid)
+    for field in ["url", "whymem"]:
+        val = mimp.get(field)
+        if val:
+            txt += ", " + field + ": " + str(val)
+    return txt
+
+
+def confirm_receipt(mimp):
+    logger.info("confirm_receipt " + mimp_summary(mimp))
     # send confirmation response letting them know it posted
-    subj = "Membic created for " + ellipsis(msg["url"])
-    body = "Mail-In Membic " + mimres["prebmembic"]["dsId"] + " created:\n"
-    # reference the original message url in case the membic creation process
-    # moves the membic url to rurl.
-    body += " [url]: " + msg["url"] + "\n"
-    body += "[text]: " + mimres["prebmembic"]["text"] + "\n"
-    for tag, pn in mimres["tags"].items():
+    subj = "Membic created for " + ellipsis(mimp["url"])
+    body = "Mail-In Membic " + mimp["prebmembic"]["dsId"] + " created:\n"
+    # reference the original url in case the membic creation process moves
+    # the membic url to rurl.
+    body += " [url]: " + mimp["url"] + "\n"
+    body += "[text]: " + mimp["whymem"] + "\n"
+    for tag, pn in mimp["tags"].items():
         stat = "Ignored"
         if pn:
             stat = pn["name"]
         body += "    #" + tag + ": " + stat + "\n"
     body += "\n"
     body += "You can view or edit this membic from your profile at "
-    body += util.my_login_url(mimres["muser"], "https://membic.org") + "\n"
-    util.send_mail(msg["emaddr"], subj, body, domain="membic.org",
+    body += util.my_login_url(mimp["muser"], "https://membic.org") + "\n\n"
+    body += "This message is an automated response to your Mail-In Membic. If you have any questions or concerns, forward this message to support@membic.org along with your comments so we can look into it. Thanks for using Membic!\n"
+    util.send_mail(mimp["emaddr"], subj, body, domain="membic.org",
                    sender=MAILINADDR.split("@")[0])
+    logging.info("Confirmation email sent")
 
 
-def reject_email(msg, errtxt):
-    logger.info("reject_email " + errtxt + " msg: " + str(msg))
-    if not msg["userid"]:
+def reject_email(mimp, errtxt):
+    logger.info("reject_email " + mimp_summary(mimp))
+    if not mimp.get("muser"):
         return  # Not a membic user.  Probably spam.  Ignore.
-    muser = dbacc.cfbk("MUser", "dsId", msg["userid"])
-    subj = "Mail-In Membic failure for " + ellipsis(msg["url"])
+    subj = "Mail-In Membic failure for " + ellipsis(mimp["subject"])
     body = "Your Mail-In Membic didn't post.\n"
-    body += "   [url]: " + msg["url"] + "\n"
-    body += "[whymem]: " + msg["whymem"] + "\n"
+    body += "   [url]: " + str(mimp.get("url")) + "\n"
+    body += "[whymem]: " + str(mimp.get("whymem")) + "\n"
     body += "[errmsg]: " + errtxt + "\n\n"
     body += "You sent:\n"
-    body += "[subject]: " + msg["subject"] + "\n"
-    body += "[content]: " + msg["body"] + "\n\n"
+    body += "[subject]: " + mimp["subject"] + "\n"
+    body += "[content]: " + mimp["body"] + "\n\n"
     body += "If this error message doesn't make sense to you, please forward this email to support@membic.org so we can look into it. You can also create the membic directly from your profile at "
-    body += util.my_login_url(muser, "https://membic.org") + "\n"
-    util.send_mail(msg["emaddr"], subj, body, domain="membic.org",
+    body += util.my_login_url(mimp["muser"], "https://membic.org") + "\n"
+    util.send_mail(mimp["emaddr"], subj, body, domain="membic.org",
                    sender=MAILINADDR.split("@")[0])
+    logging.info("Rejection response email sent")
 
 
-# msg = {"from": "Membic User <test@example.com>",
-#        "subject": "Reason why memorable #mytheme #othertheme",
-#        "body": "Post a link to https://epinova.com when you read this"}
+def set_mimp_emaddr_fields(mimp):
+    # e.g. "Membic Writer <test@example.com>"
+    emaddrs = re.findall(r"\S+@\S+\.\S+", mimp["from"])
+    if not emaddrs or len(emaddrs) == 0:
+        raise ValueError("No email address found.")
+    emaddr = emaddrs[0]
+    if emaddr.startswith("<") and emaddr.endswith(">"):
+        emaddr = emaddr[1:-1]
+    mimp["emaddr"] = emaddr
+    muser = dbacc.cfbk("MUser", "email", emaddr)
+    if not muser:
+        muser = dbacc.cfbk("MUser", "altinmail", emaddr)
+        if not muser:
+            raise ValueError("Email address " + emaddr + " not found.")
+    # If mailins are explicitely disabled, then continue as if the email
+    # address was not found.  Don't email a response back.
+    cliset = json.loads(muser.get("cliset", "{}"))
+    mailins = cliset.get("mailins")
+    if mailins and mailins != "enabled":
+        raise ValueError("Mail-In Membics disabled")
+    mimp["muser"] = muser
+
+
+# mimp = {"from": "Membic User <test@example.com>",
+#         "subject": "Reason why memorable #mytheme #othertheme",
+#         "body": "Post a link to https://epinova.com when you read this"}
 # "ugly html headers <body>example.com</body></html>"
-def process_email_message(msg):
-    # initialize result fields to normalize error handling
-    msg["emaddr"] = ""
-    msg["whymem"] = ""
-    msg["themetags"] = []
-    msg["url"] = ""
-    msg["userid"] = ""
+def process_email_message(mimp):
     try:
-        # e.g. "Membic Writer <test@example.com>"
-        emaddrs = re.findall(r"\S+@\S+\.\S+", msg["from"])
-        if not emaddrs or len(emaddrs) == 0:
-            raise ValueError("No email address found.")
-        emaddr = emaddrs[0]
-        if emaddr.startswith("<") and emaddr.endswith(">"):
-            emaddr = emaddr[1:-1]
-        msg["emaddr"] = emaddr
+        set_mimp_emaddr_fields(mimp)  # ValueError if unknown
         # e.g. "Reason why memorable #mytheme #othertheme"
-        whymem = msg["subject"]
+        whymem = mimp["subject"]
         themetags = re.findall(r"(#\S+)", whymem)
         for tag in reversed(themetags):
             whymem = whymem.strip()
             if whymem.endswith(tag):
                 whymem = whymem[0:-1 * len(tag)]
-        msg["whymem"] = whymem.strip()
-        msg["themetags"] = themetags
+        mimp["whymem"] = whymem.strip()
+        mimp["themetags"] = themetags
         # e.g. "Post a link to https://epinova.com when you read this"
         # The body may be arbitrarily ugly html.  Might include signature
         # lines with irrelevant links.
-        body = msg["body"]
+        body = mimp["body"]
         subcontents = re.findall(r"<body", body, flags=re.IGNORECASE)
         if len(subcontents) > 0:  # trash all headers and associated urls
             body = body.split(subcontents[0])[1]
@@ -152,11 +164,11 @@ def process_email_message(msg):
             urls = re.findall(r"\S+\.\S+", body)
         if len(urls) == 0:
             raise ValueError("No URL provided")
-        msg["url"] = urls[0]
-        mimres = make_mail_in_membic(msg)
-        confirm_receipt(msg, mimres)
+        mimp["url"] = urls[0]
+        make_mail_in_membic(mimp)
+        confirm_receipt(mimp)
     except Exception as e:
-        reject_email(msg, str(e))
+        reject_email(mimp, str(e))
 
 
 # Unfortunately it is not possible to just get("from") and have things work.
@@ -190,7 +202,9 @@ def process_inbound_mail():
         _, data = msvr.search(None, "ALL")   # returns list of 32bit mail ids
         # data will look something like [b'1 2 3'], so data[0] is b'1 2 3'
         mailids = data[0].split()   # now have something like [b'1', b'2', b'3']
-        for mailid in mailids:
+        # traverse in reverse order since deleting can change ids otherwise
+        for mailid in reversed(mailids):
+            logger.info("Processing mailid " + str(mailid))
             # fetch 1st param can take a number, a range, or csv of ranges
             _, msgd = msvr.fetch(mailid, "(RFC822)")  # raw msg data
             # e.g. len(msgd) 2, msgd[0]: msg content, msgd[1]: closing paren
