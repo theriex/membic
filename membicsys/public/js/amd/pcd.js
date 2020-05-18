@@ -99,14 +99,87 @@ app.pcd = (function () {
     }
 
 
-    function shareMailLink () {
-        var url = ctx.descobj.exturl + "&action=settings";
-        var subj = "Invitation to " + ctx.descobj.name;
-        var body = "Hi,\n\n" +
-            "Check out " + ctx.descobj.name + " " + url + ". You can follow new posts via email or RSS. Low noise, trusted info.\n\n";
+    function weeklyPrebVolume () {
+        var vol = {low:1000, high:0, ttl:0, avg:0, nzc:0, nzt:0, nzwa:0,
+                   prebs:ctx.actobj.itlist, pidx:0,
+                   wkb:new Date().toISOString()};
+        if(!vol.prebs.length) { return vol; }
+        vol.lpc = vol.prebs[vol.prebs.length - 1].created;
+        if(vol.prebs[vol.prebs.length - 1].dsType === "Overflow") {
+            vol.lpc = vol.prebs[vol.prebs.length - 2].created; }
+        while(vol.wkb > vol.lpc) {  //while week begin > last preb created
+            if(!vol.weeks) {  //first pass
+                vol.weeks = []; }
+            else {  //record last pass total
+                vol.weeks.push(vol.wkt); }
+            vol.wkt = 0;
+            vol.wkb = new Date(jt.isoString2Time(vol.wkb).getTime() -
+                               (7 * 24 * 60 * 60 * 1000)).toISOString();
+            while(vol.pidx < vol.prebs.length &&
+                  vol.prebs[vol.pidx].created > vol.wkb) {
+                if(vol.prebs[vol.pidx].dsType === "Membic") {
+                    vol.wkt += 1; }
+                vol.pidx += 1; } }
+        vol.weeks.forEach(function (wkt) {
+            if(wkt < vol.low) { vol.low = wkt; }
+            if(wkt > vol.high) { vol.high = wkt; }
+            vol.ttl += wkt;
+            if(wkt) {
+                vol.nzc += 1;
+                vol.nzt += wkt; } });
+        vol.avg = Math.round(vol.ttl / vol.weeks.length);
+        vol.nzwa = Math.round(vol.nzt / vol.nzc);
+        return vol;
+    }
+
+
+    function shareMailApplicationLink () {
+        var subj = "membic.org";
+        var body = "Links and why they are worth reading.\n" +
+            app.docroot + "\n\n" +
+            "You can use Membic to save and publish links related to your ongoing interests. Check out some Themes and Profiles to see what you can do.\n";
         var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
             jt.dquotenc(body) + "%0A%0A";
         return link;
+    }
+
+
+    //Even though the receiver will clearly have the sender's email address,
+    //app links for sharing should avoid having the email address in them.
+    //Also possible the sender is using a different address to login with
+    //than the one they are sending from.
+    function shareMailThemeOrProfileLink () {
+        var actargs = "?action=invitation";
+        var sig = "";
+        var auth = app.login.authenticated();
+        if(auth) {
+            sig = app.login.myProfile().name;
+            //Add the invitation sender to the action so the app can help
+            //the sender avoid duplicate invites, send thanks, whatever.
+            actargs += "&from=" + auth.authId; }
+        var url = ctx.descobj.exturl + actargs;
+        if(!url.startsWith("http")) {
+            if(url.startsWith("/")) {
+                url = url.slice(1); }
+            url = app.docroot + url; }
+        var vol = weeklyPrebVolume();
+        var descrname = ctx.descobj.name;
+        if(ctx.descobj.disptype !== "theme") {
+            descrname = "The profile page for " + descrname; }
+        var subj = "Invitation to " + ctx.descobj.name;
+        var body = "This is an invitation to follow \"" + ctx.descobj.name + "\" on membic.org. I think you might find upcoming links worth your time to check out.\n\n" +
+            descrname + " is a highly curated low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). When you get notified about a post you find interesting, please send me your thoughts on it. You can use this link to connect: " + url + "\n\n" +
+            "Looking forward to hearing from you.\n" + sig + "\n";
+        var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
+            jt.dquotenc(body) + "%0A%0A";
+        return link;
+    }
+
+
+    function shareMailLink () {
+        if(ctx.descobj.disptype === "app") {
+            return shareMailApplicationLink(); }
+        return shareMailThemeOrProfileLink();
     }
 
 
@@ -131,7 +204,7 @@ app.pcd = (function () {
                         ["img", {src:app.dr("img/rssiconwhite.png"),
                                  style:"max-width:16px;"}]]]]); }
         if(app.solopage()) {
-            var membicurl = ctx.descobj.exturl + "&action=settings";
+            var membicurl = ctx.descobj.exturl + "?action=settings";
             tac.push(["a", {href:membicurl, //right click to copy
                             cla:"resp-sharing-button__link",
                             id:"membiclink", title:"Follow on Membic",
