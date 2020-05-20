@@ -59,7 +59,10 @@ module.exports = (function () {
      logflds:["email", "name"]},
         ////////// Notes:
         // cliset: {flags:{archived:ISO},  //no new membics for theme if set
-        //          mailins:"enabled",     //must be "enabled" for Mail-Ins
+        //          mailins:"enabled",     //"disabled" if Mail-Ins not allowed
+        //          followers:{userid:{name:_, following:_, mayEmail:_}...}
+        //              following: "Yes" or "No"|timestamp when last noted
+        //              mayEmail: "Yes" or "No"|authorizinguserid|timestamp
         //          embcolors:{link:"#84521a", hover:"#a05705"},
         //          //No longer supported:
         //          maxPostsPerDay:1,  //prev max of 2

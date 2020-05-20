@@ -7,6 +7,7 @@
 #pylint: disable=line-too-long
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
+#pylint: disable=multiple-imports
 import logging
 import logging.handlers
 REPL = ["logs/plg_mailins.log", "e@m.org", "foo"]
@@ -16,7 +17,7 @@ logging.basicConfig(
     handlers=[logging.handlers.TimedRotatingFileHandler(
         REPL[0], when='D', backupCount=10)])
 logger = logging.getLogger(__name__)
-import imaplib
+import imaplib, smtplib, ssl, textwrap, datetime
 import email
 from email import policy
 import re
@@ -171,6 +172,29 @@ def process_email_message(mimp):
         reject_email(mimp, str(e))
 
 
+def email_quote_original(mimp):
+    tstamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    qt = "On " + tstamp + " " + mimp["emaddr"] + " wrote:\n"
+    qt += textwrap.fill(mimp["body"], 76,
+                        initial_indent="> ", subsequent_indent="> ")
+    return qt
+
+
+def echo_test_message(mimp):
+    try:
+        set_mimp_emaddr_fields(mimp)  # ValueError if unknown
+        sctx = ssl.create_default_context()  # validate host and certificates
+        # 465: secured with SSL. 587: not secured, but supports STARTTLS
+        with smtplib.SMTP_SSL("smtp.dreamhost.com", 465, context=sctx) as smtp:
+            smtp.login(MAILINADDR, MAILINPASS)
+            smtp.sendmail(MAILINADDR, mimp["emaddr"],
+                          "Subject: Re: " + mimp["subject"] + "\n\n" +
+                          "echo_test received your message:\n\n" +
+                          email_quote_original(mimp))
+    except Exception as e:
+        logging.exception(str(e))
+
+
 # Unfortunately it is not possible to just get("from") and have things work.
 # 15may20 Sending mail via Thunderbird 68.8 using foo@gmail.com account, with
 # bar@example.com as the default identity, and sending as baz@other.org.
@@ -202,7 +226,7 @@ def process_inbound_mail():
         _, data = msvr.search(None, "ALL")   # returns list of 32bit mail ids
         # data will look something like [b'1 2 3'], so data[0] is b'1 2 3'
         mailids = data[0].split()   # now have something like [b'1', b'2', b'3']
-        # traverse in reverse order since deleting can change ids otherwise
+        # Traverse in reverse order since deleting, otherwise ids change.
         for mailid in reversed(mailids):
             logger.info("Processing mailid " + str(mailid))
             # fetch 1st param can take a number, a range, or csv of ranges
@@ -210,13 +234,14 @@ def process_inbound_mail():
             # e.g. len(msgd) 2, msgd[0]: msg content, msgd[1]: closing paren
             for response_part in msgd:
                 if isinstance(response_part, tuple):  # have content
-                    # e.g. response_part[0]: RFC822 id, [1]: binary text content
+                    # e.g. response_part[0]: "RFC822", [1]: binary text content
                     # parse method recommends always specifying policy
                     msg = email.message_from_bytes(response_part[1],
                                                    policy=policy.SMTP)
-                    process_email_message({"from": find_from_address(msg),
-                                           "subject": msg.get("subject"),
-                                           "body": msg.get_content()})
+                    mimp = {"from": find_from_address(msg),
+                            "subject": msg.get("subject"),
+                            "body": msg.get_content()}
+                    process_email_message(mimp)
             msvr.store(mailid, "+FLAGS", "\\Deleted")
             msvr.expunge()
         msvr.close()
