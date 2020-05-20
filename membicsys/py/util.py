@@ -13,6 +13,7 @@ import hmac
 import re
 import json
 import base64
+import py.mconf as mconf
 import py.dbacc as dbacc
 import requests         # Fetch things over http in a reasonable way
 import io               # Image.open/save requires file-like access
@@ -21,7 +22,8 @@ import string
 import random
 import urllib.parse     # to be able to use urllib.parse.quote
 from email.mime.text import MIMEText
-from subprocess import Popen, PIPE  # smtplib does not work
+import smtplib
+import ssl
 import os
 
 
@@ -393,9 +395,11 @@ def send_mail(emaddr, subj, body, domain=None, sender="support"):
     msg["Subject"] = subj
     msg["From"] = fromaddr
     msg["To"] = emaddr
-    smp = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE,
-                universal_newlines=True)
-    smp.communicate(msg.as_string())
+    sctx = ssl.create_default_context()  # validate host and certificates
+    # 465: secured with SSL. 587: not secured, but supports STARTTLS
+    with smtplib.SMTP_SSL(mconf.email["smtp"], 465, context=sctx) as smtp:
+        smtp.login(fromaddr, mconf.email[sender])
+        smtp.sendmail(fromaddr, emaddr, msg.as_string())
 
 
 def make_auth_obj(muser, srvtok):
