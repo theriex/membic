@@ -2,13 +2,14 @@
 #pylint: disable=invalid-name
 #pylint: disable=missing-function-docstring
 #pylint: disable=wrong-import-position
+import py.mconf as mconf
 import logging
 import logging.handlers
 # logging may or may not have been set up, depending on environment.
 logging.basicConfig(level=logging.INFO)
 # Tune logging so it works the way it should, even if set up elsewhere
 handler = logging.handlers.TimedRotatingFileHandler(
-    "logs/plg_application.log", when='D', backupCount=10)
+    mconf.logsdir + "plg_application.log", when='D', backupCount=10)
 handler.setFormatter(logging.Formatter(
     '%(levelname)s %(module)s %(asctime)s %(message)s'))
 logger = logging.getLogger()

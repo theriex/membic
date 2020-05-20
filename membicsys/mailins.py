@@ -8,14 +8,14 @@
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
 #pylint: disable=multiple-imports
+import py.mconf as mconf
 import logging
 import logging.handlers
-REPL = ["logs/plg_mailins.log", "e@m.org", "foo"]
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(levelname)s %(module)s %(asctime)s %(message)s',
     handlers=[logging.handlers.TimedRotatingFileHandler(
-        REPL[0], when='D', backupCount=10)])
+        mconf.logsdir + "plg_mailins.log", when='D', backupCount=10)])
 logger = logging.getLogger(__name__)
 import imaplib, smtplib, ssl, textwrap, datetime
 import email
@@ -26,8 +26,11 @@ import py.useract as useract
 import py.util as util
 import json
 
-MAILINADDR = REPL[1]
-MAILINPASS = REPL[2]
+
+MAILINADDR = "me" + "@" + mconf.domain
+MAILINPASS = mconf.email["me"]
+SITEROOT = "https://" + mconf.domain
+SUPPADDR = "support" + "@" + mconf.domain
 
 # The processing here needs to use the same core processing as membicsave.
 def make_mail_in_membic(mimp):
@@ -88,10 +91,10 @@ def confirm_receipt(mimp):
         body += "    #" + tag + ": " + stat + "\n"
     body += "\n"
     body += "You can view or edit this membic from your profile at "
-    body += util.my_login_url(mimp["muser"], "https://membic.org") + "\n\n"
-    body += "This message is an automated response to your Mail-In Membic. If you have any questions or concerns, forward this message to support@membic.org along with your comments so we can look into it. Thanks for using Membic!\n"
-    util.send_mail(mimp["emaddr"], subj, body, domain="membic.org",
-                   sender=MAILINADDR.split("@")[0])
+    body += util.my_login_url(mimp["muser"], SITEROOT) + "\n\n"
+    body += "This message is an automated response to your Mail-In Membic. If you have any questions or concerns, forward this message to " + SUPPADDR + " along with your comments so we can look into it. Thanks for using Membic!\n"
+    util.send_mail(mimp["emaddr"], subj, body, domain=mconf.domain,
+                   sender="me")
     logging.info("Confirmation email sent")
 
 
@@ -107,10 +110,10 @@ def reject_email(mimp, errtxt):
     body += "You sent:\n"
     body += "[subject]: " + mimp["subject"] + "\n"
     body += "[content]: " + mimp["body"] + "\n\n"
-    body += "If this error message doesn't make sense to you, please forward this email to support@membic.org so we can look into it. You can also create the membic directly from your profile at "
-    body += util.my_login_url(mimp["muser"], "https://membic.org") + "\n"
-    util.send_mail(mimp["emaddr"], subj, body, domain="membic.org",
-                   sender=MAILINADDR.split("@")[0])
+    body += "If this error message doesn't make sense to you, please forward this email to " + SUPPADDR + " so we can look into it. You can also create the membic directly from your profile at "
+    body += util.my_login_url(mimp["muser"], SITEROOT) + "\n"
+    util.send_mail(mimp["emaddr"], subj, body, domain=mconf.domain,
+                   sender="me")
     logging.info("Rejection response email sent")
 
 
@@ -185,7 +188,7 @@ def echo_test_message(mimp):
         set_mimp_emaddr_fields(mimp)  # ValueError if unknown
         sctx = ssl.create_default_context()  # validate host and certificates
         # 465: secured with SSL. 587: not secured, but supports STARTTLS
-        with smtplib.SMTP_SSL("smtp.dreamhost.com", 465, context=sctx) as smtp:
+        with smtplib.SMTP_SSL(mconf.email["smtp"], 465, context=sctx) as smtp:
             smtp.login(MAILINADDR, MAILINPASS)
             smtp.sendmail(MAILINADDR, mimp["emaddr"],
                           "Subject: Re: " + mimp["subject"] + "\n\n" +
@@ -220,7 +223,7 @@ def find_from_address(msg):
 def process_inbound_mail():
     """ Read inbound email, create membics and clear from inbox. """
     try:
-        msvr = imaplib.IMAP4_SSL("imap.dreamhost.com")  # port defaults to 993
+        msvr = imaplib.IMAP4_SSL(mconf.email["imap"])  # port defaults to 993
         msvr.login(MAILINADDR, MAILINPASS)
         msvr.select("inbox")  # case doesn't seem to matter
         _, data = msvr.search(None, "ALL")   # returns list of 32bit mail ids

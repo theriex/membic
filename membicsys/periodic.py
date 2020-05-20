@@ -4,13 +4,14 @@
 #pylint: disable=invalid-name
 #pylint: disable=missing-function-docstring
 #pylint: disable=logging-not-lazy
+import py.mconf as mconf
 import logging
 import logging.handlers
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(levelname)s %(module)s %(asctime)s %(message)s',
     handlers=[logging.handlers.TimedRotatingFileHandler(
-        "logs/plg_periodic.log", when='D', backupCount=10)])
+        mconf.logsdir + "plg_periodic.log", when='D', backupCount=10)])
 import py.util as util
 import py.dbacc as dbacc
 import datetime

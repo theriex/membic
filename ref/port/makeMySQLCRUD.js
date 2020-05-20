@@ -317,9 +317,10 @@ function helperFunctions () {
     pyc += "def get_mysql_connector():\n";
     pyc += "    cnx = None\n";
     pyc += "    try:\n";
-    pyc += "        sr = {\"u\":\"root\", \"p\":None, \"h\":\"127.0.0.1\", \"d\":\"membic_database\"}\n";
-    pyc += "        cnx = mysql.connector.connect(user=sr[\"u\"], password=sr[\"p\"],\n";
-    pyc += "                                      host=sr[\"h\"], database=sr[\"d\"])\n";
+    pyc += "        cnx = mysql.connector.connect(user=mconf.db[\"u\"],\n"
+    pyc += "                                      password=mconf.db[\"p\"],\n"
+    pyc += "                                      host=mconf.db[\"h\"],\n"
+    pyc += "                                      database=mconf.db[\"d\"])\n"
     pyc += "    except Exception as e:\n";
     pyc += "        raise ValueError(\"Connection failed: \" + str(e))\n";
     pyc += "    return cnx\n";
@@ -790,6 +791,7 @@ function createPythonDBAcc () {
     pyc += "import datetime\n";
     pyc += "import pickle\n";
     pyc += "import mysql.connector\n";
+    pyc += "import py.mconf as mconf\n";
     pyc += "\n";
     pyc += "# Notes:\n"
     pyc += "# (1) In general, all processing that might raise a mysql.connector.Error is\n"
