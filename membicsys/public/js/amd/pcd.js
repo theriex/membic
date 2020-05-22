@@ -168,8 +168,9 @@ app.pcd = (function () {
             descrname = "The profile page for " + descrname; }
         var subj = "Invitation to " + ctx.descobj.name;
         var body = "This is an invitation to follow \"" + ctx.descobj.name + "\" on membic.org. I think you might find upcoming links worth your time to check out.\n\n" +
-            descrname + " is a highly curated low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). When you get notified about a post you find interesting, please send me your thoughts on it. You can use this link to connect: " + url + "\n\n" +
-            "Looking forward to hearing from you.\n" + sig + "\n";
+            descrname + " is a highly curated, low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). When you get notified about a post you find interesting, I would be interested in your thoughts on it. You can use this link to connect: " + url + "\n";
+        if(sig) {
+            body += "\nLooking forward to hearing from you.\n" + sig + "\n"; }
         var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
             jt.dquotenc(body) + "%0A%0A";
         return link;
@@ -204,7 +205,7 @@ app.pcd = (function () {
                         ["img", {src:app.dr("img/rssiconwhite.png"),
                                  style:"max-width:16px;"}]]]]); }
         if(app.solopage()) {
-            var membicurl = ctx.descobj.exturl + "?action=settings";
+            var membicurl = ctx.descobj.exturl + "?action=invitation";
             tac.push(["a", {href:membicurl, //right click to copy
                             cla:"resp-sharing-button__link",
                             id:"membiclink", title:"Follow on Membic",
@@ -234,6 +235,22 @@ app.pcd = (function () {
                    title:ctx.descobj.disptype.capitalize() + " Settings",
                    onclick:jt.fs(ctx.actobj.setfstr)},
              ["img", {cla:"webjump", src:app.dr("img/settings.png")}]]);
+    }
+
+
+    //If the content is being displayed within another site, then the entire
+    //top section has been hidden to avoid blinking the description and
+    //other info.  Re-enable just enough to allow for search and share.
+    function unhideSoloPageActions() {
+        var tsecdiv = jt.byId("topsectiondiv");
+        if(!tsecdiv || tsecdiv.style.display !== "none" || !app.solopage()) {
+            return; }
+        var hds = ["topmessagelinediv", "topactiondiv", "pgdescdiv",
+                   "pcdnotidiv"];
+        hds.map((i) => jt.byId(i)).forEach(function (hd) {
+            if(hd) { hd.style.display = "none"; } });
+        tsecdiv.style.display = "block";
+        jt.log("Unhid solo page actions area");
     }
 
 
@@ -272,8 +289,9 @@ app.pcd = (function () {
               shareAndFollowButtons()],
              ["div", {id:"pcdsettingsdiv", style:"display:none;"},
               ["div", {id:"pcdsetcontdiv"}]]]));
+        unhideSoloPageActions();
     }
-        
+
 
     //process any extra information from login.verifyUserInfo
     function processExtraObject (extraobj) {
@@ -345,9 +363,10 @@ app.pcd = (function () {
         var sf = "";
         if(app.login.myProfile()) {  //signed in and user info loaded
             sf = "app.pcd.settings()"; }
+        var fullurl = app.docroot + app.pcd.linkForThemeOrProfile(obj).slice(1);
         app.pcd.setPageDescription({picsrc:picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
-                                    exturl:app.pcd.linkForThemeOrProfile(obj),
+                                    exturl:fullurl,
                                     rssurl:rssURLForObj(obj),
                                     name:obj.name,
                                     descr:obj.description || obj.aboutme});

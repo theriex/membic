@@ -115,9 +115,9 @@ var jt = {};   //Global access to general utility methods
         app.docroot = ox.split("/").slice(0, 3).join("/") + "/";
         jtminjsDecorateWithUtilities(jt);
         if(app.solopage()) {  //hide framing content if embedded or standalone
+            //temporarily hide the top to avoid blinking content
             jt.byId("topsectiondiv").style.display = "none";
-            jt.byId("bottomnav").style.display = "none";
-            jt.byId("topsectiondiv").style.display = "none"; }
+            jt.byId("bottomnav").style.display = "none"; }
         //No load-time interdependencies between modules.
         var modules = [ "js/amd/login", "js/amd/connect", "js/amd/membic",
                         "js/amd/layout", "js/amd/refmgr", "js/amd/statemgr",
