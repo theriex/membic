@@ -81,6 +81,50 @@ app.membic = (function () {
     // helper functions
     ////////////////////////////////////////
 
+    //People can paste in all kinds of crap.  Don't let it crash the display.
+    function htmlSafeURL (url) {
+        var xi = url.search(/["<>]/g);
+        if(xi >= 0) {  //have bad chars in url
+            var hi = url.search(/http/i);
+            if(hi >= 0) {
+                if(hi < xi) {
+                    url = url.slice(hi, xi); }
+                else {
+                    url = url.slice(hi);
+                    xi = url.search(/["<>]/g);
+                    if(xi >= 0) {
+                        url = url.slice(0, xi); } } }
+            else {  //no "http" in url, take the first clean part
+                url = url.slice(0, xi); } }
+        return url;
+    }
+
+
+    //Return a display title for the membic.
+    function titleForMembic (membic) {
+        //normally a membic will have a title or name filled in
+        if(membic.details && (membic.details.title || membic.details.name)) {
+            return membic.details.title || membic.details.name; }
+        //if just created, membic might have an rurl but no details yet.
+        if(membic.rurl) {
+            return htmlSafeURL(membic.rurl); }
+        jt.log("Membic " + membic.dsId + " No title, name or rurl.");
+        return "No Title Available";
+    }
+
+
+    function linkForMembic (membic) {
+        if(membic.url) {   //have normalized url from reader
+            return membic.url; }
+        if(membic.rurl) {  //have interim url, waiting for reader
+            return htmlSafeURL(membic.rurl); }
+        //ok to have a membic with no url if details specfied.  If no
+        //details, that will be evident from the title, so no need to log
+        //that situation here.
+        return "";   //no url
+    }
+
+
     //Thought about adding membic share button to make your own membic off
     //of an existing one, but that adds complexity, would likely be of very
     //limited use, and detract from the external nature of sharing.  To make
@@ -88,12 +132,12 @@ app.membic = (function () {
     //mail it in.
     function membicShareHTML (membic) {
         var subj = membic.text;
-        var body = membic.url;
+        var body = linkForMembic(membic) || "No URL available";
         var mlink = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
             jt.dquotenc(body) + "%0A%0A";
         return jt.tac2html(app.layout.shareButtonsTAC(
-            {url:membic.url,
-             title:membic.text,
+            {url:body,
+             title:subj,
              mref:mlink,
              socmed:["tw", "fb", "em"]}));
     }
@@ -187,28 +231,27 @@ app.membic = (function () {
     }
 
 
-    //Membics may have been added through direct server side mechanisms like
-    //mail-in processing.  These membics will not have made it through the
-    //client-side interactive reader processing and are incomplete.  Return
-    //true if the membic needs a reader pass, false otherwise.
+    //Membics can be added server side (via mail-in processing) without
+    //having gone through a url reader pass.  The url read happens in the
+    //background when creating a new membic interatively.
     function membicDetailsUnread (membic) {
-        if(membic.dsId && !membic.rurl && membic.url) {
-            if(!membic.details) {
-                return true; }  //no info filled in at all
-            if(membic.details.artist ||
-               membic.details.author ||
-               membic.details.publisher ||
-               membic.details.album ||
-               membic.details.starring ||
-               membic.details.address ||
-               membic.details.year) {
-                return false; }  //some details filled out, assume read.
-            //If the title is set to the url, that's just a placeholder.
-            //The url may have been sanitized so look for it as a substring.
-            var wt = membic.details.title || membic.details.name || "";
-            if(!wt || wt.indexOf(membic.url) >= 0) {
-                return true; } }  //no title set, need details
-        return false;
+        if(!mayEdit(membic)) {
+            return false; }  //can't change, so don't try and read.
+        if(membic.svcdata && membic.svcdata.urlreader &&
+           Object.keys(membic.svcdata.urlreader).length > 0) {
+            return false; }  //reader ran at least once before.
+        //Older membics might not have reader information logged.
+        if(membic.imguri) {
+            return false; }  //reader filled in the img
+        if(membic.details && (membic.details.artist ||
+                              membic.details.author ||
+                              membic.details.publisher ||
+                              membic.details.album ||
+                              membic.details.starring ||
+                              membic.details.address ||
+                              membic.details.year)) {
+            return false; }  //reader filled more than title/name
+        return true;
     }
 
 
@@ -225,7 +268,8 @@ app.membic = (function () {
         tm.details = membic.details || {};
         tm.revtype = membic.revtype || "article";
         tm.rating = ratmgr.rati.dfltv;
-        tm.keywords = "";
+        tm.svcdata = tm.svcdata || {};
+        tm.svcdata.urlreader = membic.svcdata.urlreader;
         saveMembic("mergeURLReadInfoIntoSavedMembic", tm);
     }
 
@@ -248,6 +292,9 @@ app.membic = (function () {
     }
 
 
+    //A membic starts from the rurl field being filled out, then the url
+    //reader fills out the url field with a canonical value.  The rurl is
+    //not used for display, it is only for reference and reader processing.
     function startReader (membic) {
         var readername = readerModuleForURL(membic.rurl);
         membic.svcdata = membic.svcdata || {};
@@ -878,13 +925,13 @@ app.membic = (function () {
     formElements = {
         title: {
             closed: function (ignore /*cdx*/, membic) {
-                if(!membic.details) {  //Shouldn't happen, log for debugging.
-                    jt.log("formElements.title.closed no membic details: " +
-                           JSON.stringify(membic)); }
-                var html = jt.tac2html(
-                    ["a", {href:membic.url, title:membic.url,
-                           onclick:jt.fs("window.open('" + membic.url + "')")},
-                     (membic.details.title || membic.details.name)]);
+                var html = titleForMembic(membic);
+                var link = linkForMembic(membic);
+                if(link) {
+                    html = jt.tac2html(
+                        ["a", {href:link, title:link,
+                               onclick:jt.fs("window.open('" + link + "')")},
+                     html]); }
                 return html; },
             expanded: function (cdx, membic) {
                 if(!mayEdit(membic)) {
@@ -992,15 +1039,18 @@ app.membic = (function () {
             read: function (cdx) {
                 jt.out("dlgbsbdiv" + cdx, "Reading...");
                 var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-                membic.rurl = membic.rurl || membic.url;
+                membic.rurl = membic.rurl;
                 startReader(membic); } },
         picture: {
             closed: function (ignore /*cdx*/, membic) {
-                return jt.tac2html(
-                    ["div", {cla:"mdpicdiv"},
-                     ["a", {href:membic.url, title:membic.url,
-                            onclick:jt.fs("window.open('" + membic.url + "')")},
-                      ["img", {cla:"mdimg", src:membicImgSrc(membic)}]]]); },
+                var link = linkForMembic(membic);
+                var html = ["img", {cla:"mdimg", src:membicImgSrc(membic)}];
+                if(link) {
+                    html = ["a", {href:link, title:link,
+                                  onclick:jt.fs("window.open('" + link + "')")},
+                            html]; }
+                return jt.tac2html(["div", {cla:"mdpicdiv"},
+                                    html]); },
             expanded: function (cdx, membic) {
                 if(mayEdit(membic)) { //no link, too many clickables
                     return jt.tac2html(
@@ -1086,53 +1136,22 @@ app.membic = (function () {
     }
 
 
-    //A membic starts from the rurl field being filled out, then the url
-    //reader fills out the url field with a canonical value.  The rurl is
-    //not used for display, it is only for reference and reader processing.
-    //This function ensures a url field value that won't break the display.
-    function sanitizeMembicURLFields (membic) {
-        if(!membic.url && membic.rurl) {
-            return jt.log("Membic " + membic.dsId + " awaiting reader."); }
-        if(!membic.url) {
-            //return jt.log("Membic " + membic.dsId + " has no url"); }
-            return; }
-        var xi = membic.url.search(/["<>]/g);
-        if(xi >= 0) {  //have bad chars in url
-            membic.details = membic.details || {};
-            var fixtn = ((membic.details.title === membic.url) ||
-                         (membic.details.name === membic.url));
-            var hi = membic.url.search(/http/i);
-            if(hi >= 0) {
-                if(hi < xi) {
-                    membic.url = membic.url.slice(hi, xi); }
-                else {
-                    membic.url = membic.url.slice(hi);
-                    xi = membic.url.search(/["<>]/g);
-                    if(xi >= 0) {
-                        membic.url = membic.url.slice(0, xi); } } }
-            else {  //no "http" in url, take the first clean part
-                membic.url = membic.url.slice(0, xi); }
-            if(fixtn) {
-                membic.details.title = membic.url;
-                membic.details.name = membic.url; } }
-    }
-
-
     //app.pcd does not have a display iteration completion hook, since that
     //would require differentiating between "more", no results, or max items
-    //termination conditions.  So if further processing is needed, schedule
-    //it.  readerFinish -> merge and saveMembic -> redisplay -> here.  Track
+    //termination conditions.  If a membic needs further processing, this
+    //kicks it off.  Only need to start the first read here.
+    //readerFinish -> merge and saveMembic -> redisplay -> here.  Track
     //the scheduling timeout to avoid multiple simultaneous reads.
     function scheduleFollowupProcessing (cdx, membic) {
         if(cdx === 0) { //start of display pass through membics
             if(apto) {  //clear any previously scheduled automation
                 clearTimeout(apto); }
             apto = null; }
+        //May only edit membic from your own profile display
         if(!apto && mayEdit(membic) && membicDetailsUnread(membic)) {
-            var des = "Follup read Membic " + membic.dsId;
+            var des = "Followup read Membic " + membic.dsId;
+            jt.log(des);
             apto = app.fork({descr:des, ms:800, func:function () {
-                //update the membic to ready for read, and to prevent looping
-                membic.rurl = membic.rurl || membic.url;
                 startReader(membic); }}); }
     }
 
@@ -1266,7 +1285,6 @@ return {
 
 
     formHTML: function (cdx, membic) {
-        sanitizeMembicURLFields(membic);
         scheduleFollowupProcessing(cdx, membic);
         return jt.tac2html(
             //include membic data for debugging. 
