@@ -4,6 +4,7 @@
 #pylint: disable=invalid-name
 #pylint: disable=missing-function-docstring
 #pylint: disable=logging-not-lazy
+#pylint: disable=inconsistent-return-statements
 import py.mconf as mconf
 import logging
 import logging.handlers
@@ -16,6 +17,7 @@ import py.util as util
 import py.dbacc as dbacc
 import datetime
 import json
+import sys
 
 
 def nd_as_string(nd):
@@ -31,6 +33,15 @@ def nd_as_string(nd):
     for key, muser in nd["musers"].items():
         srcs = [(s["dsType"] + str(s["dsId"])) for s in muser["sources"]]
         txt += "    " + key + ": " + str(srcs) + "\n"
+    txt += "Source Followers:\n"
+    for key, audchks in nd["srcfs"].items():
+        txt += "  " + key + ":\n"
+        for ac in audchks:
+            txt += "    " + ac["change"] + " " + ac["uid"] + " "
+            avs = []
+            for fld in ["lev", "mech"]:
+                avs.append(fld + ": " + str(ac["follower"][fld]))
+            txt += ", ".join(avs) + "\n"
     return txt
 
 
@@ -38,24 +49,27 @@ def note_source(sources, dsType, dsId, name, membic):
     dk = dsType + str(dsId)
     src = sources.get(dk)
     if not src:
-        src = {"dsType":dsType, "dsId":dsId, "name":name, "membics":{}}
+        src = {"dsType":dsType, "dsId":dsId, "name":name, "membics":{},
+               "audience":{}}
     src["membics"][membic["dsId"]] = membic
     sources[dk] = src
 
 
 def note_follower(musers, src, info, follower):
+    uid = follower["dsId"]
+    mech = info.get("followmech") or "email"
+    src["audience"][uid] = {"lev":info["lev"], "mech":mech,
+                            "name":follower["name"]}
     if not info["lev"]:
         return  # No longer following, so don't send anything
-    mech = info.get("followmech")
     if mech == "RSS":
         return  # Following via webfeed, not email
-    mid = follower["dsId"]
-    muser = musers.get(mid)
+    muser = musers.get(uid)
     if not muser:
-        muser = {"dsId":mid, "email":follower["email"],
+        muser = {"dsId":uid, "email":follower["email"],
                  "name":follower["name"], "sources":[]}
     muser["sources"].append(src)
-    musers[mid] = muser
+    musers[uid] = muser
 
 
 def source_has_membics_from_others(nd, src, muser):
@@ -93,7 +107,8 @@ def find_users_to_notify(nd):
 
 # Return a dict with new membics and the users to be emailed.
 def fetch_notifications_data(sts, ets):
-    nd = {"start":sts, "end":ets, "membics":{}, "sources":{}, "musers":{}}
+    nd = {"start":sts, "end":ets,
+          "membics":{}, "sources":{}, "musers":{}, "srcfs":{}}
     where = "WHERE created > \"" + sts + "\" AND created <= \"" + ets + "\""
     where += " AND ctmid = 0 ORDER BY created DESC"
     for membic in dbacc.query_entity("Membic", where):
@@ -110,6 +125,44 @@ def fetch_notifications_data(sts, ets):
     find_users_to_notify(nd)
     logging.info("fetch_notifications_data nd_as_string\n" + nd_as_string(nd))
     return nd
+
+
+def cliset_follower_from_audinf(audinf, ts):
+    return {"name":audinf["name"],
+            "lev":audinf["lev"],
+            "mech":audinf["mech"],
+            "since":ts}
+
+
+def verify_audiences(nd, updates="save"):
+    for _, src in nd["sources"].items():
+        dbsrc = dbacc.cfbk(src["dsType"], "dsId", src["dsId"], required=True)
+        srcaudchk = []
+        updated = False
+        cliset = json.loads(dbsrc["cliset"] or "{}")
+        followers = cliset.get("followers") or {}
+        for uid, audinf in src["audience"].items():
+            changed = "   Same"
+            ts = dbacc.nowISO()
+            if not followers.get(uid):
+                changed = "  Added"
+                updated = True
+                followers[uid] = cliset_follower_from_audinf(audinf, ts)
+            else:
+                updf = cliset_follower_from_audinf(audinf, ts)
+                for fld in ["name", "lev", "mech"]:  # user update fields
+                    if followers[uid][fld] != updf[fld]:
+                        changed = "Updated"
+                        updated = True
+                        followers[uid][fld] = updf[fld]
+                        followers[uid]["updated"] = ts
+            srcaudchk.append({"change":changed, "uid":uid,
+                              "follower":followers[uid]})
+        nd["srcfs"][dbsrc["dsType"] + dbsrc["dsId"]] = srcaudchk
+        if updated and updates == "save":
+            cliset["followers"] = followers
+            dbsrc["cliset"] = json.dumps(cliset)
+            dbacc.write_entity(dbsrc, vck=dbsrc["modified"])
 
 
 def membic_poster_and_themes(membic):
@@ -154,9 +207,20 @@ def send_follower_notifications(nd, mn):
     mn["lastupd"] = dbacc.nowISO()
 
 
+def preview_daily():
+    sts = dbacc.nowISO()[0:10] + "T00:00:00Z"
+    ets = dbacc.dt2ISO(dbacc.ISO2dt(sts) + datetime.timedelta(hours=24))
+    nd = fetch_notifications_data(sts, ets)
+    verify_audiences(nd, updates="discard")
+    logging.info("preview_daily nd_as_string\n" + nd_as_string(nd))
+
+
 # Don't particularly care what time the server is using, or what time this
 # runs, as long as it is consistent.  Midnight to midnight ISO.
 def daily_notices():
+    if len(sys.argv) > 1 and sys.argv[1] == "preview":
+        return preview_daily()
+    logging.info(str(sys.argv))
     logging.info(str(util.envinfo()))
     ets = dbacc.nowISO()[0:10] + "T00:00:00Z"
     sts = dbacc.dt2ISO(dbacc.ISO2dt(ets) + datetime.timedelta(hours=-24))
@@ -167,6 +231,7 @@ def daily_notices():
         logging.info(notice_name + " already exists, not resending.")
         return
     nd = fetch_notifications_data(sts, ets)
+    verify_audiences(nd)
     mn = dbacc.write_entity({"dsType": "MailNotice",
                              "name": notice_name,
                              "subject": notice_subj})

@@ -60,9 +60,14 @@ module.exports = (function () {
         ////////// Notes:
         // cliset: {flags:{archived:ISO},  //no new membics for theme if set
         //          mailins:"enabled",     //"disabled" if Mail-Ins not allowed
-        //          followers:{userid:{name:_, following:_, mayEmail:_}...}
-        //              following: "Yes" or "No"|timestamp when last noted
-        //              mayEmail: "Yes" or "No"|authorizinguserid|timestamp
+        //          followers:{uid:audinfo, uid2:audinfo2...}
+        //              audinfo: {name, lev, mech, since, updated, blocked}
+        //                  name: latest seen name for ease of reference
+        //                  lev: same as theme info lev
+        //                  mech: "email" | "webfeed"
+        //                  since: timestamp when first noted
+        //                  updated: timestamp if/when last changed
+        //                  blocked: authId|timestamp if/when email disabled
         //          embcolors:{link:"#84521a", hover:"#a05705"},
         //          //No longer supported:
         //          maxPostsPerDay:1,  //prev max of 2
