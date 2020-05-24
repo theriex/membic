@@ -38,8 +38,8 @@ def nd_as_string(nd):
         txt += "  " + key + ":\n"
         for ac in audchks:
             txt += "    " + ac["change"]
-            for fld in ["lev", "mech", "uid", "name"]:
-                txt += " " + ac["fra"][fld]
+            for fld in ["uid", "name", "lev", "mech"]:
+                txt += " " + str(ac["fra"][fld])
             txt += "\n"
     return txt
 
@@ -155,7 +155,7 @@ def verify_audiences(nd, updates="save"):
                 if updates == "save":
                     fra = dbacc.write_entity(fra, vck=fra["modified"])
             else:
-                changed = "   Same"
+                changed = "     nc"
             srcaudchk.append({"change":changed, "fra":fra})
         nd["srcfs"][src["dsType"] + src["dsId"]] = srcaudchk
 

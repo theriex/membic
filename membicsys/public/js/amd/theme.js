@@ -158,7 +158,7 @@ app.theme = (function () {
         if(setctx.assoc === "Unknown") {
             link.text = "Follow " + setctx.tpo.name;
             link.title = link.text;
-            link.src = "blank.png"; }
+            link.src = "acbullet.png"; }
         else if(setctx.assoc === "Following") {
             link.text = "Following"; }  //"Settings" on the end gets confusing
         jt.out(setctx.mendivid, jt.tac2html(
