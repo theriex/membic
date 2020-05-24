@@ -19,7 +19,7 @@ var cachev = (function () {
         writeopt = {encoding: "utf8"},
         docroot = "",      //runtime
         othersources = ["css/site.css", "img/membiclogo.png"],
-        otherrefs = ["css/site.css", "../src/py/start.py"],
+        otherrefs = ["css/site.css", "../py/start.py"],
         ignorefiles = ["compiled.js"],  //no path on these
         srcfiles = null,   //runtime discovered + othersources
         rfiles = null,     //runtime discovered + otherrefs
@@ -47,7 +47,7 @@ var cachev = (function () {
         var basename = "cachev.js",
             path = thisfile.slice(0, -1 * basename.length);
         //console.log("path: " + path);
-        docroot = path + "../membicsys/docroot";
+        docroot = path + "../membicsys/public";
         //console.log("docroot: " + docroot);
         if(!srcfiles) {
             srcfiles = [];

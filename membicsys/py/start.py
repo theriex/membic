@@ -19,7 +19,7 @@ import py.feed as feed
 # This cache bust value is updated via membic/build/cachev.js which keeps
 # all the cache bust values updated and in sync across the sourcebase.  Do
 # not edit it directly.
-cachev = "v=200216"
+cachev = "v=200524"
 
 indexHTML = """
 <!doctype html>
