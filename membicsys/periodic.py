@@ -37,11 +37,10 @@ def nd_as_string(nd):
     for key, audchks in nd["srcfs"].items():
         txt += "  " + key + ":\n"
         for ac in audchks:
-            txt += "    " + ac["change"] + " " + ac["uid"] + " "
-            avs = []
-            for fld in ["lev", "mech"]:
-                avs.append(fld + ": " + str(ac["follower"][fld]))
-            txt += ", ".join(avs) + "\n"
+            txt += "    " + ac["change"]
+            for fld in ["lev", "mech", "uid", "name"]:
+                txt += " " + ac["fra"][fld]
+            txt += "\n"
     return txt
 
 
@@ -127,42 +126,38 @@ def fetch_notifications_data(sts, ets):
     return nd
 
 
-def cliset_follower_from_audinf(audinf, ts):
-    return {"name":audinf["name"],
-            "lev":audinf["lev"],
-            "mech":audinf["mech"],
-            "since":ts}
+def follower_record_from_audinf(src, uid, audinf):
+    return {"dsType":"Following", "dsId":"", "uid":uid, "name":audinf["name"],
+            "srctype":src["dsType"], "srcid":src["dsId"], "lev":audinf["lev"],
+            "mech":audinf["mech"], "blocked":"", "modified":""}
 
 
 def verify_audiences(nd, updates="save"):
     for _, src in nd["sources"].items():
-        dbsrc = dbacc.cfbk(src["dsType"], "dsId", src["dsId"], required=True)
         srcaudchk = []
-        updated = False
-        cliset = json.loads(dbsrc["cliset"] or "{}")
-        followers = cliset.get("followers") or {}
         for uid, audinf in src["audience"].items():
-            changed = "   Same"
-            ts = dbacc.nowISO()
-            if not followers.get(uid):
+            changed = ""
+            fra = follower_record_from_audinf(src, uid, audinf)
+            frecs = dbacc.query_entity(
+                "Following", "WHERE uid = " + str(uid) +
+                " AND srctype = \"" + src["dsType"] + "\"" +
+                " AND srcid = " + src["dsId"] + " LIMIT 1")
+            if len(frecs) < 1:
                 changed = "  Added"
-                updated = True
-                followers[uid] = cliset_follower_from_audinf(audinf, ts)
-            else:
-                updf = cliset_follower_from_audinf(audinf, ts)
+            else:  # have existing follower record
+                fre = frecs[0]
                 for fld in ["name", "lev", "mech"]:  # user update fields
-                    if followers[uid][fld] != updf[fld]:
+                    if fra[fld] != fre[fld]:
                         changed = "Updated"
-                        updated = True
-                        followers[uid][fld] = updf[fld]
-                        followers[uid]["updated"] = ts
-            srcaudchk.append({"change":changed, "uid":uid,
-                              "follower":followers[uid]})
-        nd["srcfs"][dbsrc["dsType"] + dbsrc["dsId"]] = srcaudchk
-        if updated and updates == "save":
-            cliset["followers"] = followers
-            dbsrc["cliset"] = json.dumps(cliset)
-            dbacc.write_entity(dbsrc, vck=dbsrc["modified"])
+                        fre[fld] = fra[fld]
+                fra = fre
+            if changed:  # added or updated
+                if updates == "save":
+                    fra = dbacc.write_entity(fra, vck=fra["modified"])
+            else:
+                changed = "   Same"
+            srcaudchk.append({"change":changed, "fra":fra})
+        nd["srcfs"][src["dsType"] + src["dsId"]] = srcaudchk
 
 
 def membic_poster_and_themes(membic):
@@ -187,7 +182,16 @@ def send_follower_notice(muser, membics):
         body += membic_poster_and_themes(membic) + "\n\n"
     body += "To unsubscribe from these notices, change your follow settings"
     body += " on https://membic.org\n"
+    # Mail is sent from the default "support" account so that any responses
+    # won't get handled by automation.
     util.send_mail(muser["email"], subj, body, domain="membic.org")
+
+
+def send_audience_change_notices(nd):
+    # walk the audience checks in the source followers and if there are
+    # changes, send a note to the source membership.  Helpful to know when
+    # you've gotten a new follower or one has dropped off.
+    logging.info("send_audience_change_notices not implemented yet")
 
 
 def send_follower_notifications(nd, mn):
@@ -200,6 +204,7 @@ def send_follower_notifications(nd, mn):
                 membics[membicid] = membic
         send_follower_notice(muser, membics)
         uids.append(uid)
+    send_audience_change_notices(nd)
     # Send the notifications data summary to support for general checking
     util.send_mail(None, "membic notifications data", nd_as_string(nd),
                    domain="membic.org")

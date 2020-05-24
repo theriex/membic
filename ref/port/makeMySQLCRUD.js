@@ -527,7 +527,7 @@ function dblogMessager () {
     pyc += "            msg = \"db\" + op + \" \" + entity + \" \" + obj[\"dsId\"]\n";
     pyc += "            if entity in log_summary_flds:\n";
     pyc += "                for field in log_summary_flds[entity]:\n";
-    pyc += "                    msg += \" \" + obj[field]\n";
+    pyc += "                    msg += \" \" + str(obj[field])\n";
     pyc += "            logging.info(msg)\n";
     pyc += "    else:  # no res, probably a delete\n";
     pyc += "        logging.info(\"db\" + op + \" \" + entity + \" -no obj details-\")\n";

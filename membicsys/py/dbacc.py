@@ -148,6 +148,18 @@ entdefs = {
         "uidcsv": {"pt": "string", "un": False, "dv": ""},
         "lastupd": {"pt": "string", "un": False, "dv": ""}
     },
+    "Following": {  # Accumulated follower relationships
+        "dsId": {"pt": "dbid", "un": True, "dv": 0},
+        "created": {"pt": "string", "un": False, "dv": ""},
+        "modified": {"pt": "string", "un": False, "dv": ""},
+        "uid": {"pt": "dbid", "un": False, "dv": 0},
+        "name": {"pt": "string", "un": False, "dv": ""},
+        "srctype": {"pt": "string", "un": False, "dv": ""},
+        "srcid": {"pt": "dbid", "un": False, "dv": 0},
+        "lev": {"pt": "int", "un": False, "dv": 0},
+        "mech": {"pt": "string", "un": False, "dv": ""},
+        "blocked": {"pt": "string", "un": False, "dv": ""}
+    },
     "ActivitySummary": {  # Stats by profile/theme
         "dsId": {"pt": "dbid", "un": True, "dv": 0},
         "created": {"pt": "string", "un": False, "dv": ""},
@@ -183,6 +195,7 @@ entkeys = {
     "Membic": ["importid"],
     "Overflow": [],
     "MailNotice": ["name"],
+    "Following": [],
     "ActivitySummary": ["refp"],
     "ConnectionService": ["name"]
 }
@@ -195,6 +208,7 @@ cachedefs = {
     "Membic": {"minutes": 0, "manualadd": False},
     "Overflow": {"minutes": 0, "manualadd": False},
     "MailNotice": {"minutes": 0, "manualadd": False},
+    "Following": {"minutes": 0, "manualadd": False},
     "ActivitySummary": {"minutes": 0, "manualadd": False},
     "ConnectionService": {"minutes": 240, "manualadd": False}
 }
@@ -746,6 +760,43 @@ def db2app_MailNotice(inst):
     return cnv
 
 
+# Convert the given Following inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
+def app2db_Following(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["created"] = app2db_fieldval(None, "created", inst)
+    cnv["modified"] = app2db_fieldval(None, "modified", inst)
+    cnv["uid"] = app2db_fieldval("Following", "uid", inst)
+    cnv["name"] = app2db_fieldval("Following", "name", inst)
+    cnv["srctype"] = app2db_fieldval("Following", "srctype", inst)
+    cnv["srcid"] = app2db_fieldval("Following", "srcid", inst)
+    cnv["lev"] = app2db_fieldval("Following", "lev", inst)
+    cnv["mech"] = app2db_fieldval("Following", "mech", inst)
+    cnv["blocked"] = app2db_fieldval("Following", "blocked", inst)
+    return cnv
+
+
+# Convert the given Following inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
+def db2app_Following(inst):
+    cnv = {}
+    cnv["dsType"] = "Following"
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["created"] = db2app_fieldval(None, "created", inst)
+    cnv["modified"] = db2app_fieldval(None, "modified", inst)
+    cnv["uid"] = db2app_fieldval("Following", "uid", inst)
+    cnv["name"] = db2app_fieldval("Following", "name", inst)
+    cnv["srctype"] = db2app_fieldval("Following", "srctype", inst)
+    cnv["srcid"] = db2app_fieldval("Following", "srcid", inst)
+    cnv["lev"] = db2app_fieldval("Following", "lev", inst)
+    cnv["mech"] = db2app_fieldval("Following", "mech", inst)
+    cnv["blocked"] = db2app_fieldval("Following", "blocked", inst)
+    return cnv
+
+
 # Convert the given ActivitySummary inst dict from app values to db values.  Removes
 # the dsType field to avoid trying to write it to the db.
 def app2db_ActivitySummary(inst):
@@ -830,6 +881,7 @@ def dblogmsg(op, entity, res):
         "Membic": ["url", "penname", "penid", "ctmid"],
         "Overflow": ["dbkind", "dbkeyid"],
         "MailNotice": ["name"],
+        "Following": ["srctype", "srcid", "name", "uid", "lev", "mech"],
         "ActivitySummary": ["refp", "tstart", "tuntil"],
         "ConnectionService": ["name"]}
     if res:
@@ -839,7 +891,7 @@ def dblogmsg(op, entity, res):
             msg = "db" + op + " " + entity + " " + obj["dsId"]
             if entity in log_summary_flds:
                 for field in log_summary_flds[entity]:
-                    msg += " " + obj[field]
+                    msg += " " + str(obj[field])
             logging.info(msg)
     else:  # no res, probably a delete
         logging.info("db" + op + " " + entity + " -no obj details-")
@@ -1157,6 +1209,54 @@ def update_existing_MailNotice(cnx, cursor, fields, vck):
     return fields
 
 
+# Write a new Following row, using the given field values or defaults.
+def insert_new_Following(cnx, cursor, fields):
+    fields = app2db_Following(fields)
+    stmt = (
+        "INSERT INTO Following (created, modified, uid, name, srctype, srcid, lev, mech, blocked) "
+        "VALUES (%(created)s, %(modified)s, %(uid)s, %(name)s, %(srctype)s, %(srcid)s, %(lev)s, %(mech)s, %(blocked)s)")
+    data = {
+        'created': fields.get("created"),
+        'modified': fields.get("modified"),
+        'uid': fields.get("uid", entdefs["Following"]["uid"]["dv"]),
+        'name': fields.get("name", entdefs["Following"]["name"]["dv"]),
+        'srctype': fields.get("srctype", entdefs["Following"]["srctype"]["dv"]),
+        'srcid': fields.get("srcid", entdefs["Following"]["srcid"]["dv"]),
+        'lev': fields.get("lev", entdefs["Following"]["lev"]["dv"]),
+        'mech': fields.get("mech", entdefs["Following"]["mech"]["dv"]),
+        'blocked': fields.get("blocked", entdefs["Following"]["blocked"]["dv"])}
+    cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
+    cnx.commit()
+    fields = db2app_Following(fields)
+    dblogmsg("ADD", "Following", fields)
+    return fields
+
+
+# Update the specified Following row with the given field values.
+def update_existing_Following(cnx, cursor, fields, vck):
+    fields = app2db_Following(fields)
+    dsId = int(fields["dsId"])  # Verify int value
+    stmt = ""
+    for field in fields:  # only updating the fields passed in
+        if stmt:
+            stmt += ", "
+        stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE Following SET " + stmt + " WHERE dsId=" + str(dsId)
+    if vck != "override":
+        stmt += " AND modified=\"" + vck + "\""
+    data = {}
+    for field in fields:
+        data[field] = fields[field]
+    cursor.execute(stmt, data)
+    if cursor.rowcount < 1 and vck != "override":
+        raise ValueError("Following" + str(dsId) + " update received outdated version check value " + vck + ".")
+    cnx.commit()
+    fields = db2app_Following(fields)
+    dblogmsg("UPD", "Following", fields)
+    return fields
+
+
 # Write a new ActivitySummary row, using the given field values or defaults.
 def insert_new_ActivitySummary(cnx, cursor, fields):
     fields = app2db_ActivitySummary(fields)
@@ -1282,6 +1382,8 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                     return update_existing_Overflow(cnx, cursor, inst, vck)
                 if entity == "MailNotice":
                     return update_existing_MailNotice(cnx, cursor, inst, vck)
+                if entity == "Following":
+                    return update_existing_Following(cnx, cursor, inst, vck)
                 if entity == "ActivitySummary":
                     return update_existing_ActivitySummary(cnx, cursor, inst, vck)
                 if entity == "ConnectionService":
@@ -1300,6 +1402,8 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                 return insert_new_Overflow(cnx, cursor, inst)
             if entity == "MailNotice":
                 return insert_new_MailNotice(cnx, cursor, inst)
+            if entity == "Following":
+                return insert_new_Following(cnx, cursor, inst)
             if entity == "ActivitySummary":
                 return insert_new_ActivitySummary(cnx, cursor, inst)
             if entity == "ConnectionService":
@@ -1415,6 +1519,20 @@ def query_MailNotice(cnx, cursor, where):
     return res
 
 
+def query_Following(cnx, cursor, where):
+    query = "SELECT dsId, created, modified, "
+    query += "uid, name, srctype, srcid, lev, mech, blocked"
+    query += " FROM Following " + where
+    cursor.execute(query)
+    res = []
+    for (dsId, created, modified, uid, name, srctype, srcid, lev, mech, blocked) in cursor:
+        inst = {"dsType": "Following", "dsId": dsId, "created": created, "modified": modified, "uid": uid, "name": name, "srctype": srctype, "srcid": srcid, "lev": lev, "mech": mech, "blocked": blocked}
+        inst = db2app_Following(inst)
+        res.append(inst)
+    dblogmsg("QRY", "Following", res)
+    return res
+
+
 def query_ActivitySummary(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
     query += "refp, tstart, tuntil, reqbyid, reqbyht, reqbypm, reqbyrs, reqdets, newmembics, edited, removed"
@@ -1466,6 +1584,8 @@ def query_entity(entity, where):
                 return query_Overflow(cnx, cursor, where)
             if entity == "MailNotice":
                 return query_MailNotice(cnx, cursor, where)
+            if entity == "Following":
+                return query_Following(cnx, cursor, where)
             if entity == "ActivitySummary":
                 return query_ActivitySummary(cnx, cursor, where)
             if entity == "ConnectionService":
@@ -1554,6 +1674,13 @@ def visible_MailNotice_fields(obj, audience):
     return filtobj
 
 
+def visible_Following_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.items():
+        filtobj[fld] = val
+    return filtobj
+
+
 def visible_ActivitySummary_fields(obj, audience):
     filtobj = {}
     for fld, val in obj.items():
@@ -1585,6 +1712,8 @@ def visible_fields(obj, audience="public"):
         return visible_Overflow_fields(obj, audience)
     if obj["dsType"] == "MailNotice":
         return visible_MailNotice_fields(obj, audience)
+    if obj["dsType"] == "Following":
+        return visible_Following_fields(obj, audience)
     if obj["dsType"] == "ActivitySummary":
         return visible_ActivitySummary_fields(obj, audience)
     if obj["dsType"] == "ConnectionService":

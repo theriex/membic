@@ -60,14 +60,6 @@ module.exports = (function () {
         ////////// Notes:
         // cliset: {flags:{archived:ISO},  //no new membics for theme if set
         //          mailins:"enabled",     //"disabled" if Mail-Ins not allowed
-        //          followers:{uid:audinfo, uid2:audinfo2...}
-        //              audinfo: {name, lev, mech, since, updated, blocked}
-        //                  name: latest seen name for ease of reference
-        //                  lev: same as theme info lev
-        //                  mech: "email" | "webfeed"
-        //                  since: timestamp when first noted
-        //                  updated: timestamp if/when last changed
-        //                  blocked: authId|timestamp if/when email disabled
         //          embcolors:{link:"#84521a", hover:"#a05705"},
         //          //No longer supported:
         //          maxPostsPerDay:1,  //prev max of 2
@@ -86,6 +78,7 @@ module.exports = (function () {
         //             status:"pending"|"rejected", reason}
         // The themes data is for ease of reference, it is not authoritative
         // and may be out of date.  See util.verify_theme_muser_info
+
 
     {entity:"Theme", descr:"A cooperative theme.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
@@ -106,6 +99,7 @@ module.exports = (function () {
      logflds:["name"]},
         ////////// Notes:
         // name: bootstrap name is "Theme " + id of first founder
+
 
     {entity:"AdminLog", descr:"Administrative actions log.", fields:[
         {f:"letype", d:"req string", c:"log entry type, e.g. 'Theme'"},
@@ -202,6 +196,7 @@ module.exports = (function () {
         //   might select from a scalar view of emoticons to rate it.  Or
         //   flag as inappropriate.
 
+
     {entity:"Overflow", descr:"extra preb membics", fields:[
         {f:"dbkind", d:"req string", c:"MUser or Theme"},
         {f:"dbkeyid", d:"req dbid", c:"id of source MUser or Theme"},
@@ -209,6 +204,7 @@ module.exports = (function () {
      cache:{minutes:0},  //not commonly referenced
      logflds:["dbkind", "dbkeyid"]},
         
+
     //This is used to prevent duplicate sends of things like daily summaries.
     //Broadcast email is completely unreliable, and it should be assumed to
     //be routed directly to spam folders.  Only if the recipient has previously
@@ -221,6 +217,24 @@ module.exports = (function () {
         {f:"lastupd", d:"isodate", c:"last recorded send"}],
      cache:{minutes:0},  //not generally referenced
      logflds:["name"]},
+
+
+    //Follower relationships are discovered through periodic notices and
+    //email contact processing, they are not updated transactionally when
+    //someone chooses to follow or join.  Follower entries can be updated
+    //directly by those managing their audiences.
+    {entity:"Following", descr:"Accumulated follower relationships", fields:[
+        {f:"uid", d:"req dbid", c:"MUser id of follower"},
+        {f:"name", d:"string", c:"latest seen name for ease of reference"},
+        {f:"srctype", d:"string", c:"dsType of source: Theme or MUser"},
+        {f:"srcid", d:"req dbid", c:"dsId of source"},
+        {f:"lev", d:"int", c:"same as MUser.themes info lev"},
+        {f:"mech", d:"string", c:"email or webfeed"},
+        {f:"blocked", d:"string", c:"authId|timestamp when email disabled"}],
+     cache:{minutes:0},  //not frequently referenced
+     logflds:["srctype", "srcid", "name", "uid", "lev", "mech"],
+     queries:[{q:[{f:"srctype"}, {f:"srcid"}]}]},
+     
         
     //Content updated by cron job.  General reporting/history use.
     {entity:"ActivitySummary", descr:"Stats by profile/theme", fields:[
@@ -243,6 +257,7 @@ module.exports = (function () {
         //  - Map of known (signed in via cookie) users, with counts/names.
         //  - Map of referering urls with counts for each
         //  - Map of user agent strings with counts for each
+
 
     {entity:"ConnectionService", descr:"Supporting service auth", fields:[
         {f:"name", d:"req unique string", c:"service name"},

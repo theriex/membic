@@ -939,10 +939,9 @@ app.membic = (function () {
                 return jt.tac2html(
                     ["span", editableWithPlaceholder(cdx, "mftitlespan",
                                                      "Title for Membic"),
-                     (membic.details.title || membic.details.name)]); },
+                     titleForMembic(membic)]); },
             changed: function (cdx, membic) {
-                var mt = (membic.details.title || membic.details.name);
-                mt = mt.trim();
+                var mt = titleForMembic(membic);
                 var st = mt;  //unchanged if title not displayed yet
                 var elem = jt.byId("mftitlespan" + cdx);
                 if(elem) {  //have input area, even if they have cleared it out
