@@ -273,6 +273,11 @@ return {
     },
 
 
+    uidimgsrc: function (uid) {
+        return "/api/obimg?dt=MUser&di=" + uid + jt.ts("&cb=", "hour");
+    },
+
+
     profimgsrc: function (muser) {
         var userid = "";
         if(!muser) {  //assume for self if nothing passed in
@@ -285,7 +290,7 @@ return {
         //Not having a user for a given id may simply mean they're not
         //cached.  Better to take a chance they have a pic uploaded.
         if(!muser && userid) {
-            return "/api/obimg?dt=MUser&di=" + userid + jt.ts("&cb=", "hour"); }
+            return app.login.uidimgsrc(userid); }
         return app.pcd.picImgSrc(muser);
     },
 

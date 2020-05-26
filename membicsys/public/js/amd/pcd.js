@@ -218,6 +218,13 @@ app.pcd = (function () {
                                 "aria-hidden":"true"},
                         ["img", {src:app.dr("img/membiciconwhite.png"),
                                  style:"max-width:16px;"}]]]]); }
+        else if(app.theme.mayViewAudience()) {
+            tac.push(["a", {href:"#audience", title:"Show Audience",
+                            cla:"resp-sharing-button__link",
+                            onclick:jt.fs("app.theme.audience()")},
+                      ["img", {src:app.dr("img/audience.png"),
+                               style:"max-width:24px;"}]]);
+            tac.push(["div", {id:"pcdaudcontdiv"}]); }
         return tac;
     }
 

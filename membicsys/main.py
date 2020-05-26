@@ -2,6 +2,8 @@
 #pylint: disable=invalid-name
 #pylint: disable=missing-function-docstring
 #pylint: disable=wrong-import-position
+#pylint: disable=wrong-import-order
+#pylint: disable=ungrouped-imports
 import py.mconf as mconf
 import logging
 import logging.handlers
@@ -83,6 +85,14 @@ def themeupd(): #params an, at, Theme update fields
 @app.route('/api/associate', methods=['GET', 'POST'])
 def associate(): #params: an, at, aot, aoi, pid, assoc, fm[, fid, mtok]
     return useract.associate()
+
+@app.route('/api/audinf')
+def audinf(): #params: an, at, dsType, dsId
+    return useract.audinf()
+
+@app.route('/api/audblock', methods=['GET', 'POST'])
+def audblock(): #params: an, at, srctype, srcid, uid, blocked
+    return useract.audblock()
 
 @app.route('/api/urlcontents')
 def urlcontents():  # params: an, at, url

@@ -177,7 +177,7 @@ def send_follower_notice(muser, membics):
     for _, membic in membics.items():
         dets = json.loads(membic["details"])
         body += (dets["title"] or dets["name"]) + "\n"
-        body += (membic["url"] or "No link provided") + "\n"
+        body += (membic["url"] or membic["rurl"] or "No link provided") + "\n"
         body += membic["text"] + "\n"
         body += membic_poster_and_themes(membic) + "\n\n"
     body += "To unsubscribe from these notices, change your follow settings"

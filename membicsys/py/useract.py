@@ -615,3 +615,62 @@ def membicsave():
     except ValueError as e:
         return util.srverr(str(e))
     return "[" + res + "]"
+
+
+# Return the followers for the given theme or profile as specified in the
+# dsType and dsId parameters. Only available for your own profile or a theme
+# you are a member of.  All members can see the followers, but only founders
+# may block.
+def audinf():
+    res = ""
+    try:
+        muser, _ = util.authenticate()
+        dsType = dbacc.reqarg("dsType", "string", required=True)
+        dsId = str(dbacc.reqarg("dsId", "dbid", required=True))
+        if dsType == "MUser" and str(muser["dsId"]) != dsId:
+            raise ValueError("You may only view audience for your own profile")
+        if dsType == "Theme":
+            theme = dbacc.cfbk("Theme", "dsId", dsId, required=True)
+            if assoc_level(theme_association(theme, muser["dsId"])) <= 0:
+                raise ValueError("Only Theme members may view audience")
+        where = "WHERE srctype=\"" + dsType + "\" AND srcid=" + dsId
+        fwrs = dbacc.query_entity("Following", where)
+        res = json.dumps({"dsType":dsType.lower() + "audience",
+                          "dsId":str(dsId), "followers":fwrs})
+    except ValueError as e:
+        return util.srverr(str(e))
+    return util.respJSON("[" + res + "]")
+
+
+def audblock():
+    res = ""
+    try:
+        muser, _ = util.authenticate()
+        srctype = dbacc.reqarg("srctype", "string", required=True)
+        srcid = str(dbacc.reqarg("srcid", "dbid", required=True))
+        uid = dbacc.reqarg("uid", "dbid", required=True)
+        blocked = dbacc.reqarg("blocked", "string")
+        if srctype not in ["MUser", "Theme"]:
+            raise ValueError("Invalid srctype: " + srctype)
+        if srctype == "MUser":
+            if srcid != muser["dsId"]:
+                raise ValueError("Not your profile.")
+        else:  # Theme
+            theme = dbacc.cfbk("Theme", "dsId", srcid, required=True)
+            if theme_association(theme, muser["dsId"]) != "Founder":
+                raise ValueError("Only Founder may block.")
+        updos = dbacc.query_entity(
+            "Following", "WHERE srctype=\"" + srctype + "\" AND srcid=" +
+            srcid + " AND uid=" + str(uid) + " LIMIT 1")
+        if len(updos) < 1:
+            raise ValueError("Follower record not found.")
+        frec = updos[0]
+        if blocked:
+            frec["blocked"] = muser["dsId"] + "|" + dbacc.nowISO()
+        else:
+            frec["blocked"] = ""
+        frec = dbacc.write_entity(frec, frec["modified"])
+        res = json.dumps(frec)
+    except ValueError as e:
+        return util.srverr(str(e))
+    return util.respJSON("[" + res + "]")

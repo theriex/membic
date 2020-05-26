@@ -467,6 +467,14 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .thlhelpdiv { font-size:small; display:table }
 .moreinfospan { font-size:small; padding-left:20px; }
 
+.followerimg { max-width:25px; max-height:25px; vertical-align:middle; }
+.followernamespan { font-size:medium; }
+.flevspan { font-size:small; }
+.fmechtd { text-align:center; }
+.fmechspan { font-size:small; }
+.fblockspan img { vertical-align:middle; }
+.fblockspan button { margin-left:8px; }
+
 
 /* >> share buttons */
 /* thanks to https://sharingbuttons.io */

@@ -9,6 +9,16 @@ app.theme = (function () {
     var setctx = null;
 
 
+    function nameForLevel (lev) {
+        switch(lev) {
+        case 3: return "Founder";
+        case 2: return "Moderator";
+        case 1: return "Member";
+        case -1: return "Following";
+        default: return "Unknown"; }
+    }
+
+
     function profassoc (dsType, dsId) {
         var prof = app.login.myProfile() || {};
         var themes = prof.themes || {};
@@ -32,12 +42,7 @@ app.theme = (function () {
             if(tpo.members.csvcontains(uid)) { return "Member"; } }
         //Either tpo is not a theme, or they are no longer listed as a
         //member. Treat as a profile lookup in either case.
-        switch(profassoc(tpo.dsType, tpo.dsId).lev) {
-        case 3: return "Founder";
-        case 2: return "Moderator";
-        case 1: return "Member";
-        case -1: return "Following";
-        default: return "Unknown"; }
+        return nameForLevel(profassoc(tpo.dsType, tpo.dsId).lev);
     }
 
 
@@ -166,6 +171,89 @@ app.theme = (function () {
                    onclick:jt.fs("app.theme.connopt()")},
              [["img", {cla:"setassocimg", src:app.dr("img/" + link.src)}],
               ["span", {cla:"setassocspan"}, link.text]]]));
+    }
+
+
+    function blockHTML (f, idx) {
+        var emb;
+        if(f.blocked) {
+            emb = ["img", {src:app.dr("img/emailgenprohib.png")}];
+            if(app.theme.mayViewAudience() === "edit") {
+                emb = ["a", {href:"#unblock" + f.uid, 
+                             title:"allow email contact from " + f.name,
+                             onclick:jt.fs("app.theme.blockFollower(" + idx +
+                                           ",false)")}, emb]; } }
+        else {
+            emb = ["img", {src:app.dr("img/email.png")}];
+            if(app.theme.mayViewAudience() === "edit") {
+                emb = ["a", {href:"#block" + f.uid, 
+                             title:"block email from " + f.name,
+                             onclick:jt.fs("app.theme.blockFollower('" + idx +
+                                           "',true)")}, emb]; } }
+        return [emb, ["span", {id:"fblockstatspan" + idx}, ""]];
+    }
+
+
+    function displayAudience(co) {
+        var ams = [];
+        co.followers.forEach(function (f, idx) {
+            var emb = blockHTML(f, idx);
+            ams.push(["tr",
+                      [["td",
+                        ["a", {href:"#" + f.uid, title:f.name,
+                               onclick:jt.fs("app.statemgr.setState('MUser','" +
+                                             f.uid + "')")},
+                         [["img", {cla:"followerimg",
+                                   src:app.login.uidimgsrc(f.uid)}],
+                          ["span", {cla:"followernamespan"}, f.name]]]],
+                       ["td", ["span", {cla:"flevspan"}, nameForLevel(f.lev)]],
+                       ["td", {cla:"fmechtd"},
+                        ["span", {cla:"fmechspan"}, f.mech]],
+                       ["td", ["span", {cla:"fblockspan",
+                                        id:"fblockspan" + idx}, emb]]]]); });
+        if(!ams.length) {
+            jt.out("pcdaudcontdiv", "No followers seen yet."); }
+        else {
+            ams.splice(0, 0,
+                       ["tr",
+                        [["th", {colspan:2}, "Audience"],
+                         ["th", "Notify"],
+                         ["th", "Response"]]]);
+            jt.out("pcdaudcontdiv", jt.tac2html(
+                ["table", {cla:"followerstable"}, ams])); }
+    }
+
+
+    function fetchAudienceInfo(dsType, dsId) {
+        var authobj = app.login.authenticated();
+        var url = app.dr("/api/audinf") + "?an=" + authobj.email + "&at=" +
+            authobj.token + "&dsType=" + dsType + "&dsId=" + dsId +
+            jt.ts("&cb=", "minute");  //use refmgr cache, not browser
+        jt.call("GET", url, null,
+                function (aios) {
+                    app.refmgr.put(aios[0]);
+                    displayAudience(aios[0]); },
+                function(code, errtxt) {
+                    jt.out("pcdaudcontdiv", "Audience fetch failed " + code +
+                           ": " + errtxt); },
+                jt.semaphore("theme.fetchAudienceInfo"));
+    }
+
+
+    function audObjType (dsType) {
+        return dsType.toLowerCase() + "audience";
+    }
+
+
+    function fetchAndDisplayAudience (dsType, dsId) {
+        var atn = audObjType(dsType);
+        var co = app.refmgr.cached(atn, dsId);
+        if(!co) {
+            jt.out("pcdaudcontdiv", "Fetching audience details...");
+            return app.fork({descr:"fetch " + atn + dsId, ms:50,
+                             func:function () {
+                                 fetchAudienceInfo(dsType, dsId); }}); }
+        displayAudience(co);
     }
 
 
@@ -318,6 +406,77 @@ return {
                 jt.byId("settingsupdbutton").disabled = false;
                 jt.out("settingsinfdiv", "Update failed code " + code + " " +
                         errtxt); });
+    },
+
+
+    mayViewAudience: function () {
+        var authobj = app.login.authenticated();
+        if(!authobj) {
+            return false; }  //not logged in
+        var ctx = app.pcd.getDisplayContext();
+        if(!ctx || !ctx.actobj || !ctx.actobj.contextobj) {
+            return false; }  //no context object
+        ctx = ctx.actobj.contextobj;
+        if(ctx.dsType === "MUser" && ctx.dsId === authobj.authId) {
+            return "edit"; }  //may see audience for own profile
+        if(ctx.dsType === "Theme") {
+            var assoc = association(ctx);
+            if(assoc === "Founder") {
+                return "edit"; }
+            if(assoc === "Moderator" || assoc === "Member") {
+                return "view"; } }
+        return false;
+    },
+
+
+    audience: function () {
+        var div = jt.byId("pcdaudcontdiv");
+        if(!div.innerHTML) {
+            div.style.display = "none";  //toggled on in next step
+            var obj = app.pcd.getDisplayContext().actobj.contextobj;
+            fetchAndDisplayAudience(obj.dsType, obj.dsId); }
+        if(div.style.display === "none") {
+            div.style.display = "block"; }
+        else {
+            div.style.display = "none"; }
+    },
+
+
+    blockFollower: function (idx, block, confirmed) {
+        var obj = app.pcd.getDisplayContext().actobj.contextobj;
+        var aud = app.refmgr.cached(audObjType(obj.dsType), obj.dsId);
+        var f = aud.followers[idx];
+        if(block) {
+            f.blocked = "blocked"; } //authId|timestamp filled out on save
+        else {
+            f.blocked = ""; }
+        var savebutton = jt.byId("fblockstatspan" + idx).innerHTML;
+        jt.out("fblockspan" + idx, jt.tac2html(blockHTML(f, idx)));
+        if(!confirmed) {
+            if(savebutton) {
+                jt.out("fblockstatspan" + idx, ""); }  //cancel save
+            else {
+                jt.out("fblockstatspan" + idx, jt.tac2html(
+                    ["button", {type:"button",
+                                onclick:jt.fs("app.theme.blockFollower(" + idx +
+                                              "," + block + ",true)")},
+                     "Save"])); } }
+        else { //confirmed
+            jt.out("fblockstatspan" + idx, "Saving...");
+            var authobj = app.login.authenticated();
+            var data = jt.objdata({an:authobj.email, at:authobj.token,
+                                   srctype:obj.dsType, srcid:obj.dsId,
+                                   uid:f.uid, blocked:f.blocked});
+            jt.call("POST", app.dr("/api/audblock"), data,
+                    function (fos) {
+                        f.blocked = fos[0].blocked;
+                        jt.out("fblockstatspan" + idx, ""); },
+                    function (code, errtxt) {
+                        jt.log("blockFollower " + code + " " + errtxt);
+                        jt.out("fblockstatspan" + idx, "Failed.");
+                        app.refmgr.uncache(audObjType(obj.dsType),
+                                           obj.dsId); },
+                    jt.semaphore("theme.blockFollower")); }
     }
             
 }; //end of returned functions
