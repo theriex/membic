@@ -127,7 +127,7 @@ def fetch_notifications_data(sts, ets):
 
 
 def follower_record_from_audinf(src, uid, audinf):
-    return {"dsType":"Following", "dsId":"", "uid":uid, "name":audinf["name"],
+    return {"dsType":"Audience", "dsId":"", "uid":uid, "name":audinf["name"],
             "srctype":src["dsType"], "srcid":src["dsId"], "lev":audinf["lev"],
             "mech":audinf["mech"], "blocked":"", "modified":""}
 
@@ -139,7 +139,7 @@ def verify_audiences(nd, updates="save"):
             changed = ""
             fra = follower_record_from_audinf(src, uid, audinf)
             frecs = dbacc.query_entity(
-                "Following", "WHERE uid = " + str(uid) +
+                "Audience", "WHERE uid = " + str(uid) +
                 " AND srctype = \"" + src["dsType"] + "\"" +
                 " AND srcid = " + src["dsId"] + " LIMIT 1")
             if len(frecs) < 1:

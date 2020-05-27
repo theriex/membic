@@ -168,7 +168,7 @@ app.pcd = (function () {
             descrname = "The profile page for " + descrname; }
         var subj = "Invitation to " + ctx.descobj.name;
         var body = "This is an invitation to follow \"" + ctx.descobj.name + "\" on membic.org. I think you might find upcoming links worth your time to check out.\n\n" +
-            descrname + " is a highly curated, low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). When you get notified about a post you find interesting, I would be interested in your thoughts on it. You can use this link to connect: " + url + "\n";
+            descrname + " is a highly curated, low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). I would be interested in your thoughts and reactions. Use this link to connect: " + url + "\n";
         if(sig) {
             body += "\nLooking forward to hearing from you.\n" + sig + "\n"; }
         var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +

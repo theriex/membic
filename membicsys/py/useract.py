@@ -634,7 +634,7 @@ def audinf():
             if assoc_level(theme_association(theme, muser["dsId"])) <= 0:
                 raise ValueError("Only Theme members may view audience")
         where = "WHERE srctype=\"" + dsType + "\" AND srcid=" + dsId
-        fwrs = dbacc.query_entity("Following", where)
+        fwrs = dbacc.query_entity("Audience", where)
         res = json.dumps({"dsType":dsType.lower() + "audience",
                           "dsId":str(dsId), "followers":fwrs})
     except ValueError as e:
@@ -660,7 +660,7 @@ def audblock():
             if theme_association(theme, muser["dsId"]) != "Founder":
                 raise ValueError("Only Founder may block.")
         updos = dbacc.query_entity(
-            "Following", "WHERE srctype=\"" + srctype + "\" AND srcid=" +
+            "Audience", "WHERE srctype=\"" + srctype + "\" AND srcid=" +
             srcid + " AND uid=" + str(uid) + " LIMIT 1")
         if len(updos) < 1:
             raise ValueError("Follower record not found.")

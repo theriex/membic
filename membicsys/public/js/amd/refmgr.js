@@ -17,7 +17,7 @@ app.refmgr = (function () {
 
     var cache = {};
 
-    var persistentTypes = ["MUser", "Theme", "AdminLog", "Membic", "Overflow", "MailNotice", "Following", "ActivitySummary", "ConnectionService"];
+    var persistentTypes = ["MUser", "Theme", "AdminLog", "Membic", "Overflow", "MailNotice", "Audience", "ActivitySummary", "ConnectionService"];
 
 
     //All json fields are initialized to {} so they can be accessed directly.
@@ -61,7 +61,7 @@ app.refmgr = (function () {
             break;
         case "MailNotice": 
             break;
-        case "Following": 
+        case "Audience": 
             break;
         case "ActivitySummary": 
             reconstituteFieldJSONObject("reqdets", obj);
@@ -97,7 +97,7 @@ app.refmgr = (function () {
             break;
         case "MailNotice": 
             break;
-        case "Following": 
+        case "Audience": 
             break;
         case "ActivitySummary": 
             obj.reqdets = JSON.stringify(obj.reqdets);
@@ -126,7 +126,7 @@ app.refmgr = (function () {
             break;
         case "MailNotice": 
             break;
-        case "Following": 
+        case "Audience": 
             break;
         case "ActivitySummary": 
             break;

@@ -148,7 +148,7 @@ entdefs = {
         "uidcsv": {"pt": "string", "un": False, "dv": ""},
         "lastupd": {"pt": "string", "un": False, "dv": ""}
     },
-    "Following": {  # Accumulated follower relationships
+    "Audience": {  # Accumulated follower relationships
         "dsId": {"pt": "dbid", "un": True, "dv": 0},
         "created": {"pt": "string", "un": False, "dv": ""},
         "modified": {"pt": "string", "un": False, "dv": ""},
@@ -195,7 +195,7 @@ entkeys = {
     "Membic": ["importid"],
     "Overflow": [],
     "MailNotice": ["name"],
-    "Following": [],
+    "Audience": [],
     "ActivitySummary": ["refp"],
     "ConnectionService": ["name"]
 }
@@ -208,7 +208,7 @@ cachedefs = {
     "Membic": {"minutes": 0, "manualadd": False},
     "Overflow": {"minutes": 0, "manualadd": False},
     "MailNotice": {"minutes": 0, "manualadd": False},
-    "Following": {"minutes": 0, "manualadd": False},
+    "Audience": {"minutes": 0, "manualadd": False},
     "ActivitySummary": {"minutes": 0, "manualadd": False},
     "ConnectionService": {"minutes": 240, "manualadd": False}
 }
@@ -760,40 +760,40 @@ def db2app_MailNotice(inst):
     return cnv
 
 
-# Convert the given Following inst dict from app values to db values.  Removes
+# Convert the given Audience inst dict from app values to db values.  Removes
 # the dsType field to avoid trying to write it to the db.
-def app2db_Following(inst):
+def app2db_Audience(inst):
     cnv = {}
     cnv["dsId"] = None
     if "dsId" in inst:
         cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
     cnv["created"] = app2db_fieldval(None, "created", inst)
     cnv["modified"] = app2db_fieldval(None, "modified", inst)
-    cnv["uid"] = app2db_fieldval("Following", "uid", inst)
-    cnv["name"] = app2db_fieldval("Following", "name", inst)
-    cnv["srctype"] = app2db_fieldval("Following", "srctype", inst)
-    cnv["srcid"] = app2db_fieldval("Following", "srcid", inst)
-    cnv["lev"] = app2db_fieldval("Following", "lev", inst)
-    cnv["mech"] = app2db_fieldval("Following", "mech", inst)
-    cnv["blocked"] = app2db_fieldval("Following", "blocked", inst)
+    cnv["uid"] = app2db_fieldval("Audience", "uid", inst)
+    cnv["name"] = app2db_fieldval("Audience", "name", inst)
+    cnv["srctype"] = app2db_fieldval("Audience", "srctype", inst)
+    cnv["srcid"] = app2db_fieldval("Audience", "srcid", inst)
+    cnv["lev"] = app2db_fieldval("Audience", "lev", inst)
+    cnv["mech"] = app2db_fieldval("Audience", "mech", inst)
+    cnv["blocked"] = app2db_fieldval("Audience", "blocked", inst)
     return cnv
 
 
-# Convert the given Following inst dict from db values to app values.  Adds the
+# Convert the given Audience inst dict from db values to app values.  Adds the
 # dsType field for general app processing.
-def db2app_Following(inst):
+def db2app_Audience(inst):
     cnv = {}
-    cnv["dsType"] = "Following"
+    cnv["dsType"] = "Audience"
     cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
     cnv["created"] = db2app_fieldval(None, "created", inst)
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
-    cnv["uid"] = db2app_fieldval("Following", "uid", inst)
-    cnv["name"] = db2app_fieldval("Following", "name", inst)
-    cnv["srctype"] = db2app_fieldval("Following", "srctype", inst)
-    cnv["srcid"] = db2app_fieldval("Following", "srcid", inst)
-    cnv["lev"] = db2app_fieldval("Following", "lev", inst)
-    cnv["mech"] = db2app_fieldval("Following", "mech", inst)
-    cnv["blocked"] = db2app_fieldval("Following", "blocked", inst)
+    cnv["uid"] = db2app_fieldval("Audience", "uid", inst)
+    cnv["name"] = db2app_fieldval("Audience", "name", inst)
+    cnv["srctype"] = db2app_fieldval("Audience", "srctype", inst)
+    cnv["srcid"] = db2app_fieldval("Audience", "srcid", inst)
+    cnv["lev"] = db2app_fieldval("Audience", "lev", inst)
+    cnv["mech"] = db2app_fieldval("Audience", "mech", inst)
+    cnv["blocked"] = db2app_fieldval("Audience", "blocked", inst)
     return cnv
 
 
@@ -881,7 +881,7 @@ def dblogmsg(op, entity, res):
         "Membic": ["url", "penname", "penid", "ctmid"],
         "Overflow": ["dbkind", "dbkeyid"],
         "MailNotice": ["name"],
-        "Following": ["srctype", "srcid", "name", "uid", "lev", "mech"],
+        "Audience": ["srctype", "srcid", "name", "uid", "lev", "mech"],
         "ActivitySummary": ["refp", "tstart", "tuntil"],
         "ConnectionService": ["name"]}
     if res:
@@ -1209,40 +1209,40 @@ def update_existing_MailNotice(cnx, cursor, fields, vck):
     return fields
 
 
-# Write a new Following row, using the given field values or defaults.
-def insert_new_Following(cnx, cursor, fields):
-    fields = app2db_Following(fields)
+# Write a new Audience row, using the given field values or defaults.
+def insert_new_Audience(cnx, cursor, fields):
+    fields = app2db_Audience(fields)
     stmt = (
-        "INSERT INTO Following (created, modified, uid, name, srctype, srcid, lev, mech, blocked) "
+        "INSERT INTO Audience (created, modified, uid, name, srctype, srcid, lev, mech, blocked) "
         "VALUES (%(created)s, %(modified)s, %(uid)s, %(name)s, %(srctype)s, %(srcid)s, %(lev)s, %(mech)s, %(blocked)s)")
     data = {
         'created': fields.get("created"),
         'modified': fields.get("modified"),
-        'uid': fields.get("uid", entdefs["Following"]["uid"]["dv"]),
-        'name': fields.get("name", entdefs["Following"]["name"]["dv"]),
-        'srctype': fields.get("srctype", entdefs["Following"]["srctype"]["dv"]),
-        'srcid': fields.get("srcid", entdefs["Following"]["srcid"]["dv"]),
-        'lev': fields.get("lev", entdefs["Following"]["lev"]["dv"]),
-        'mech': fields.get("mech", entdefs["Following"]["mech"]["dv"]),
-        'blocked': fields.get("blocked", entdefs["Following"]["blocked"]["dv"])}
+        'uid': fields.get("uid", entdefs["Audience"]["uid"]["dv"]),
+        'name': fields.get("name", entdefs["Audience"]["name"]["dv"]),
+        'srctype': fields.get("srctype", entdefs["Audience"]["srctype"]["dv"]),
+        'srcid': fields.get("srcid", entdefs["Audience"]["srcid"]["dv"]),
+        'lev': fields.get("lev", entdefs["Audience"]["lev"]["dv"]),
+        'mech': fields.get("mech", entdefs["Audience"]["mech"]["dv"]),
+        'blocked': fields.get("blocked", entdefs["Audience"]["blocked"]["dv"])}
     cursor.execute(stmt, data)
     fields["dsId"] = cursor.lastrowid
     cnx.commit()
-    fields = db2app_Following(fields)
-    dblogmsg("ADD", "Following", fields)
+    fields = db2app_Audience(fields)
+    dblogmsg("ADD", "Audience", fields)
     return fields
 
 
-# Update the specified Following row with the given field values.
-def update_existing_Following(cnx, cursor, fields, vck):
-    fields = app2db_Following(fields)
+# Update the specified Audience row with the given field values.
+def update_existing_Audience(cnx, cursor, fields, vck):
+    fields = app2db_Audience(fields)
     dsId = int(fields["dsId"])  # Verify int value
     stmt = ""
     for field in fields:  # only updating the fields passed in
         if stmt:
             stmt += ", "
         stmt += field + "=(%(" + field + ")s)"
-    stmt = "UPDATE Following SET " + stmt + " WHERE dsId=" + str(dsId)
+    stmt = "UPDATE Audience SET " + stmt + " WHERE dsId=" + str(dsId)
     if vck != "override":
         stmt += " AND modified=\"" + vck + "\""
     data = {}
@@ -1250,10 +1250,10 @@ def update_existing_Following(cnx, cursor, fields, vck):
         data[field] = fields[field]
     cursor.execute(stmt, data)
     if cursor.rowcount < 1 and vck != "override":
-        raise ValueError("Following" + str(dsId) + " update received outdated version check value " + vck + ".")
+        raise ValueError("Audience" + str(dsId) + " update received outdated version check value " + vck + ".")
     cnx.commit()
-    fields = db2app_Following(fields)
-    dblogmsg("UPD", "Following", fields)
+    fields = db2app_Audience(fields)
+    dblogmsg("UPD", "Audience", fields)
     return fields
 
 
@@ -1382,8 +1382,8 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                     return update_existing_Overflow(cnx, cursor, inst, vck)
                 if entity == "MailNotice":
                     return update_existing_MailNotice(cnx, cursor, inst, vck)
-                if entity == "Following":
-                    return update_existing_Following(cnx, cursor, inst, vck)
+                if entity == "Audience":
+                    return update_existing_Audience(cnx, cursor, inst, vck)
                 if entity == "ActivitySummary":
                     return update_existing_ActivitySummary(cnx, cursor, inst, vck)
                 if entity == "ConnectionService":
@@ -1402,8 +1402,8 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                 return insert_new_Overflow(cnx, cursor, inst)
             if entity == "MailNotice":
                 return insert_new_MailNotice(cnx, cursor, inst)
-            if entity == "Following":
-                return insert_new_Following(cnx, cursor, inst)
+            if entity == "Audience":
+                return insert_new_Audience(cnx, cursor, inst)
             if entity == "ActivitySummary":
                 return insert_new_ActivitySummary(cnx, cursor, inst)
             if entity == "ConnectionService":
@@ -1519,17 +1519,17 @@ def query_MailNotice(cnx, cursor, where):
     return res
 
 
-def query_Following(cnx, cursor, where):
+def query_Audience(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
     query += "uid, name, srctype, srcid, lev, mech, blocked"
-    query += " FROM Following " + where
+    query += " FROM Audience " + where
     cursor.execute(query)
     res = []
     for (dsId, created, modified, uid, name, srctype, srcid, lev, mech, blocked) in cursor:
-        inst = {"dsType": "Following", "dsId": dsId, "created": created, "modified": modified, "uid": uid, "name": name, "srctype": srctype, "srcid": srcid, "lev": lev, "mech": mech, "blocked": blocked}
-        inst = db2app_Following(inst)
+        inst = {"dsType": "Audience", "dsId": dsId, "created": created, "modified": modified, "uid": uid, "name": name, "srctype": srctype, "srcid": srcid, "lev": lev, "mech": mech, "blocked": blocked}
+        inst = db2app_Audience(inst)
         res.append(inst)
-    dblogmsg("QRY", "Following", res)
+    dblogmsg("QRY", "Audience", res)
     return res
 
 
@@ -1584,8 +1584,8 @@ def query_entity(entity, where):
                 return query_Overflow(cnx, cursor, where)
             if entity == "MailNotice":
                 return query_MailNotice(cnx, cursor, where)
-            if entity == "Following":
-                return query_Following(cnx, cursor, where)
+            if entity == "Audience":
+                return query_Audience(cnx, cursor, where)
             if entity == "ActivitySummary":
                 return query_ActivitySummary(cnx, cursor, where)
             if entity == "ConnectionService":
@@ -1674,7 +1674,7 @@ def visible_MailNotice_fields(obj, audience):
     return filtobj
 
 
-def visible_Following_fields(obj, audience):
+def visible_Audience_fields(obj, audience):
     filtobj = {}
     for fld, val in obj.items():
         filtobj[fld] = val
@@ -1712,8 +1712,8 @@ def visible_fields(obj, audience="public"):
         return visible_Overflow_fields(obj, audience)
     if obj["dsType"] == "MailNotice":
         return visible_MailNotice_fields(obj, audience)
-    if obj["dsType"] == "Following":
-        return visible_Following_fields(obj, audience)
+    if obj["dsType"] == "Audience":
+        return visible_Audience_fields(obj, audience)
     if obj["dsType"] == "ActivitySummary":
         return visible_ActivitySummary_fields(obj, audience)
     if obj["dsType"] == "ConnectionService":

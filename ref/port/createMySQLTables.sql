@@ -114,7 +114,7 @@ CREATE TABLE MailNotice (  -- Broadcast email tracking
 );
 ALTER TABLE MailNotice AUTO_INCREMENT = 2020;
 
-CREATE TABLE Following (  -- Accumulated follower relationships
+CREATE TABLE Audience (  -- Accumulated follower relationships
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   created VARCHAR(256) NOT NULL,
   modified VARCHAR(256) NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE Following (  -- Accumulated follower relationships
   INDEX (srctype, srcid),
   PRIMARY KEY (dsId)
 );
-ALTER TABLE Following AUTO_INCREMENT = 2020;
+ALTER TABLE Audience AUTO_INCREMENT = 2020;
 
 CREATE TABLE ActivitySummary (  -- Stats by profile/theme
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,

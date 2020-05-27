@@ -219,11 +219,10 @@ module.exports = (function () {
      logflds:["name"]},
 
 
-    //Follower relationships are discovered through periodic notices and
-    //email contact processing, they are not updated transactionally when
-    //someone chooses to follow or join.  Follower entries can be updated
-    //directly by those managing their audiences.
-    {entity:"Following", descr:"Accumulated follower relationships", fields:[
+    //Audience relationships are not updated transactionally.  Normally they
+    //are discovered through periodic sweeps or email processing.  Audience
+    //entries can be updated directly by those managing their audiences.
+    {entity:"Audience", descr:"Accumulated follower relationships", fields:[
         {f:"uid", d:"req dbid", c:"MUser id of follower"},
         {f:"name", d:"string", c:"latest seen name for ease of reference"},
         {f:"srctype", d:"string", c:"dsType of source: Theme or MUser"},
