@@ -497,6 +497,9 @@ app.pcd = (function () {
     }
 
 
+    //Return the standardized "permalink" web feed URI.  This should be as
+    //simple and as compatible as possible.  The personalized web feed is
+    //available when selecting how you are following.
     function webfeedSetting (embobj) {
         var rssurl = rssURLForObj(embobj);
         return jt.tac2html(
@@ -522,21 +525,21 @@ app.pcd = (function () {
     }
 
 
-    //Themes have custom keywords, profiles don't.  Otherwise the keywords
-    //can become restrictive, and the only way out is to create another
-    //account.  Better to encourage creating a theme earlier on.
+    //Themes have custom keywords, profiles don't.  Putting keywords on
+    //profileseventually restricts the content of what a user might choose
+    //to post, and the only way out is to create another account.  Better to
+    //encourage creating a theme.  No need to display the keywords entry
+    //unless making changes, since the keywords can be easily seen by
+    //clicking the search input.
     function keywordsSetting (embobj, canmod) {
-        if((embobj.dsType !== "Theme") || (!canmod && !embobj.keywords)) {
+        if((embobj.dsType !== "Theme") || !canmod) {
             return ""; }
-        var rhs = ["span", {id:"kwrdsin"}, embobj.keywords];
-        if(canmod) {
-            rhs = ["input", {type:"text", cla:"lifin", id:"kwrdsin",
-                             value:embobj.keywords || "",
-                             placeholder:"Comma separated values"}]; }
         return jt.tac2html(
             ["div", {cla:"cbdiv"},
              [["label", {fo:"kwrdsin", cla:"liflab"}, "Keywords"],
-              rhs]]);
+              ["input", {type:"text", cla:"lifin", id:"kwrdsin",
+                         value:embobj.keywords || "",
+                         placeholder:"Comma separated values"}]]]);
     }
 
 

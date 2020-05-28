@@ -46,15 +46,24 @@ app.theme = (function () {
     }
 
 
-    function subtoken (str, tok) {
-        return jt.enc(str).split("")
-            .map((c) => tok.charAt(c.codePointAt(0) % tok.length))
-            .join("");
+    function followRSSLinkHTML () {
+        if(setctx.fm !== "RSS") {
+            return ""; }
+        var authobj = app.login.authenticated();  //in settings, so auth avail
+        var rssurl = "/feed" + app.statemgr.urlForInstance(setctx.tpo) +
+            "?uid=" + authobj.authId;
+        return jt.tac2html(
+            ["Use your personalized web feed",
+             ["br"],
+             ["a", {href:rssurl,
+                    onclick:jt.fs("window.open('" + rssurl + "')")},
+              rssurl],
+             ["br"],
+             "to respond directly to posts"]);
     }
 
 
     function emailOrRSSFollowHTML () {
-        var rsshelpurl = "https://en.wikipedia.org/wiki/Web_feed";
         return jt.tac2html(
             ["div", {id:"followseldiv"},
              [["span", {id:"followselspan"}, "Follow via"],
@@ -66,93 +75,49 @@ app.theme = (function () {
               ["input", {type:"radio", name:"followmechins", value:"RSS",
                          checked:jt.toru(setctx.fm === "RSS"),
                          onchange:jt.fs("app.theme.relupd('','RSS')")}],
-              ["label", {fo:"fmrssin", title:"Follow new membics via RSS"},
-              "RSS"],
-              //not good to make labels into links, so provide as extra
-              ["a", {href:rsshelpurl,
-                     onclick:jt.fs("window.open('" + rsshelpurl + "')")},
-               "web feed"]]]);
+              ["label", {fo:"fmrssin", title:"Follow new membics via web feed"},
+              "Web Feed"],
+              ["div", {id:"folrssdiv"}, followRSSLinkHTML()]]]);
     }
 
 
-    function memberSummaryHTML () {
-        var html = [];
-        var mfs = ["founders", "moderators", "members"];
-        mfs.forEach(function (field) {
-            var misrc = app.dr("img/ts" + field.slice(0, field.length - 1) +
-                               ".png");
-            setctx.tpo[field].csvarray().forEach(function (pid) {
-                //No relevant &cb= value for profile img. Using plain.
-                var pisrc = app.dr("/api/obimg?dt=MUser&di=" + pid);
-                var name = setctx.tpo.people[pid] || pid;
-                var fst = jt.fs("app.statemgr.setState('MUser','" + pid + "')");
-                if(pid !== app.login.myProfile().dsId) {
-                    html.push(["div", {cla:"tmemlinediv"},
-                               ["a", {href:"#profile",
-                                      title:"View profile for " + name,
-                                      onclick:fst},
-                                [["img", {cla:"tmemlineimg", src:misrc}],
-                                 ["img", {cla:"tmemlineimg", src:pisrc}],
-                                 name]]]); } }); });
-        return jt.tac2html(html);
-    }
-
-
-    function founderSettingsHTML () {
-        var ah = "";
+    function assocActionButtonHTML () {
+        var rxv = {btxt:"Archive",
+                   fstr:jt.fs("app.theme.archive(true,'Archiving a theme prevents any new membic posts. Are you sure you want to archive " + jt.embenc(setctx.tpo.name) + "?')")};
         if(setctx.tpo.cliset && setctx.tpo.cliset.flags && 
            setctx.tpo.cliset.flags.archived) {
-            ah = ["div", {cla:"tinfolinediv"},
-                  "Archived " + setctx.tpo.cliset.flags.archived]; }
+            rxv = {btxt:"Re-Activate",
+                   fstr:jt.fs("app.theme.archive(false,'Re-Activating " + jt.embenc(setctx.tpo.name) + " will allow new membic posts from all members. Re-Activate?')")}; }
+        var aas = {"Founder":rxv,
+                   "Moderator":{
+                       btxt:"Resign",
+                       fstr:jt.fs("app.theme.relupd('Member','" + setctx.fm + "','If you resign as a moderator, you only be only have regular member access to " + jt.embenc(setctx.tpo.name) + ". Are you sure you want to resign as a moderator?')")},
+                   "Member":{
+                       btxt:"Resign",
+                       fstr:jt.fs("app.theme.relupd('Following','" + setctx.fm + "','If you resign your membership, you will no longer be able to post membics to " + jt.embenc(setctx.tpo.name) + ". Are you sure you want to resign your membership?')")},
+                   "Following":{
+                       btxt:"Stop&nbsp;Following",
+                       fstr:jt.fs("app.theme.relupd('Unknown')")},
+                   "Unknown":{
+                       btxt:"Follow",
+                       fstr:jt.fs("app.theme.relupd('Following')")}};
+        var aa = aas[setctx.assoc];
         return jt.tac2html(
-            [["div", {id:"tmemlistdiv"},
-              memberSummaryHTML()],
-             ["div", {id:"tinfodiv"},
-              ah],
-             ["div", {id:"inviteformdiv"},
-              [["div", {cla:"cbdiv"},
-                [["label", {fo:"invemin", cla:"liflab",
-                            title:"Member email for invite authentication"},
-                  "Email"],
-                 ["input", {type:"email", id:"invemin", cla:"lifin",
-                            onchange:jt.fs("app.theme.inviteMemberLink()"),
-                            placeholder:"authorized@example.com"}]]],
-               ["div", {id:"inviteformbuttonsdiv", cla:"lifbuttonsdiv"},
-                [["button", {type:"button",
-                             onclick:"app.theme.inviteMemberLink()"},
-                  "Make Invite"],
-                 ["span", {id:"invlinkspan"}]]]]]]);
+            ["button", {type:"button", onclick:aa.fstr}, aa.btxt]);
     }
 
 
-    function memberSettingsHTML () {
-        return jt.tac2html(
-            [emailOrRSSFollowHTML(),
-             ["div", {id:"assocbuttonsdiv"},
-              [["button", {type:"button",
-                           onclick:jt.fs("app.theme.relupd('Unknown')")},
-                "Resign"]]]]);
-    }
-
-
-    //Possible to update immediately to following when they click the link,
-    //but important for the user to confirm receiving email.
-    function followSettingsHTML () {
-        var bh = [
-            ["button", {type:"button",
-                        onclick:jt.fs("app.theme.relupd('Following')")},
-             "Follow"]];
-        if(setctx.assoc === "Following") {
-            bh = [
+    function assocUpdateButtonHTML () {
+        var html = "";
+        if(!setctx.ao.followmech) {  //set the default value to track changes
+            setctx.ao.followmech = "email"; }
+        if(setctx.ao.followmech !== setctx.fm) {
+            html = jt.tac2html(
                 ["button", {type:"button",
-                            onclick:jt.fs("app.theme.relupd('Unknown')")},
-                 "Stop&nbsp;Following"],
-                ["button", {type:"button",
-                            onclick:jt.fs("app.theme.relupd('Following')")},
-                 "Update&nbsp;Follow"]]; }
-        return jt.tac2html(
-            [emailOrRSSFollowHTML(),
-             ["div", {id:"assocbuttonsdiv"}, bh]]);
+                            onclick:jt.fs("app.theme.relupd('" + setctx.assoc +
+                                          "')")},
+                 "Update"]); }
+        return html;
     }
 
 
@@ -283,28 +248,31 @@ return {
         if(!show && div.innerHTML && div.style.display === "block") {
             div.style.display = "none";  //toggle off
             return; }
-        var html = "";
-        switch(setctx.assoc) {
-        case "Founder": html = founderSettingsHTML(); break;
-        case "Moderator":  //fall through to Member
-        case "Member": html = memberSettingsHTML(); break;
-        case "Following":  //fall through to Unknown
-        case "Unknown": html = followSettingsHTML(); break; }
-        div.innerHTML = jt.tac2html(html);
         div.style.display = "block";
+        div.innerHTML = jt.tac2html(
+            ["div", {id:"memberactcontdiv"},
+             [[emailOrRSSFollowHTML(),
+               ["div", {id:"assocbuttonsdiv"},
+                [assocActionButtonHTML(),
+                 ["span", {id:"assocActButtonSpan"},
+                  assocUpdateButtonHTML()]]]]]]);
     },
 
 
     //Update and save the account only if an association is specified.  All
     //associations are authorized and maintained server side.  If the follow
     //mechanism is specified, update it in the context.
-    relupd: function (assoc, fmech) {
+    relupd: function (assoc, fmech, cfrm) {
         if(assoc) {    //update association if provided, otherwise use same
             setctx.assoc = assoc; }
         if(fmech) {    //update follow mechanism if provided, otherwise use same
             setctx.fm = fmech; }
+        jt.out("folrssdiv", followRSSLinkHTML());
+        jt.out("assocActButtonSpan", assocUpdateButtonHTML());
         if(!assoc) {   //only call server if association was specified
             return; }  //otherwise interim UI update
+        if(cfrm && !confirm(cfrm)) {
+            return; }
         jt.out("assocbuttonsdiv", "Updating...");
         var authobj = app.login.authenticated();
         var data = jt.objdata(
@@ -318,6 +286,7 @@ return {
                         app.refmgr.put(app.refmgr.deserialize(obj)); });
                     if(app.samePO(setctx.tpo, result[result.length - 1])) {
                         setctx.tpo = result[result.length - 1]; }
+                    setctx.ao = profassoc(setctx.tpo.dsType, setctx.tpo.dsId);
                     app.theme.connopt(); },
                 function (code, errtxt) {
                     //show the error occurred. User will have to toggle 
@@ -325,27 +294,6 @@ return {
                     jt.out("assocbuttonsdiv", "Update failed " + code + ": " +
                            errtxt); },
                 jt.semaphore("theme.relupd"));
-    },
-
-
-    inviteMemberLink: function () {
-        var email = jt.byId("invemin").value;
-        if(!jt.isProbablyEmail(email)) {
-            return jt.out("invlinkspan", ""); }
-        var subj = "Membership invitation for " + setctx.tpo.name;
-        var body = "This is an invitation from $MYNAME to join $MYTHEME as a contributing member.  As a member, you will be able to post membics from your own account to $MYTHEME.  Click this link to get membership access:\n\n$ACCLINK";
-        body = body.replace(/\$MYNAME/g, app.login.myProfile().name);
-        body = body.replace(/\$MYTHEME/g, setctx.tpo.name);
-        var authobj = app.login.authenticated();
-        body = body.replace(/\$ACCLINK/g, app.dr(
-            "?cmd=membership&tid=" + setctx.tpo.dsId +
-                "&fid=" + authobj.authId +  //Founder dsId
-                "&mtok=" + subtoken(email, authobj.token)));
-        jt.out("invlinkspan", jt.tac2html(
-            ["a", {href:"mailto:" + email + "?subject=" + jt.dquotenc(subj) +
-                   "&body=" + jt.dquotenc(body) + "%0A%0A",
-                   title:"Invite New Member"},
-             "Send Invitation"]));
     },
 
 
@@ -477,6 +425,26 @@ return {
                         app.refmgr.uncache(audObjType(obj.dsType),
                                            obj.dsId); },
                     jt.semaphore("theme.blockFollower")); }
+    },
+
+
+    archive: function (setflag, confmsg) {
+        if(!confirm(confmsg)) {
+            return; }
+        jt.out("assocbuttonsdiv", "Updating...");
+        setctx.tpo.cliset = setctx.tpo.cliset || {};
+        setctx.tpo.cliset.flags = setctx.tpo.cliset.flags || {};
+        if(setflag) {
+            setctx.tpo.cliset.flags.archived = new Date().toISOString(); }
+        else {
+            setctx.tpo.cliset.flags.archived = ""; }
+        app.theme.update(setctx.tpo,
+                         function (theme) {
+                             setctx.tpo = theme;
+                             app.theme.connopt(); },
+                         function (code, errtxt) {  //same handling as relupd
+                             jt.out("assocbuttonsdiv", "Update failed " + code +
+                                    ": " + errtxt); });
     }
             
 }; //end of returned functions

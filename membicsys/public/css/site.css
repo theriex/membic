@@ -245,6 +245,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #colorchoicesdiv { font-size:small; text-align:center; margin:0px auto; }
 .colorselectdiv { display:inline-block; margin-left:5px; }
 #memberactdiv { background-image:url('../img/white60percent.png'); }
+#memberactcontdiv { padding:5px; }
 #inviteformbuttonsdiv { padding-bottom:12px; }
 #tmemlistdiv { padding-bottom:10px; }
 .tmemlineimg { max-height:18px; margin:0px 5px; }
