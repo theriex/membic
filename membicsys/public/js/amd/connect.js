@@ -203,11 +203,12 @@ app.connect = (function () {
 
     function displayMainContent () {
         jt.log("connect.displayMainContent starting");
-        app.pcd.setPageDescription({picsrc:app.dr("img/membiclogo.png"),
-                                    disptype:"app",
-                                    exturl:"/",
-                                    name:"Membic",
-                                    descr:"Blog your memorable links"});
+        app.pcd.setPageDescription(
+            {picsrc:app.dr("img/membiclogo.png"),
+             disptype:"app",
+             exturl:"/",
+             name:"Membic",
+             descr:"A better way to share memorable links."});
         var sf = "";
         var authobj = app.login.authenticated();
         if(authobj) {
