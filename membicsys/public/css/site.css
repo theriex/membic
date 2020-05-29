@@ -473,6 +473,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .flevspan { font-size:small; }
 .fmechtd { text-align:center; }
 .fmechspan { font-size:small; }
+.fblocktd { padding-left:5px; }
 .fblockspan img { vertical-align:middle; }
 .fblockspan button { margin-left:8px; }
 

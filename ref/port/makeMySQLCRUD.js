@@ -620,11 +620,13 @@ function entityWriteFunction () {
     definitions.forEach(function (edef) {
         pyc += "                if entity == \"" + edef.entity + "\":\n";
         pyc += "                    return update_existing_" + edef.entity + "(cnx, cursor, inst, vck)\n"; });
+    pyc += "                raise ValueError(\"Cannot modify unknown entity dsType \" + str(entity))\n";
     pyc += "            # No existing instance to update.  Insert new.\n";
     pyc += "            initialize_timestamp_fields(inst, vck)\n";
     definitions.forEach(function (edef) {
         pyc += "            if entity == \"" + edef.entity + "\":\n";
         pyc += "                return insert_new_" + edef.entity + "(cnx, cursor, inst)\n"; });
+    pyc += "            raise ValueError(\"Cannot create unknown entity dsType \" + str(entity))\n";
     pyc += "        except mysql.connector.Error as e:\n";
     pyc += "            raise ValueError(str(e) or \"No mysql error text\")  # see note 1\n"
     pyc += "        finally:\n";

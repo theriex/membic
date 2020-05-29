@@ -90,6 +90,10 @@ def associate(): #params: an, at, aot, aoi, pid, assoc, fm[, fid, mtok]
 def audinf(): #params: an, at, dsType, dsId
     return useract.audinf()
 
+@app.route('/api/audupd', methods=['GET', 'POST'])
+def audupd(): #params: an, at, dsType, dsId
+    return useract.audupd()
+
 @app.route('/api/audblock', methods=['GET', 'POST'])
 def audblock(): #params: an, at, srctype, srcid, uid, blocked
     return useract.audblock()

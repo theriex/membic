@@ -1388,6 +1388,7 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                     return update_existing_ActivitySummary(cnx, cursor, inst, vck)
                 if entity == "ConnectionService":
                     return update_existing_ConnectionService(cnx, cursor, inst, vck)
+                raise ValueError("Cannot modify unknown entity dsType " + str(entity))
             # No existing instance to update.  Insert new.
             initialize_timestamp_fields(inst, vck)
             if entity == "MUser":
@@ -1408,6 +1409,7 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                 return insert_new_ActivitySummary(cnx, cursor, inst)
             if entity == "ConnectionService":
                 return insert_new_ConnectionService(cnx, cursor, inst)
+            raise ValueError("Cannot create unknown entity dsType " + str(entity))
         except mysql.connector.Error as e:
             raise ValueError(str(e) or "No mysql error text")  # see note 1
         finally:

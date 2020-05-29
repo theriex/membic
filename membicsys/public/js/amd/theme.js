@@ -174,16 +174,17 @@ app.theme = (function () {
                        ["td", ["span", {cla:"flevspan"}, nameForLevel(f.lev)]],
                        ["td", {cla:"fmechtd"},
                         ["span", {cla:"fmechspan"}, f.mech]],
-                       ["td", ["span", {cla:"fblockspan",
-                                        id:"fblockspan" + idx}, emb]]]]); });
+                       ["td", {cla:"fblocktd"},
+                        ["span", {cla:"fblockspan",
+                                  id:"fblockspan" + idx}, emb]]]]); });
         if(!ams.length) {
             jt.out("pcdaudcontdiv", "No followers seen yet."); }
         else {
             ams.splice(0, 0,
                        ["tr",
                         [["th", {colspan:2}, "Audience"],
-                         ["th", "Notify"],
-                         ["th", "Response"]]]);
+                         ["th", ""],
+                         ["th", ""]]]);
             jt.out("pcdaudcontdiv", jt.tac2html(
                 ["table", {cla:"followerstable"}, ams])); }
     }
@@ -219,6 +220,32 @@ app.theme = (function () {
                              func:function () {
                                  fetchAudienceInfo(dsType, dsId); }}); }
         displayAudience(co);
+    }
+
+
+    //Non-transactional, non-blocking, good effort audience check.  Helps
+    //not having to wait for the nightly notices processing.  Triggered by
+    //a user visiting the theme/profile and updating their follow prefs.
+    function backgroundVerifyAudience () {
+        app.fork(
+            {descr:"Check audience record.", ms:500,
+             func:function () {
+                 if(!setctx || !setctx.tpo) {
+                     return; }
+                 var authobj = app.login.authenticated();
+                 if(!authobj || (setctx.tpo.dsType === "MUser" &&
+                                 setctx.tpo.dsId === authobj.authId)) {
+                     return; }
+                 var data = jt.objdata(
+                     {an:authobj.email, at:authobj.token,
+                      dsType:setctx.tpo.dsType, dsId:setctx.tpo.dsId});
+                 jt.call("POST", app.dr("api/audupd"), data,
+                         function () {
+                             jt.log("backgroundVerifyAudience completed."); },
+                         function (code, errtxt) {
+                             jt.log("backgroundVerifyAudience failed " + code +
+                                    ": " + errtxt); },
+                         jt.semaphore("theme.backgroundVerifyAudience")); }});
     }
 
 
@@ -287,6 +314,7 @@ return {
                     if(app.samePO(setctx.tpo, result[result.length - 1])) {
                         setctx.tpo = result[result.length - 1]; }
                     setctx.ao = profassoc(setctx.tpo.dsType, setctx.tpo.dsId);
+                    backgroundVerifyAudience();
                     app.theme.connopt(); },
                 function (code, errtxt) {
                     //show the error occurred. User will have to toggle 

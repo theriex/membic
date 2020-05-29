@@ -642,6 +642,37 @@ def audinf():
     return util.respJSON("[" + res + "]")
 
 
+# Verify audience info for the authorized user and the specified object.
+def audupd():
+    res = ""
+    try:
+        muser, _ = util.authenticate()
+        dsType = dbacc.reqarg("dsType", "string", required=True)
+        dsId = str(dbacc.reqarg("dsId", "dbid", required=True))
+        tid = str(dsId)
+        if dsType == "MUser":
+            tid = "P" + tid
+        ts = json.loads(muser["themes"] or "{}")
+        tp = ts.get(tid)
+        if tp:
+            aes = dbacc.query_entity(
+                "Audience", "WHERE uid=" + str(muser["dsId"]) +
+                " AND srctype=\"" + dsType + "\" AND srcid=" + dsId)
+            if len(aes) > 0:
+                aud = aes
+                aud["name"] = muser["name"]
+                aud["lev"] = tp.get("lev", 0)
+            else:  # no existing audience entry, make one
+                aud = {"dsType":"Audience", "uid":muser["dsId"],
+                       "srctype":dsType, "srcid":dsId, "name":muser["name"],
+                       "lev":tp.get("lev", 0),
+                       "mech":tp.get("followmech", "email"), "modified":""}
+            dbacc.write_entity(aud, aud["modified"])
+    except ValueError as e:
+        return util.srverr(str(e))
+    return util.respJSON("[" + res + "]")
+
+
 def audblock():
     res = ""
     try:
