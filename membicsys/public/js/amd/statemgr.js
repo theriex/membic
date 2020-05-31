@@ -112,6 +112,10 @@ return {
             jt.log("history.pushState " + dsType + " " + dsId);
             history.pushState(newst, dsType + dsId,
                               app.statemgr.urlForInstance(refobj)); }
+        if(extra) {
+            delete extra.forceReplace;
+            if(Object.keys(extra).length === 0) {
+                extra = null; } }
         dispatchState(history.state, extra);
     },
 

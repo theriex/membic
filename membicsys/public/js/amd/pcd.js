@@ -306,7 +306,7 @@ app.pcd = (function () {
     //might be needed again.
     function processExtraObject (extraobj) {
         if(extraobj) {
-            jt.log("processExtraObject ignored " + extraobj); }
+            jt.log("processExtraObject ignored " + JSON.stringify(extraobj)); }
     }
 
 
