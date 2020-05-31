@@ -336,12 +336,11 @@ var jtminjsDecorateWithUtilities = function (utilityObject) {
     };
 
 
-    //if a string needs to be URL encoded and then stuffed inside of
-    //single quotes, then you need to replace any embedded single
-    //quotes to avoid terminating the string early.
-    uo.embenc = function (val) {
-        val = uo.enc(val);
+    //Make an html text value safe for placing between double or single quotes.
+    uo.escq = function (val) {
+        val = val || "";
         val = val.replace(/'/g, "%27");
+        val = val.replace(/"/g, "&quot;");
         return val;
     };
 

@@ -946,9 +946,10 @@ function createJSServerAcc () {
     jsc += "        if(!obj) {\n";
     jsc += "            jt.log(\"refmgr.put: Attempt to put null obj\");\n";
     jsc += "            console.trace(); }\n";
-    jsc += "        clearPrivilegedFields(obj);  //no sensitive info here\n";
+    jsc += "        clearPrivilegedFields(obj);  //no sensitive info in cache\n";
     jsc += "        cache[obj.dsType] = cache[obj.dsType] || {};\n";
     jsc += "        cache[obj.dsType][obj.dsId] = obj;\n";
+    jsc += "        return obj;\n"
     jsc += "    },\n";
     jsc += "\n";
     jsc += "\n";

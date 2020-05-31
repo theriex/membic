@@ -25,12 +25,10 @@ app.login = (function () {
         //probably up to date, but that's not guaranteed given server call
         //timing.  Best to just just redraw.
         app.refmgr.getFull("MUser", authobj.authId, function (muser) {
-            if(app.startParams.cmd === "membership" && app.startParams.tid) {
-                app.statemgr.setState("Theme", app.startParams.tid, 
-                                      {cmd:"membership",
-                                       fid:app.startParams.fid,
-                                       mtok:app.startParams.mtok}); }
-            else if(authobj.status === "Pending") {
+            //no URL commands currently being supported.
+            //if(app.startParams.cmd === "blah")
+            //    app.statemgr.setState("obtype", "obid", {extraobj})
+            if(authobj.status === "Pending") {
                 //If they have not activated their account yet, then go to
                 //their empty profile so they can take the next step without
                 //having to navigate.

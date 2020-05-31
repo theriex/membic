@@ -476,6 +476,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fblocktd { padding-left:5px; }
 .fblockspan img { vertical-align:middle; }
 .fblockspan button { margin-left:8px; }
+.audlevdiv { text-align:center; padding:0px 1px 10px 1px; }
 
 
 /* >> share buttons */

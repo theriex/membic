@@ -39,12 +39,14 @@ def verify_hashtag(hashtag):
         raise ValueError("Hashtag " + hashtag + " already in use")
 
 
-def verify_active_account(muser):
+def verify_active_account(muser, lax=False):
     if muser["status"] == "Active":
         return
     actcode = dbacc.reqarg("actcode")
     if not actcode:
-        return  # not trying to activate
+        if lax:     # probably still doing initial account setup but not
+            return  # trying to activate yet
+        raise ValueError("Account is not active")
     if actcode == "requestresend":
         util.send_activation_code(muser)
         return
@@ -87,21 +89,14 @@ def subtoken(src, token):
 # becoming a member or being removed as a member.
 def verify_authorized_theme_member_change(muser, theme, prof, ras):
     ua = theme_association(theme, muser["dsId"])
-    personal = muser["dsId"] == prof["dsId"]
-    if ua == "Founder" and not personal:
-        return True  # Founders can do anything with other members
-    if ua != "Founder" and personal:
-        if assoc_level(ras["assoc"]) <= 0:
-            return True  # Any member can resign if they want
-        if ras["assoc"] == "Member" and ras["fid"]:
-            # check membership accept with founder authorization
-            if theme_association(theme, ras["fid"]) != "Founder":
-                raise ValueError("fid " + ras["fid"] + " is not a founder.")
-            founder = dbacc.cfbk("MUser", "dsId", ras["fid"], required=True)
-            ftok = util.token_for_user(founder)
-            if subtoken(prof["email"], ftok) != ras["mtok"]:
-                raise ValueError("mtok authorization value did not match")
-            return True
+    founder = (ua == "Founder")
+    personal = (muser["dsId"] == prof["dsId"])
+    # Founders can change levels of other members but cannot resign themselves
+    if founder and not personal:
+        return True
+    # Regular members may resign
+    if personal and not founder and assoc_level(ras["assoc"]) < assoc_level(ua):
+        return True
     raise ValueError("Unauthorized Theme member change.")
 
 
@@ -112,7 +107,7 @@ def update_theme_membership(updt, prof, assoc):
         try:
             ids.remove(prof["dsId"])
         except Exception:
-            pass  # not found is ok, anything else is ok, not in list now.
+            pass  # not found or whatever is ok. Verified not in list.
         if an == assoc:
             ids.append(prof["dsId"])
         updt[field] = ",".join(ids)
@@ -148,24 +143,47 @@ def update_profile_association(prof, ao, ras):
     return prof
 
 
+def update_audience_record(audrec):
+    audrec["dsType"] = "Audience"
+    audrec["modified"] = audrec.get("modified", "")
+    recs = dbacc.query_entity(
+        "Audience", "WHERE uid=" + audrec["uid"] + " AND srctype=\"" +
+        audrec["srctype"] + "\" AND srcid=" + audrec["srcid"] + " LIMIT 1")
+    if len(recs) > 0:
+        audrec["dsId"] = recs[0]["dsId"]
+        audrec["modified"] = recs[0]["modified"]
+    return dbacc.write_entity(audrec, audrec["modified"])
+
+
+# Returns a list of modified objects.  [MUser] if user changes follower
+# association or fmech.  [MUser, Theme] if user resigns.  [Theme] if founder
+# promotes or demotes someone.  The corresponding Audience record is also
+# updated but not returned.  Only the Founder may change the audience view
+# directly, and they already have their local updated copy.
 def update_association(muser, ao, prof, ras):
     assoc = ras["assoc"]
     if not (assoc in MEMBERASSOCS or assoc in FOLLOWASSOCS):
         raise ValueError("Unknown association " + assoc)
-    updt = None
-    if ao["dsType"] == "Theme":
+    objs = []
+    if muser["dsId"] == prof["dsId"]:  # update own following info
+        update_profile_association(prof, ao, ras)
+        prof = dbacc.write_entity(prof, vck=prof["modified"])
+        dbacc.entcache.cache_put(prof)  # so subsequent updates have correct vck
+        objs.append(prof)
+    if ao["dsType"] == "Theme":  # update member info if resigning or founder
         prevassoc = theme_association(ao, prof["dsId"])
         if prevassoc != assoc and (prevassoc in MEMBERASSOCS or
                                    assoc in MEMBERASSOCS):
             verify_authorized_theme_member_change(muser, ao, prof, ras)
             update_theme_membership(ao, prof, assoc)
-            updt = dbacc.write_entity(ao, vck=ao["modified"])
-    if not updt and prof["dsId"] != muser["dsId"]:  # Not Founder and not self
-        raise ValueError("Not authorized to update MUser " + prof["dsId"])
-    prof = update_profile_association(prof, ao, ras)
-    prof = dbacc.write_entity(prof, vck=prof["modified"])
-    dbacc.entcache.cache_put(prof)  # so subsequent updates have correct vck
-    return prof, updt
+            ao = dbacc.write_entity(ao, vck=ao["modified"])
+            objs.append(ao)
+    if len(objs) > 0:  # Note audience change
+        update_audience_record({"uid":prof["dsId"], "name":prof["name"],
+                                "srctype":ao["dsType"], "srcid":ao["dsId"],
+                                "lev":assoc_level(ras["assoc"]),
+                                "mech":ras["fm"]})
+    return objs
 
 
 # Simple in this case means bold and italic tags only.  That allows some
@@ -473,7 +491,7 @@ def accupd():
     res = ""
     try:
         muser, srvtok = util.authenticate()
-        verify_active_account(muser)
+        verify_active_account(muser, lax=True)
         prevemail = muser["email"]
         prevalt = muser["altinmail"]
         prevhash = muser["hashtag"]
@@ -547,14 +565,10 @@ def associate():
         pid = dbacc.reqarg("pid", "dbid", required=True)
         prof = dbacc.cfbk("MUser", "dsId", pid, required=True)
         ras = {"assoc": dbacc.reqarg("assoc", "string", required=True),
-               "fm": dbacc.reqarg("fm", "string", required=True),
-               # member invite authorization request attributes
-               "fid": dbacc.reqarg("fid", "dbid"),
-               "mtok": dbacc.reqarg("mtok", "string")}
-        prof, theme = update_association(muser, ao, prof, ras)
-        res = util.safe_JSON(prof)
-        if theme:
-            res += "," + util.safe_JSON(theme)
+               "fm": dbacc.reqarg("fm", "string", required=True)}
+        objs = update_association(muser, ao, prof, ras)
+        objs = [util.safe_JSON(obj) for obj in objs]
+        res = ",".join(objs)
     except ValueError as e:
         return util.srverr(str(e))
     return util.respJSON("[" + res + "]")
@@ -637,37 +651,6 @@ def audinf():
         fwrs = dbacc.query_entity("Audience", where)
         res = json.dumps({"dsType":dsType.lower() + "audience",
                           "dsId":str(dsId), "followers":fwrs})
-    except ValueError as e:
-        return util.srverr(str(e))
-    return util.respJSON("[" + res + "]")
-
-
-# Verify audience info for the authorized user and the specified object.
-def audupd():
-    res = ""
-    try:
-        muser, _ = util.authenticate()
-        dsType = dbacc.reqarg("dsType", "string", required=True)
-        dsId = str(dbacc.reqarg("dsId", "dbid", required=True))
-        tid = str(dsId)
-        if dsType == "MUser":
-            tid = "P" + tid
-        ts = json.loads(muser["themes"] or "{}")
-        tp = ts.get(tid)
-        if tp:
-            aes = dbacc.query_entity(
-                "Audience", "WHERE uid=" + str(muser["dsId"]) +
-                " AND srctype=\"" + dsType + "\" AND srcid=" + dsId)
-            if len(aes) > 0:
-                aud = aes
-                aud["name"] = muser["name"]
-                aud["lev"] = tp.get("lev", 0)
-            else:  # no existing audience entry, make one
-                aud = {"dsType":"Audience", "uid":muser["dsId"],
-                       "srctype":dsType, "srcid":dsId, "name":muser["name"],
-                       "lev":tp.get("lev", 0),
-                       "mech":tp.get("followmech", "email"), "modified":""}
-            dbacc.write_entity(aud, aud["modified"])
     except ValueError as e:
         return util.srverr(str(e))
     return util.respJSON("[" + res + "]")

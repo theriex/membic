@@ -148,9 +148,10 @@ return {
         if(!obj) {
             jt.log("refmgr.put: Attempt to put null obj");
             console.trace(); }
-        clearPrivilegedFields(obj);  //no sensitive info here
+        clearPrivilegedFields(obj);  //no sensitive info in cache
         cache[obj.dsType] = cache[obj.dsType] || {};
         cache[obj.dsType][obj.dsId] = obj;
+        return obj;
     },
 
 

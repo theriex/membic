@@ -19,6 +19,16 @@ app.theme = (function () {
     }
 
 
+    function levelForAssociationName (name) {
+        switch(name) {
+        case "Founder": return 3;
+        case "Moderator": return 2;
+        case "Member": return 1;
+        case "Following": return -1;
+        default: return 0; }
+    }
+
+
     function profassoc (dsType, dsId) {
         var prof = app.login.myProfile() || {};
         var themes = prof.themes || {};
@@ -83,22 +93,22 @@ app.theme = (function () {
 
     function assocActionButtonHTML () {
         var rxv = {btxt:"Archive",
-                   fstr:jt.fs("app.theme.archive(true,'Archiving a theme prevents any new membic posts. Are you sure you want to archive " + jt.embenc(setctx.tpo.name) + "?')")};
+                   fstr:jt.fs("app.theme.archive(true,'Archiving a theme prevents any new membic posts. Are you sure you want to archive " + jt.escq(setctx.tpo.name) + "?')")};
         if(setctx.tpo.cliset && setctx.tpo.cliset.flags && 
            setctx.tpo.cliset.flags.archived) {
             rxv = {btxt:"Re-Activate",
-                   fstr:jt.fs("app.theme.archive(false,'Re-Activating " + jt.embenc(setctx.tpo.name) + " will allow new membic posts from all members. Re-Activate?')")}; }
-        var aas = {"Founder":rxv,
-                   "Moderator":{
+                   fstr:jt.fs("app.theme.archive(false,'Re-Activating " + jt.escq(setctx.tpo.name) + " will allow new membic posts from all members. Re-Activate?')")}; }
+        var aas = {Founder:rxv,
+                   Moderator:{
                        btxt:"Resign",
-                       fstr:jt.fs("app.theme.relupd('Member','" + setctx.fm + "','If you resign as a moderator, you only be only have regular member access to " + jt.embenc(setctx.tpo.name) + ". Are you sure you want to resign as a moderator?')")},
-                   "Member":{
+                       fstr:jt.fs("app.theme.relupd('Member','','If you resign as a moderator, you will still be able to post membics, but you will no longer be able to remove membics posted by others to " + jt.escq(setctx.tpo.name) + ". Are you sure you want to resign as a moderator?')")},
+                   Member:{
                        btxt:"Resign",
-                       fstr:jt.fs("app.theme.relupd('Following','" + setctx.fm + "','If you resign your membership, you will no longer be able to post membics to " + jt.embenc(setctx.tpo.name) + ". Are you sure you want to resign your membership?')")},
-                   "Following":{
+                       fstr:jt.fs("app.theme.relupd('Following','','If you resign your membership, you will no longer be able to post membics to " + jt.escq(setctx.tpo.name) + ". Are you sure you want to resign?')")},
+                   Following:{
                        btxt:"Stop&nbsp;Following",
                        fstr:jt.fs("app.theme.relupd('Unknown')")},
-                   "Unknown":{
+                   Unknown:{
                        btxt:"Follow",
                        fstr:jt.fs("app.theme.relupd('Following')")}};
         var aa = aas[setctx.assoc];
@@ -123,10 +133,10 @@ app.theme = (function () {
 
     function updateSettingsMenuHeading () {
         var link = {text:setctx.assoc + " Settings",
-                    title:"Actions for " + setctx.assoc + " " + setctx.tpo.name,
+                    title:"Actions for " + setctx.assoc + " ",
                     src:"ts" + setctx.assoc.toLowerCase() + ".png"};
         if(setctx.assoc === "Unknown") {
-            link.text = "Follow " + setctx.tpo.name;
+            link.text = "Follow " + jt.escq(setctx.tpo.name);
             link.title = link.text;
             link.src = "acbullet.png"; }
         else if(setctx.assoc === "Following") {
@@ -160,23 +170,37 @@ app.theme = (function () {
 
 
     function displayAudience(co) {
+        var levn = association(app.pcd.getDisplayContext().actobj.contextobj);
         var ams = [];
         co.followers.forEach(function (f, idx) {
+            var assoc = nameForLevel(f.lev);
+            if(levn === "Founder") {
+                assoc = ["a", {href:"#association",
+                               onclick:jt.fs("app.theme.chgassoc(" + idx + ")"),
+                               title:"Change association for " + f.name},
+                         assoc]; }
             var emb = blockHTML(f, idx);
             ams.push(["tr",
                       [["td",
-                        ["a", {href:"#" + f.uid, title:f.name,
+                        ["a", {href:"#" + f.uid, 
+                               title:"Show profile for " + f.name,
                                onclick:jt.fs("app.statemgr.setState('MUser','" +
                                              f.uid + "')")},
                          [["img", {cla:"followerimg",
                                    src:app.login.uidimgsrc(f.uid)}],
                           ["span", {cla:"followernamespan"}, f.name]]]],
-                       ["td", ["span", {cla:"flevspan"}, nameForLevel(f.lev)]],
+                       ["td", 
+                        ["span", {cla:"flevspan"},
+                         assoc]],
                        ["td", {cla:"fmechtd"},
                         ["span", {cla:"fmechspan"}, f.mech]],
                        ["td", {cla:"fblocktd"},
                         ["span", {cla:"fblockspan",
-                                  id:"fblockspan" + idx}, emb]]]]); });
+                                  id:"fblockspan" + idx}, emb]]]]);
+            ams.push(["tr",
+                      ["td", {colspan:4},
+                       ["div", {id:"audlevdiv" + idx, cla:"audlevdiv",
+                                style:"display:none;"}]]]); });
         if(!ams.length) {
             jt.out("pcdaudcontdiv", "No followers seen yet."); }
         else {
@@ -223,29 +247,30 @@ app.theme = (function () {
     }
 
 
-    //Non-transactional, non-blocking, good effort audience check.  Helps
-    //not having to wait for the nightly notices processing.  Triggered by
-    //a user visiting the theme/profile and updating their follow prefs.
-    function backgroundVerifyAudience () {
-        app.fork(
-            {descr:"Check audience record.", ms:500,
-             func:function () {
-                 if(!setctx || !setctx.tpo) {
-                     return; }
-                 var authobj = app.login.authenticated();
-                 if(!authobj || (setctx.tpo.dsType === "MUser" &&
-                                 setctx.tpo.dsId === authobj.authId)) {
-                     return; }
-                 var data = jt.objdata(
-                     {an:authobj.email, at:authobj.token,
-                      dsType:setctx.tpo.dsType, dsId:setctx.tpo.dsId});
-                 jt.call("POST", app.dr("api/audupd"), data,
-                         function () {
-                             jt.log("backgroundVerifyAudience completed."); },
-                         function (code, errtxt) {
-                             jt.log("backgroundVerifyAudience failed " + code +
-                                    ": " + errtxt); },
-                         jt.semaphore("theme.backgroundVerifyAudience")); }});
+    function audLevelAdjustHTML (idx) {
+        var obj = app.pcd.getDisplayContext().actobj.contextobj;
+        var aud = app.refmgr.cached(audObjType(obj.dsType), obj.dsId);
+        var follower = aud.followers[idx];
+        var aas = {Founder:[],
+                   Moderator:[
+                       {btxt:"Demote to Member",
+                        fstr:jt.fs("app.theme.levupd(" + idx + ",'Member','After removing " + jt.escq(follower.name) + " as a moderator, they will no longer be able to remove membics from other members. Demote?')")}],
+                   Member:[
+                       {btxt:"Promote to Moderator",
+                        fstr:jt.fs("app.theme.levupd(" + idx + ",'Moderator','As a moderator, " + jt.escq(follower.name) + " can continue to post but will also be able to remove membics from other members. You should trust their judgement. Promote to moderator?')")},
+                       {btxt:"Cancel Membership",
+                        fstr:jt.fs("app.theme.levupd(" + idx + ",'Following','After removing membership, " + jt.escq(follower.name) + " will no longer be able to post membics to " + jt.escq(obj.name) + ", though they may still modify or remove any membics they have previously posted. Are you sure you want to cancel their membership?')")}],
+                   Following:[
+                       {btxt:"Grant Membership",
+                        fstr:jt.fs("app.theme.levupd(" + idx + ",'Member','As a member, " + jt.escq(follower.name) + " will be able to post membics to " + jt.escq(obj.name) + ". Grant membership?')")}],
+                   Unknown:[]};
+        var html =[];
+        aas[nameForLevel(follower.lev)].forEach(function (button) {
+            if(html.length) {
+                html.push("&nbsp;"); }
+            html.push(["button", {type:"button", onclick:button.fstr},
+                       button.btxt]); });
+        return jt.tac2html(html);
     }
 
 
@@ -303,18 +328,17 @@ return {
         jt.out("assocbuttonsdiv", "Updating...");
         var authobj = app.login.authenticated();
         var data = jt.objdata(
-            {an:authobj.email, at:authobj.token,          //user ident
+            {an:authobj.email, at:authobj.token,          //auth user ident
              aot:setctx.tpo.dsType, aoi:setctx.tpo.dsId,  //association obj
-             pid:app.login.myProfile().dsId,            //association prof
+             pid:app.login.myProfile().dsId,              //association prof
              assoc:setctx.assoc, fm:setctx.fm});          //assoc and mech
         jt.call("POST", app.dr("/api/associate"), data,
-                function (result) {  //prof, followed by theme if updated
+                function (result) {  //prof, followed by theme if also updated
                     result.forEach(function (obj) {
-                        app.refmgr.put(app.refmgr.deserialize(obj)); });
-                    if(app.samePO(setctx.tpo, result[result.length - 1])) {
-                        setctx.tpo = result[result.length - 1]; }
+                        obj = app.refmgr.put(app.refmgr.deserialize(obj));
+                        if(app.samePO(setctx.tpo, obj)) {
+                            setctx.tpo = obj; } });
                     setctx.ao = profassoc(setctx.tpo.dsType, setctx.tpo.dsId);
-                    backgroundVerifyAudience();
                     app.theme.connopt(); },
                 function (code, errtxt) {
                     //show the error occurred. User will have to toggle 
@@ -325,24 +349,28 @@ return {
     },
 
 
-    //Called while displaying the appropriate theme and after the new
-    //member's profile has been loaded.
-    addMember: function (extraobj) {
+    //Update membership from the audience view.
+    levupd: function (idx, association, cfrm) {
+        if(!confirm(cfrm)) {
+            return; }
         var authobj = app.login.authenticated();
-        var dispctx = app.pcd.getDisplayContext();
-        var theme = dispctx.actobj.contextobj;
+        var theme = app.pcd.getDisplayContext().actobj.contextobj;
+        var aud = app.refmgr.cached(audObjType(theme.dsType), theme.dsId);
+        var amb = aud.followers[idx];
+        jt.out("audlevdiv" + idx, "Updating " + theme.name + "...");
         var data = jt.objdata(
             {an:authobj.email, at:authobj.token, aot:"Theme", aoi:theme.dsId,
-             pid:authobj.authId, assoc:"Member", fm:"email", 
-             fid:extraobj.fid, mtok:extraobj.mtok});
-        jt.call("POST", app.dr("/api/associate"), data,
-                function (result) {  //prof, followed by theme if updated
-                    result.forEach(function (obj) {
-                        app.refmgr.put(app.refmgr.deserialize(obj)); });
-                    app.theme.connopt("show"); },
+             pid:amb.uid, assoc:association, fm:amb.mech});
+        jt.call("POST", app.dr("api/associate"), data,
+                function (result) { //just the updated Theme.
+                    app.refmgr.put(app.refmgr.deserialize(result[0]));
+                    //Audience entry updated on server.  Update local record.
+                    amb.lev = levelForAssociationName(association);
+                    displayAudience(aud); },
                 function (code, errtxt) {
-                    jt.err("Membership failed " + code + ": " + errtxt); },
-                jt.semaphore("theme.addMember"));
+                    jt.out("audlevdiv" + idx, "Update failed " + code + ": " +
+                           errtxt); },
+                jt.semaphore("theme.levupd"));
     },
 
 
@@ -413,6 +441,16 @@ return {
             fetchAndDisplayAudience(obj.dsType, obj.dsId); }
         if(div.style.display === "none") {
             div.style.display = "block"; }
+        else {
+            div.style.display = "none"; }
+    },
+
+
+    chgassoc: function (idx) {
+        var div = jt.byId("audlevdiv" + idx);
+        if(div.style.display === "none") {
+            div.style.display = "block";
+            div.innerHTML = audLevelAdjustHTML(idx); }
         else {
             div.style.display = "none"; }
     },

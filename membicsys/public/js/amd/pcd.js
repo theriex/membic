@@ -300,10 +300,13 @@ app.pcd = (function () {
     }
 
 
-    //process any extra information from login.verifyUserInfo
+    //The extraobj is used to drive additional actions passed along from
+    //login.verifyUserInfo.  Not currently supporting any of these but
+    //leaving the passthrough mechanism in place since URL driven actions
+    //might be needed again.
     function processExtraObject (extraobj) {
-        if(extraobj && extraobj.cmd === "membership") {
-            app.theme.addMember(extraobj); }
+        if(extraobj) {
+            jt.log("processExtraObject ignored " + extraobj); }
     }
 
 
@@ -604,7 +607,7 @@ app.pcd = (function () {
                            onclick:jt.fs("app.theme.createTheme('" + divid +
                                          "')")},
                 "Create&nbsp;Theme"],
-               ["button", {title:"Sign Out And Clear Personal Info",
+               ["button", {title:"Sign Out And Clear Saved Data",
                            onclick:jt.fs("app.login.logout()")},
                 "Sign Out"]]],
              ["div", {id:"cpidiv"},
