@@ -237,6 +237,8 @@ app.membic = (function () {
     function membicDetailsUnread (membic) {
         if(!mayEdit(membic)) {
             return false; }  //can't change, so don't try and read.
+        if(!membic.rurl) {
+            return false; }  //nothing to read, so don't try.
         if(membic.svcdata && membic.svcdata.urlreader &&
            Object.keys(membic.svcdata.urlreader).length > 0) {
             return false; }  //reader ran at least once before.

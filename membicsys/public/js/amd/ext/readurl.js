@@ -406,10 +406,13 @@ app.readurl = (function () {
     }
 
 
+    //Return the url minus any query or hash parts.  In some instances that
+    //may lead to completely different content, but the original failed, so
+    //the idea is to retry without to try find a pic or descriptive info.
+    //DOES NOT retry with http if the original was https, because the called
+    //site might automatically redirect http to https which would cause an
+    //infinite loop.
     function getPlainURL (url) {
-        //returns the url minus any query or hash parts.  In some instances
-        //that may lead to completely different content, but the original
-        //failed so the idea is to retry without to try get a pic.
         var crockfordurlregex = /^(?:([A-Za-z]+):)?(\/{0,3})([0-9.\-A-Za-z]+)(?::(\d+))?(?:\/([^?#]*))?(?:\?([^#]*))?(?:#(.*))?$/;
         var result = crockfordurlregex.exec(url);
         if(!result || result.length < 4) {
@@ -447,11 +450,8 @@ return {
                 //Error may be from call to url, not a local server error
                 function (code, errtxt) {
                     jt.log("app.readurl failed " + code + ": " + errtxt);
-                    var plainurl;
-                    //Do not retry http if the original was https, since the
-                    //site may redirect http to https causing a loop.
-                    plainurl = getPlainURL(url);
-                    if(url !== plainurl) {  //wasn't a permalink, retry basic
+                    var plainurl = getPlainURL(url);
+                    if(plainurl && plainurl !== url) {
                         return app.readurl.getInfo(membic, plainurl); }
                     app.membic.readerFinish(membic, "failure",
                                             String(code) + ": " + errtxt); },
