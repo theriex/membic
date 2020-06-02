@@ -396,7 +396,7 @@ app.membic = (function () {
             var association = app.theme.nameForLevel(uti.lev);
             var data = jt.objdata(
                 {an:authobj.email, at:authobj.token, aot:"Theme", aoi:tid,
-                 pid:prof.dsId, assoc:association, fm:uti.lev});
+                 pid:prof.dsId, assoc:association, fm:uti.followmech});
             jt.call("POST", app.dr("/api/associate"), data,
                     function (objs) {  //first object is update profile
                         app.refmgr.put(app.refmgr.deserialize(objs[0]));

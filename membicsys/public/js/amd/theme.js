@@ -151,16 +151,18 @@ app.theme = (function () {
 
     function blockHTML (f, idx) {
         var emb;
+        //You may not block email contact from members.  Demote them first.
+        var mayBlock = (f.lev <= 0 && app.theme.mayViewAudience() === "edit");
         if(f.blocked) {
             emb = ["img", {src:app.dr("img/emailgenprohib.png")}];
-            if(app.theme.mayViewAudience() === "edit") {
+            if(mayBlock) {
                 emb = ["a", {href:"#unblock" + f.uid, 
                              title:"allow email contact from " + f.name,
                              onclick:jt.fs("app.theme.blockFollower(" + idx +
                                            ",false)")}, emb]; } }
         else {
             emb = ["img", {src:app.dr("img/email.png")}];
-            if(app.theme.mayViewAudience() === "edit") {
+            if(mayBlock) {
                 emb = ["a", {href:"#block" + f.uid, 
                              title:"block email from " + f.name,
                              onclick:jt.fs("app.theme.blockFollower('" + idx +
@@ -174,7 +176,7 @@ app.theme = (function () {
         var ams = [];
         co.followers.forEach(function (f, idx) {
             var assoc = nameForLevel(f.lev);
-            if(levn === "Founder") {
+            if(levn === "Founder" && assoc !== "Founder") {
                 assoc = ["a", {href:"#association",
                                onclick:jt.fs("app.theme.chgassoc(" + idx + ")"),
                                title:"Change association for " + f.name},
@@ -366,6 +368,7 @@ return {
                     app.refmgr.put(app.refmgr.deserialize(result[0]));
                     //Audience entry updated on server.  Update local record.
                     amb.lev = levelForAssociationName(association);
+                    amb.blocked = "";  //members may not be blocked
                     displayAudience(aud); },
                 function (code, errtxt) {
                     jt.out("audlevdiv" + idx, "Update failed " + code + ": " +

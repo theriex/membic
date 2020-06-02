@@ -156,9 +156,11 @@ def update_audience_record(audrec):
     recs = dbacc.query_entity(
         "Audience", "WHERE uid=" + audrec["uid"] + " AND srctype=\"" +
         audrec["srctype"] + "\" AND srcid=" + audrec["srcid"] + " LIMIT 1")
-    if len(recs) > 0:
+    if len(recs) > 0:  # note db info for update
         audrec["dsId"] = recs[0]["dsId"]
         audrec["modified"] = recs[0]["modified"]
+    if audrec["lev"] > 0:  # contact from members may not be blocked
+        audrec["blocked"] = ""
     return dbacc.write_entity(audrec, audrec["modified"])
 
 
