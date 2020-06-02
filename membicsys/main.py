@@ -83,7 +83,7 @@ def themeupd(): #params an, at, Theme update fields
     return useract.themeupd()
 
 @app.route('/api/associate', methods=['GET', 'POST'])
-def associate(): #params: an, at, aot, aoi, pid, assoc, fm[, fid, mtok]
+def associate(): #params: an, at, aot, aoi, pid, assoc, fm
     return useract.associate()
 
 @app.route('/api/audinf')

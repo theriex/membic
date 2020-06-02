@@ -385,6 +385,28 @@ app.membic = (function () {
     }
 
 
+    function membicSaveErrorRecovery (ignore /*code*/, errtxt, cdx) {
+        var matches = errtxt.match(/rchived\sTheme\s(\S+)/);
+        if(matches) {
+            //Note theme archived in profile MUser.themes
+            var tid = matches[1];
+            var authobj = app.login.authenticated();
+            var prof = app.login.myProfile();
+            var uti = prof.themes[tid];
+            var association = app.theme.nameForLevel(uti.lev);
+            var data = jt.objdata(
+                {an:authobj.email, at:authobj.token, aot:"Theme", aoi:tid,
+                 pid:prof.dsId, assoc:association, fm:uti.lev});
+            jt.call("POST", app.dr("/api/associate"), data,
+                    function (objs) {  //first object is update profile
+                        app.refmgr.put(app.refmgr.deserialize(objs[0]));
+                        tpmgr.themepost(cdx, "remove", tid); },
+                    function (code, errtxt) {
+                        jt.log("membicSaveErrorRecovery associate " + code +
+                               ": " + errtxt); }); }
+    }
+
+
     //Update the changed membic elements and call to save.
     function updateMembic (cdx) {
         jt.out("dlgbsmsgdiv" + cdx, "");
@@ -415,7 +437,8 @@ app.membic = (function () {
                 expandedMembics[srcmembic.dsId] = ""; },  //close
             function (code, txt) {
                 jt.out("dlgbsmsgdiv" + cdx, "Save failed " + code + ": " + txt);
-                jt.out("dlgbsbdiv" + cdx, bhtml); });
+                jt.out("dlgbsbdiv" + cdx, bhtml);
+                membicSaveErrorRecovery(code, txt, cdx); });
     }
 
 
@@ -486,6 +509,12 @@ app.membic = (function () {
                             onchange:jt.fs("app.membic.themepost(" + cdx + 
                                            ",'select')")},
                  tpmgr.themePostOptionsHTML(cdx)]); },
+        availableThemeIds: function (uts, skiptidcsv) {
+            return Object.keys(uts).filter(function (tid) {
+                if(skiptidcsv.csvcontains(tid)) { return false; }
+                if(uts[tid].lev <= 0) { return false; }
+                if(uts[tid].archived) { return false; }
+                return true; }); },
         verifyThemePostTimes: function () {
             var themes = app.login.myProfile().themes;
             var havePosts = true;
@@ -506,8 +535,7 @@ app.membic = (function () {
             if(pnlab) {
                 tidcsv = pnlab.dataset.tidcsv; }
             var uts = app.login.myProfile().themes;
-            var avtis = Object.keys(uts)
-                .filter((tid) => !tidcsv.csvcontains(tid));
+            var avtis = tpmgr.availableThemeIds(uts, tidcsv);
             tpmgr.verifyThemePostTimes();
             avtis.sort(function (a, b) {
                 if(uts[a].lastPost < uts[b].lastPost) { return 1; }

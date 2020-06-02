@@ -384,7 +384,8 @@ return {
         var url = app.login.authURL("/api/themeupd");
         jt.call("POST", url, app.refmgr.postdata(obj),
                 function (objs) {
-                    app.refmgr.put(app.refmgr.deserialize(objs[0]));
+                    objs.forEach(function (obj) {
+                        app.refmgr.put(app.refmgr.deserialize(obj)); });
                     app.refmgr.uncache("activetps", "411");
                     if(succf) {
                         succf(objs[0]); } },
@@ -507,11 +508,15 @@ return {
         app.theme.update(setctx.tpo,
                          function (theme) {
                              setctx.tpo = theme;
-                             app.theme.connopt(); },
+                             //redraw settings to hide/display webfeed
+                             app.pcd.settings("show"); },
                          function (code, errtxt) {  //same handling as relupd
                              jt.out("assocbuttonsdiv", "Update failed " + code +
                                     ": " + errtxt); });
-    }
+    },
+
+
+    nameForLevel: function (lev) { return nameForLevel(lev); }
             
 }; //end of returned functions
 }());

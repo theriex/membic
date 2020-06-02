@@ -71,7 +71,7 @@ module.exports = (function () {
         //  MUser ids are prefixed with 'P' to avoid id collisions
         //  info: {lev:N, name:str, hashtag:str, description:str,
         //         picture:idstr, keywords:CSV, followmech:email|RSS,
-        //         notices:[notice1, notice2..]}
+        //         archived:str, notices:[notice1, notice2..]}
         //    lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
         //         Any falsy value for lev means no association.
         //    notice: {type:"application", lev:int, uid, uname, created:ISO,

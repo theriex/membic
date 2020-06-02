@@ -117,13 +117,16 @@ def update_theme_membership(updt, prof, assoc):
     #              "\n  Members: " + updt["members"]);
 
 
+# This does not currently preserve existing notices.  If preservation is
+# needed, then they need to be identified as ok in response to a level or
+# follow mechanism change.
 def update_profile_association(prof, ao, ras):
     tid = ao["dsId"]
-    # probably no need to preserve existing notices, so just create a
-    # new association info object to store in the profile
+    themes = json.loads(prof["themes"] or "{}")
+    previnf = themes.get(tid, {"followmech": "email"})
     inf = {
         "lev": assoc_level(ras["assoc"]),
-        "followmech": ras["fm"],
+        "followmech": ras.get("fm", previnf["followmech"]),
         "name": ao["name"],
         "hashtag": ao["hashtag"],
         "picture": ""}
@@ -132,14 +135,18 @@ def update_profile_association(prof, ao, ras):
         if ao["picture"]:
             inf["picture"] = ao["dsId"]
         inf["keywords"] = ao["keywords"]
+        cliset = json.loads(ao.get("cliset", "{}"))
+        flags = cliset.get("flags", {})
+        archived = flags.get("archived")
+        if archived:
+            inf["archived"] = archived
     elif ao["dsType"] == "MUser":
         inf["description"] = ao["aboutme"]
         if ao["profpic"]:
             inf["picture"] = ao["dsId"]
         tid = "P" + tid
-    ts = json.loads(prof["themes"] or "{}")
-    ts[tid] = inf
-    prof["themes"] = json.dumps(ts)
+    themes[tid] = inf
+    prof["themes"] = json.dumps(themes)
     return prof
 
 
@@ -321,27 +328,46 @@ def read_membic_data(muser):
 
 
 # Walk the old and new svcdata postctms to determine which themes should be
-# affected and how.
+# affected and how.  Returns theme|verb indexed by theme dsId.
 def make_theme_plan(newmbc, oldmbc):
     plan = {}
+    # If previously posted, and not posted anymore, then delete.
     if oldmbc and oldmbc["svcdata"]:
         sd = json.loads(oldmbc["svcdata"])
         pts = sd.get("postctms", [])
         for postnote in pts:
-            plan[str(postnote["ctmid"])] = "delete"
+            plan[str(postnote["ctmid"])] = {"action": "delete"}
     sd = json.loads(newmbc.get("svcdata", "{}"))
     pts = sd.get("postctms", [])
-    # If the srcrev is -604, then it is marked as deleted.  For any negative
-    # value there should be no theme posts.  srcrev is an int in the db but
-    # a string here at app level.
+    # If there are posting themes specified, but the srcrev is any negative
+    # value then there should be no theme posts. (-604 is marked as deleted)
     if newmbc.get("srcrev") and int(newmbc["srcrev"]) < 0:
         pts = []
+    # Note existing and new posts specified
     for postnote in pts:
         ctmid = str(postnote["ctmid"])
         if plan.get(ctmid):
-            plan[ctmid] = "edit"
+            plan[ctmid] = {"action": "edit"}
         else:
-            plan[ctmid] = "add"
+            plan[ctmid] = {"action": "add"}
+    # Fetch affected themes for processing.  Referenced here and preb rebuild.
+    for tid, dets in plan.items():
+        dets["theme"] = dbacc.cfbk("Theme", "dsId", int(tid), required=True)
+    # If a theme membic is being deleted or edited, then the user had write
+    # access to the theme and is allowed to modify their previously posted
+    # content.  Adding requires active theme membership.
+    for tid, dets in plan.items():
+        if dets["action"] == "add":
+            if theme_association(dets["theme"], newmbc["penid"]) == "Unknown":
+                raise ValueError("Not a member, so cannot post to Theme " +
+                                 str(tid) + " " + dets["theme"]["name"])
+            cliset = json.loads(dets["theme"].get("cliset", "{}"))
+            flags = cliset.get("flags", {})
+            archived = flags.get("archived", "")
+            if archived:
+                # err text contains "rchived Theme <ctmid>" for client
+                raise ValueError("New posts not allowed for archived Theme " +
+                                 str(tid) + " " + dets["theme"]["name"])
     return plan
 
 
@@ -376,10 +402,6 @@ def theme_membic_from_source_membic(theme, srcmbc):
 # because it is constructed from the source db records, so relying on it
 # here would be circular logic.
 #
-# If a theme membic is being deleted or edited, then the user had write
-# access to the theme, and is allowed to modify the content they previously
-# posted.  If they are adding, verify their theme membership first.
-#
 # note1: In the rare case that a previous processing crash resulted in a
 # membic being written without the corresponding theme membics being
 # updated, then the theme membics will be out of date and subsequent updates
@@ -387,30 +409,21 @@ def theme_membic_from_source_membic(theme, srcmbc):
 # a version check override won't clobber any data, and the integrity can be
 # automatically recovered on a subsequent update.
 def write_theme_membics(themeplan, newmbc):
-    for themeid, action in themeplan.items():
-        if action == "add":
-            theme = dbacc.cfbk("Theme", "dsId", int(themeid))
-            if theme_association(theme, newmbc["penid"]) == "Unknown":
-                raise ValueError("Not a member, so cannot post to Theme " +
-                                 themeid + " " + theme["name"])
     postctms = []
-    memos = {}  # remember themes and added theme membics for preb update
-    for themeid, action in themeplan.items():
-        theme = dbacc.cfbk("Theme", "dsId", int(themeid))
-        tmbc = theme_membic_from_source_membic(theme, newmbc)  # existing or new
-        if action == "delete" and tmbc.get("dsId"):
+    for tid, dets in themeplan.items():
+        tmbc = theme_membic_from_source_membic(dets["theme"], newmbc)
+        if dets["action"] == "delete" and tmbc.get("dsId"):
             dbacc.delete_entity("Membic", tmbc.get("dsId"))
         else: # edit or add
-            # logging.info("write_theme_membics " + json.dumps(tmbc))
             tmbc = dbacc.write_entity(tmbc, vck="override")  #note1
-            postctms.append({"ctmid": themeid, "name": theme["name"],
+            postctms.append({"ctmid": tid, "name": dets["theme"]["name"],
                              "revid": str(tmbc["dsId"])})
-        memos[themeid] = {"theme":theme, "membic":tmbc}
+        dets["membic"] = tmbc
     svcdata = json.loads(newmbc.get("svcdata", "{}"))
     svcdata["postctms"] = postctms
     newmbc["svcdata"] = json.dumps(svcdata)
     newmbc = dbacc.write_entity(newmbc, vck=newmbc["modified"])
-    return newmbc, memos
+    return newmbc
 
 
 # unpack the preb, find the existing instance and update accordingly.  Not
@@ -461,21 +474,19 @@ def update_membic_and_preb(muser, newmbc, oldmbc=None):
     if oldmbc:
         vck = oldmbc["modified"]
     newmbc = dbacc.write_entity(newmbc, vck)  # write main membic
-    # Updating the theme membics triggers a second membic update to
-    # record the themes it was posted to.  The themeId/themeMembic map
-    # is returned as memos for preb update reference.
-    newmbc, memos = write_theme_membics(themeplan, newmbc)
-    # logging.info(logpre + "membics written, updating preb")
+    # Updating the theme membics modifies the source membic again to record
+    # the posted themes in the svcdata.
+    newmbc = write_theme_membics(themeplan, newmbc)
+    # The user preb update is an add or an edit (change or marked as deleted).
     userprebv = "add"
     if oldmbc:
         userprebv = "edit"
     prof = update_preb(muser, newmbc, userprebv)
     dbacc.entcache.cache_put(prof)  # update cached reference
-    res = util.safe_JSON(prof)
-    for themeid, action in themeplan.items():
-        memo = memos[themeid]
-        update_preb(memo["theme"], memo["membic"], action)
-    return res
+    # Theme preb updates directly follow the themeplan actions
+    for _, dets in themeplan.items():
+        update_preb(dets["theme"], dets["membic"], dets["action"])
+    return util.safe_JSON(prof)
 
 
 ##################################################
@@ -525,6 +536,9 @@ def accupd():
     return util.respJSON("[" + res + "]")
 
 
+# Returns the updated Theme first, followed by the updated founder profile.
+# MUser.themes should reflect changed followmech, name, hashtag,
+# description, keywords and archive status
 def themeupd():
     res = ""
     try:
@@ -546,9 +560,12 @@ def themeupd():
         verify_theme_name(prevnamec, theme)
         if theme["hashtag"] and theme["hashtag"] != prevhash:
             verify_hashtag(theme["hashtag"])
-        # Only founder is updating, so not bothering with version check
         theme = dbacc.write_entity(theme, vck=theme["modified"])
-        res = util.safe_JSON(theme)
+        # Note updated information in founder themes listing
+        update_profile_association(muser, theme, {"assoc": "Founder"})
+        muser = dbacc.write_entity(muser, vck=muser["modified"])
+        dbacc.entcache.cache_put(muser)  # subsequent updates need correct vck
+        res = ",".join([util.safe_JSON(obj) for obj in [theme, muser]])
     except ValueError as e:
         return util.srverr(str(e))
     return util.respJSON("[" + res + "]")

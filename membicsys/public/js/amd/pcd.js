@@ -505,13 +505,17 @@ app.pcd = (function () {
     //available when selecting how you are following.
     function webfeedSetting (embobj) {
         var rssurl = rssURLForObj(embobj);
+        var linktxt = rssurl;
+        if(embobj.dsType === "Theme" && embobj.cliset && embobj.cliset.flags &&
+           embobj.cliset.flags.archived) {
+            linktxt = "Archived"; }
         return jt.tac2html(
             ["div", {cla:"cblinediv"},
              ["div", {cla:"infolinediv"},
               ["Web Feed: ",
                 ["a", {href:rssurl, title:"Subscribe to " + embobj.name,
                        onclick:jt.fs("window.open('" + rssurl + "')")},
-                 rssurl]]]]);
+                 linktxt]]]]);
     }
 
 
@@ -822,10 +826,10 @@ return {
     },
 
 
-    settings: function () {
+    settings: function (show) {
         jt.byId("pcdsharediv").style.display = "none";
         var setdiv = jt.byId("pcdsettingsdiv");
-        if(setdiv.style.display === "block") {
+        if(setdiv.style.display === "block" && !show) {
             setdiv.style.display = "none"; }
         else {
             setdiv.style.display = "block"; }
