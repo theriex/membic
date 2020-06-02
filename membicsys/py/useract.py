@@ -123,7 +123,8 @@ def update_theme_membership(updt, prof, assoc):
 def update_profile_association(prof, ao, ras):
     tid = ao["dsId"]
     themes = json.loads(prof["themes"] or "{}")
-    previnf = themes.get(tid, {"followmech": "email"})
+    previnf = themes.get(tid, {})
+    previnf["followmech"] = previnf.get("followmech", "email")
     inf = {
         "lev": assoc_level(ras["assoc"]),
         "followmech": ras.get("fm", previnf["followmech"]),
