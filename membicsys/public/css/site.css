@@ -4,10 +4,10 @@
  ************************************************************
  */
 
-A:link {text-decoration:none; color:#84521a; }
+A:link    {text-decoration:none; color:#84521a; }
 A:visited {text-decoration:none; color:#84521a; }
-A:active {text-decoration:none; color:#84521a; }
-A:hover {text-decoration:underline; color:#a05705; }
+A:hover   {text-decoration:underline; color:#a05705; }
+A:active  {text-decoration:none; color:#84521a; }
 
 html {
   min-height: 100%; margin:0; padding:0;
@@ -30,7 +30,7 @@ body {
 
 img { border:0px; vertical-align:middle; }
 
-button, .loginbutton, .formbutton, .filesellab { 
+button, .loginbutton, .formbutton, .filesellab, .linkbutton { 
   border:1px solid #271400; border-radius:5px; cursor:pointer;
   background:#ffd2a4; box-shadow:1px 1px 1px #999999; }
 
@@ -61,11 +61,10 @@ button, .loginbutton, .formbutton, .filesellab {
 .revtypesdiv { display:inline-block; padding:10px 0px 0px 0px;
                transition:opacity 1s; 
                padding:2px 0px 5px 0px; }
-.typeselect, .tablink, .tablinksel { 
+.typeselect, .tablink { 
   margin:0px 3px; padding:0px 0px 2px 0px;
   background-color:#e6e7e9; opacity:0.8; border-radius:10px; }
 .typeselect { background-color:transparent; }
-.tablinksel { background-color:#ffae50; }
 #loadstatusdiv { background-image:url('../img/e6e7e9p80.png'); }
 #topnavdiv button { font-weight:bold; background-color:transparent;
   background-image:url('../img/e6e7e9p80.png'); }
@@ -96,9 +95,6 @@ button, .loginbutton, .formbutton, .filesellab {
   word-spacing:20px; padding:0px 20px 5px 20px;
   position:fixed; left:0px; bottom:0px; height:30px; width:90%; }
 #bottomstatdiv { height:15px; overflow:hidden; }
-.unselectedTab { background:#789897; 
-  background:-moz-linear-gradient(left top, #789897 0%, #8cb3b2 100%);
-  background:-webkit-linear-gradient(left top, #789897 0%, #8cb3b2 100%); }
 #contentdiv { }
 .penfont, .penflist, .penlight {
   font-family:"Shadows Into Light Two", cursive; font-size:x-large; font-weight:bold; }
@@ -185,7 +181,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #pcdshoutdiv { padding:0px; font-size:small; overflow:auto; }
 #pcdhashdiv { font-size:small; font-family:monospace; padding-top:10px; }
 #pcdctrldiv { clear:both; }
-.unselectedTab { border-bottom: 1px solid #666; }
 #pcdactdiv { padding:0px 0px 3px 0px; }
 #pcdacsharediv, #pcdacsrchdiv, #pcdacemdiv { display:inline-block; }
 #pcdactcontentdiv { font-size:small; text-align:center; }
@@ -198,7 +193,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .skbidiv { float:left; }
 .srchkwrbdiv label { display:inline-block; margin:0px; padding:0px; 
   width:48px; overflow:visible; }
-#createctmdiv { font-size:medium; background-color:#f9f9fc; }
 .formbuttonsdiv { text-align:center; padding:10px; }
 .pcdsectiondiv { background-image: url('../img/whitewash.png'); 
   margin:0px 0px 10px 0px; padding:0px 4px; }
@@ -262,7 +256,13 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mdinnerdiv { min-height:100px; }
 .mftitle { display:inline; }
 .mfshare { text-align:center; }
-.mfshare .resp-sharing-button { padding:0.2em 0.4em; margin-right:1.2em; }
+.mfshare .resp-sharing-button { padding:0.2em 0.4em; }
+.linkbutton { padding:0px 5px; font-size:small; }
+.linkbutton:link    {text-decoration:none; color:#111111; }
+.linkbutton:visited {text-decoration:none; color:#111111; }
+.linkbutton:hover   {text-decoration:none; color:#111111; }
+.linkbutton:active  {text-decoration:none; color:#111111; }
+
 .mdheaderline { text-align:center; }
 .mfrevtype { float:left; }
 .revtseldiv a { padding:0px 5px 0px 0px; }
@@ -315,11 +315,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #mdnoitemsdiv { font-size:small; text-align:center; }
 
 /* >> profile layout */
-.reviewbadge, .reviewbadgesel { 
-  width:30px; height:30px; vertical-align:middle; }
-.reviewbadgesel { background:#ffae50; border-radius:8px; 
-  background:-moz-linear-gradient(left top, #ffae50 0%, #ffceb0 100%);
-  background:-webkit-linear-gradient(left top, #ffae50 0%, #ffceb0 100%); }
 #shouteditbox { text-align:left;
   font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif;
   font-size:small; }
@@ -361,7 +356,6 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 #rdtypesdiv { width:288px; margin:auto; padding:0px 0px 0px 0px; }
 #rdtypepromptdiv { font-size:small; text-align:center; color:#999; }
 #rdkeyindiv { padding:0px 0px 10px 0px; }
-#rdacdiv { float:right; width:50px; background:url('../img/rdaclab.png'); }
 #rdaccb { margin:0px 0px 0px 5px; }
 #rdpfdiv { padding:0px 0px 5px 0px; }
 #rdpicdiv { float:left; margin:0px 5px 0px 0px; width:125px; height:125px; 
@@ -379,15 +373,12 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .rdglpicdiv { float:left; width:40px; overflow:hidden; margin:0px 2px 0px 5px; }
 .rdglpic { vertical-align:middle; max-width:40px; max-height:40px; 
   font-size:small; }
-#rdokstatdiv { color:red; }
 #revautodiv { clear:both; font-size:small; width:275px; }
 #revautodiv ul { list-style-image:url('../img/acbullet.png'); }
 #modalseparatordiv { position:absolute; left:0px; top:0px; 
   background-color:#666666; opacity:0.3; filter:alpha(opacity=30); }
 #revpicdlgdiv { width:220px; }
 .revpictypelist { list-style:none; padding:0px 0px 10px 0px; margin:0; }
-.ptddiv { display:inline-block; position:relative; vertical-align:top;
-  width:125px; height:125px; margin:5px; background:#ffeac2; }
 .overform { position:absolute; top:0px; left:0px; width:125px; }
 .picsideform { position:absolute; top:10px; left: 134px; width: 130px; }
 .picsideformbuttonsdiv { padding:0px 5px; }
@@ -424,7 +415,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .fpstarsdiv { display:inline-block; }
 .fpauthpicdiv { float:right; }
 .authpicimg { max-height:40px; }
-.fpsecfieldsdiv { margin-left:35px; /* reviewbadge + fptitlediv */
+.fpsecfieldsdiv { margin-left:35px; /* fptitlediv */
   font-size:x-small; }
 .fpdatediv { margin-left:5px; font-size: xx-small; }
 .fpdcontdiv { position:relative; }

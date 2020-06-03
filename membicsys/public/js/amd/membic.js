@@ -135,11 +135,15 @@ app.membic = (function () {
         var body = linkForMembic(membic) || "No URL available";
         var mlink = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
             jt.dquotenc(body) + "%0A%0A";
-        return jt.tac2html(app.layout.shareButtonsTAC(
+        var tac = app.layout.shareButtonsTAC(
             {url:body,
              title:subj,
              mref:mlink,
-             socmed:["tw", "fb", "em"]}));
+             socmed:["tw", "fb", "em"]});
+        tac.push(["span", {cla:"sharerespsepspan"}, "&nbsp;|&nbsp;"]);
+        tac.push(["a", {cla:"linkbutton", href:mlink},
+                  "Send&nbsp;Comment"]);
+        return jt.tac2html(tac);
     }
 
 
@@ -749,8 +753,8 @@ app.membic = (function () {
 
 
     var ratmgr = {
-        imgi: {i:app.dr("img/stars18ptC.png"),
-               g:app.dr("img/stars18ptCg.png"),
+        imgi: {i:app.dr("img/stars20ds17.png"),
+               g:app.dr("img/stars20gray.png"),
                w:85, h:15},
         rati: {tis:["No stars", "Half a star", "One star", 
                     "One and a half stars", "Two stars", "Two and a half stars",

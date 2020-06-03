@@ -27,7 +27,6 @@ app.pcd = (function () {
                        dlparam: "t"} };
     var standardOverrideColors = [
         //lower case for all colors defined here
-        //{name:"tab", value:"#ffae50", sel:".tablinksel", attr:"background"},
         {name:"link", value:"#84521a", sel: "A:link,A:visited,A:active", 
          attr:"color"},
         {name:"hover", value:"#a05705", sel:"A:hover", attr:"color"}];
