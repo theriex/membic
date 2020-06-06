@@ -125,25 +125,60 @@ app.membic = (function () {
     }
 
 
-    //Thought about adding membic share button to make your own membic off
-    //of an existing one, but that adds complexity, would likely be of very
-    //limited use, and detract from the external nature of sharing.  To make
-    //a membic off an existing membic you can always use the mail share and
-    //mail it in.
-    function membicShareHTML (membic) {
-        var subj = membic.text;
-        var body = linkForMembic(membic) || "No URL available";
-        var mlink = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
-            jt.dquotenc(body) + "%0A%0A";
-        var tac = app.layout.shareButtonsTAC(
-            {url:body,
-             title:subj,
-             mref:mlink,
-             socmed:["tw", "fb", "em"]});
-        tac.push(["span", {cla:"sharerespsepspan"}, "&nbsp;|&nbsp;"]);
-        tac.push(["a", {cla:"linkbutton", href:mlink},
-                  "Send&nbsp;Comment"]);
-        return jt.tac2html(tac);
+    function membicReferenceText (membic) {
+        var reft = membic.url;
+        if(!reft && membic.details) {
+            reft = membic.details.title || membic.details.name; }
+        if(!reft) {
+            reft = membic.text; }
+        return reft;
+    }
+
+
+    function responseButtonHTML (cdx, membic) {
+        var reft = membicReferenceText(membic);
+        var subj = "Re: " + jt.ellipsis(reft, 75);
+        var qflds = ["penname", "dsId", "penid", "ctmid", "srcrev"];
+        var body = "> " + reft;
+        qflds.forEach(function (fld) {
+            body += "\n> [" + fld + "] " + membic[fld]; });
+        var mlink = "mailto:forwarding@membic.org?subject=" +
+            jt.dquotenc(subj) + "&body=" + "%0A%0A" + jt.dquotenc(body) + "%0A";
+        var linkattrs = {cla:"linkbutton", href:mlink};
+        var prof = app.login.myProfile();
+        var ctxobj = app.pcd.getDisplayContext().actobj.contextobj;
+        var assoc = app.theme.profassoc(ctxobj.dsType, ctxobj.dsId);
+        if(!prof) {
+            linkattrs = {cla:"linkbutton linkbutdis", href:"#signInToRespond",
+                         onclick:jt.fs("app.membic.resperr(" + cdx +
+                                       ",'signin')")}; }
+        else if(!assoc.lev) {  //undefined or not following
+            linkattrs = {cla:"linkbutton linkbutdis", href:"#followToRespond",
+                         onclick:jt.fs("app.membic.resperr(" + cdx +
+                                       ",'follow')")}; }
+        return jt.tac2html(["a", linkattrs, "Send&nbsp;Comment"]);
+    }
+
+
+    function resperr (cdx, errt, ack) {
+        var actobj = app.pcd.getDisplayContext().actobj;
+        switch(errt) {
+        case "signin":
+            jt.out("mcmtdiv" + cdx, "Sign In to comment");
+            break;
+        case "follow":
+            if(!ack) {
+                jt.out("mcmtdiv" + cdx, jt.tac2html(
+                    ["a", {href:"#Follow",
+                           onclick:jt.fs("app.membic.resperr(" + cdx +
+                                         ",'follow',true)")},
+                     "Follow " + actobj.contextobj.name + " to comment"])); }
+            else {  //clicked to follow
+                jt.out("mcmtdiv" + cdx, "");
+                app.pcd.settings(); }
+            break;
+        default:
+            jt.out("membic.resperr unknown errt: " + errt); }
     }
 
 
@@ -156,6 +191,29 @@ app.membic = (function () {
         if(prof && prof.dsId === membic.penid && !membic.ctmid) {
             return true; }
         return false;
+    }
+
+
+    //Thought about adding membic share button to make your own membic off
+    //of an existing one, but that adds complexity, would likely be of very
+    //limited use, and detract from the external nature of sharing.  To make
+    //a membic off an existing membic you can always use the mail share and
+    //mail it in.
+    function membicShareHTML (cdx, membic) {
+        var subj = membic.text;
+        var body = linkForMembic(membic) || "No URL available";
+        var mlink = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
+            jt.dquotenc(body) + "%0A%0A";
+        var tac = app.layout.shareButtonsTAC(
+            {url:body,
+             title:subj,
+             mref:mlink,
+             socmed:["tw", "fb", "em"]});
+        if(!mayEdit(membic)) {  //respond option if not yours
+            tac.push(["span", {cla:"sharerespsepspan"}, "&nbsp;|&nbsp;"]);
+            tac.push(responseButtonHTML(cdx, membic));
+            tac.push(["div", {id:"mcmtdiv" + cdx}]); }
+        return jt.tac2html(tac);
     }
 
 
@@ -416,7 +474,7 @@ app.membic = (function () {
         jt.out("dlgbsmsgdiv" + cdx, "");
         var bhtml = jt.byId("dlgbsbdiv" + cdx).innerHTML;
         jt.out("dlgbsbdiv" + cdx, "Saving...");
-        var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+        var membic = app.pcd.getDisplayContext().actobjgg.itlist[cdx];
         var updm = {dsType:"Membic", dsId:membic.dsId};
         Object.keys(formElements).forEach(function (key) {
             var chgval = formElements[key].changed(cdx, membic);
@@ -987,8 +1045,8 @@ app.membic = (function () {
                 updobj.details.name = chgval; } },
         share: {
             closed: function () { return ""; },
-            expanded: function (ignore /*cdx*/, membic) {
-                return membicShareHTML(membic); },
+            expanded: function (cdx, membic) {
+                return membicShareHTML(cdx, membic); },
             changed: function () { return false; },
             write: function () { return; } },
         revtype: {
@@ -1373,7 +1431,8 @@ return {
 
     ratingEventDispatch: function (event) { ratmgr.handleEvent(event); },
     typesel: function (c, t, e) { typemgr.typesel(c, t, e); },
-    themepost: function (c, m, i) { tpmgr.themepost(c, m, i); }
+    themepost: function (c, m, i) { tpmgr.themepost(c, m, i); },
+    resperr: function (cdx, errt, ack) { resperr(cdx, errt, ack); }
 
 }; //end of returned functions
 }());

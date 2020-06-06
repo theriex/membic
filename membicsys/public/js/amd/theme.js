@@ -519,7 +519,8 @@ return {
     },
 
 
-    nameForLevel: function (lev) { return nameForLevel(lev); }
+    nameForLevel: function (lev) { return nameForLevel(lev); },
+    profassoc: function (t, i) { return profassoc(t, i); }
             
 }; //end of returned functions
 }());

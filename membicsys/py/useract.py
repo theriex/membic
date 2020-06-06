@@ -122,7 +122,7 @@ def update_theme_membership(updt, prof, assoc):
 # follow mechanism change.
 def update_profile_association(prof, ao, ras):
     tid = ao["dsId"]
-    themes = json.loads(prof["themes"] or "{}")
+    themes = json.loads(prof.get("themes") or "{}")
     previnf = themes.get(tid, {})
     previnf["followmech"] = previnf.get("followmech", "email")
     inf = {
@@ -136,7 +136,7 @@ def update_profile_association(prof, ao, ras):
         if ao["picture"]:
             inf["picture"] = ao["dsId"]
         inf["keywords"] = ao["keywords"]
-        cliset = json.loads(ao.get("cliset", "{}"))
+        cliset = json.loads(ao.get("cliset") or "{}")
         flags = cliset.get("flags", {})
         archived = flags.get("archived")
         if archived:
@@ -250,7 +250,7 @@ def verify_theme_name(prevnamec, theme):
 def set_dispafter(newmbc, muser):
     if newmbc.get("dsId") and newmbc.get("dispafter"):
         raise ValueError("set_dispafter reset of existing value")
-    preb = json.loads(muser.get("preb", "[]"))
+    preb = json.loads(muser.get("preb") or "[]")
     if len(preb) == 0:  # first membic, no wait.
         newmbc["dispafter"] = dbacc.nowISO()
     else:  # set dispafter to be 24 hours after next most recent post
@@ -340,7 +340,7 @@ def make_theme_plan(newmbc, oldmbc):
         pts = sd.get("postctms", [])
         for postnote in pts:
             plan[str(postnote["ctmid"])] = {"action": "delete"}
-    sd = json.loads(newmbc.get("svcdata", "{}"))
+    sd = json.loads(newmbc.get("svcdata") or "{}")
     pts = sd.get("postctms", [])
     # If there are posting themes specified, but the srcrev is any negative
     # value then there should be no theme posts. (-604 is marked as deleted)
@@ -364,7 +364,7 @@ def make_theme_plan(newmbc, oldmbc):
             if theme_association(dets["theme"], newmbc["penid"]) == "Unknown":
                 raise ValueError("Not a member, so cannot post to Theme " +
                                  str(tid) + " " + dets["theme"]["name"])
-            cliset = json.loads(dets["theme"].get("cliset", "{}"))
+            cliset = json.loads(dets["theme"].get("cliset") or "{}")
             flags = cliset.get("flags", {})
             archived = flags.get("archived", "")
             if archived:
@@ -422,7 +422,7 @@ def write_theme_membics(themeplan, newmbc):
             postctms.append({"ctmid": tid, "name": dets["theme"]["name"],
                              "revid": str(tmbc["dsId"])})
         dets["membic"] = tmbc
-    svcdata = json.loads(newmbc.get("svcdata", "{}"))
+    svcdata = json.loads(newmbc.get("svcdata") or "{}")
     svcdata["postctms"] = postctms
     newmbc["svcdata"] = json.dumps(svcdata)
     newmbc = dbacc.write_entity(newmbc, vck=newmbc["modified"])
@@ -435,7 +435,7 @@ def write_theme_membics(themeplan, newmbc):
 # insert in place.
 def update_preb(obj, membic, verb):
     pm = util.make_preb_membic(membic)
-    pbms = json.loads(obj.get("preb", "[]"))
+    pbms = json.loads(obj.get("preb") or "[]")
     pbm = None
     idx = 0
     while idx < len(pbms):

@@ -228,7 +228,7 @@ module.exports = (function () {
         {f:"srctype", d:"string", c:"dsType of source: Theme or MUser"},
         {f:"srcid", d:"req dbid", c:"dsId of source"},
         {f:"lev", d:"int", c:"same as MUser.themes info lev"},
-        {f:"mech", d:"string", c:"email or webfeed"},
+        {f:"mech", d:"string", c:"'email' or 'RSS'"},
         {f:"blocked", d:"string", c:"authId|timestamp when email disabled"}],
      cache:{minutes:0},  //not frequently referenced
      logflds:["srctype", "srcid", "name", "uid", "lev", "mech"],

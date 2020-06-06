@@ -30,7 +30,7 @@ body {
 
 img { border:0px; vertical-align:middle; }
 
-button, .loginbutton, .formbutton, .filesellab, .linkbutton { 
+button, .loginbutton, .formbutton, .filesellab, .linkbutton {
   border:1px solid #271400; border-radius:5px; cursor:pointer;
   background:#ffd2a4; box-shadow:1px 1px 1px #999999; }
 
@@ -262,7 +262,11 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .linkbutton:visited {text-decoration:none; color:#111111; }
 .linkbutton:hover   {text-decoration:none; color:#111111; }
 .linkbutton:active  {text-decoration:none; color:#111111; }
-
+.linkbutdis { background:#e6e7e9; border:1px solid #999; }
+.linkbutdis:link    {text-decoration:none; color:#666; }
+.linkbutdis:visited {text-decoration:none; color:#666; }
+.linkbutdis:hover   {text-decoration:none; color:#666; }
+.linkbutdis:active  {text-decoration:none; color:#666; }
 .mdheaderline { text-align:center; }
 .mfrevtype { float:left; }
 .revtseldiv a { padding:0px 5px 0px 0px; }

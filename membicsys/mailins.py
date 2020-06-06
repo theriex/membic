@@ -25,12 +25,14 @@ import py.dbacc as dbacc
 import py.useract as useract
 import py.util as util
 import json
-
+import sys
 
 MAILINADDR = "me" + "@" + mconf.domain
 MAILINPASS = mconf.email["me"]
 SITEROOT = "https://" + mconf.domain
 SUPPADDR = "support" + "@" + mconf.domain
+FWDADDR = "forwarding" + "@" + mconf.domain
+FWDPASS = mconf.email["forwarding"]
 
 # The processing here needs to use the same core processing as membicsave.
 def make_mail_in_membic(mimp):
@@ -126,27 +128,31 @@ def set_mimp_emaddr_fields(mimp):
     if emaddr.startswith("<") and emaddr.endswith(">"):
         emaddr = emaddr[1:-1]
     mimp["emaddr"] = emaddr
-    muser = dbacc.cfbk("MUser", "email", emaddr)
-    if not muser:
-        muser = dbacc.cfbk("MUser", "altinmail", emaddr)
-        if not muser:
-            raise ValueError("Email address " + emaddr + " not found.")
+    mimp["muser"] = dbacc.cfbk("MUser", "email", emaddr)
+    if not mimp["muser"]:
+        mimp["muser"] = dbacc.cfbk("MUser", "altinmail", emaddr)
+
+
+def verify_mailin_muser(mimp):
+    if not mimp["muser"]:
+        raise ValueError("Email address " + mimp["emaddr"] + " not found.")
     # If mailins are explicitely disabled, then continue as if the email
     # address was not found.  Don't email a response back.
-    cliset = json.loads(muser.get("cliset", "{}"))
+    cliset = json.loads(mimp["muser"].get("cliset") or "{}")
     mailins = cliset.get("mailins")
     if mailins and mailins != "enabled":
+        mimp["muser"] = None
         raise ValueError("Mail-In Membics disabled")
-    mimp["muser"] = muser
 
 
 # mimp = {"from": "Membic User <test@example.com>",
 #         "subject": "Reason why memorable #mytheme #othertheme",
 #         "body": "Post a link to https://epinova.com when you read this"}
 # "ugly html headers <body>example.com</body></html>"
-def process_email_message(mimp):
+def process_mailin_message(mimp):
     try:
-        set_mimp_emaddr_fields(mimp)  # ValueError if unknown
+        set_mimp_emaddr_fields(mimp)
+        verify_mailin_muser(mimp)
         # e.g. "Reason why memorable #mytheme #othertheme"
         whymem = mimp["subject"]
         themetags = re.findall(r"(#\S+)", whymem)
@@ -175,12 +181,178 @@ def process_email_message(mimp):
         reject_email(mimp, str(e))
 
 
+# Read the specified parameter fields and strip them out of the body so the
+# quoted response content doesn't include them.
+def read_body_fields(mimp, fields):
+    btxt = ""
+    lines = mimp["body"].split("\n")
+    for line in lines:
+        fieldmatch = False
+        for fld in fields:
+            pat = r"[^>]*>\s\[" + fld + r"\]\s(.*)"
+            m = re.match(pat, line)
+            if m:
+                mimp[fld] = m.group(1)
+                fieldmatch = True
+        if not fieldmatch:
+            btxt += line + "\n"
+    mimp["body"] = btxt
+    # for fld in fields:
+    #     logging.info("    " + fld + ": " + mimp[fld])
+
+
+def profile_or_theme_for_resp(mimp):
+    ptobj = {"dsType":"MUser", "dsId":mimp["penid"]}
+    if mimp["ctmid"] and int(mimp["ctmid"]):
+        ptobj = {"dsType":"Theme", "dsId":mimp["ctmid"]}
+    ptobj = dbacc.cfbk(ptobj["dsType"], "dsId", ptobj["dsId"], required=True)
+    return ptobj
+
+
+def link_for_object(ptobj):
+    link = SITEROOT
+    if ptobj.get("hashtag"):
+        link += "/" + ptobj["hashtag"]
+    elif ptobj["dsType"] == "Theme":
+        link += "/theme/" + ptobj["dsId"]
+    else:
+        link += "/profile/" + ptobj["dsId"]
+    return link
+
+
+def append_cred(muser, link, conchar="?"):
+    return (link + conchar + "an=" + muser["email"] + "&at=" +
+            util.token_for_user(muser))
+
+
+def verify_following(muser, ptobj):
+    themes = json.loads(muser.get("themes") or "{}")
+    tid = ptobj["dsId"]
+    if ptobj["dsType"] == "MUser":
+        tid = "P" + tid
+    tdet = themes.get(tid)
+    if tdet and tdet.get("lev"):
+        return True
+    return False
+
+
+# Responses from a user may be blocked at either the theme or profile level.
+# Both audience entries should exist to enable managing blocking, so create
+# if needed.
+def user_contact_blocked(mimp, ptobj):
+    # check main contact point theme or profile
+    where = ("WHERE srctype=\"" + ptobj["dsType"] + "\" AND srcid=" +
+             ptobj["dsId"] + " AND uid=" + mimp["muser"]["dsId"] + " LIMIT 1")
+    res = dbacc.query_entity("Audience", where)
+    if not res or len(res) < 1:
+        res = [dbacc.write_entity({"dsType":"Audience",
+                                   "uid":mimp["muser"]["dsId"],
+                                   "name":mimp["muser"]["name"],
+                                   "srctype":ptobj["dsType"],
+                                   "srcid":ptobj["dsId"],
+                                   "lev":-1, "mech":"email"})]
+    if res[0]["blocked"]:
+        return True
+    # check profile level if the main contact point was a theme
+    if ptobj["dsType"] == "Theme":
+        where = ("WHERE srctype=\"MUser\" AND srcid=" + mimp["penid"] +
+                 " AND uid=" + mimp["muser"]["dsId"] + " LIMIT 1")
+        res = dbacc.query_entity("Audience", where)
+        if not res or len(res) < 1:
+            res = [dbacc.write_entity({"dsType":"Audience",
+                                       "uid":mimp["muser"]["dsId"],
+                                       "name":mimp["muser"]["name"],
+                                       "srctype":"MUser",
+                                       "srcid":mimp["penid"],
+                                       "lev":-1, "mech":"email"})]
+        if res[0]["blocked"]:
+            return True
+    return False
+
+
 def email_quote_original(mimp):
     tstamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     qt = "On " + tstamp + " " + mimp["emaddr"] + " wrote:\n"
     qt += textwrap.fill(mimp["body"], 76,
                         initial_indent="> ", subsequent_indent="> ")
     return qt
+
+
+# Responses go to whoever wrote the membic, not to all theme members.  The
+# author can cc others in their response if they want, but that's a personal
+# communication decision.  The incoming response might be from a friend, and
+# the content might not be relevant to other theme members.  Keeping comms
+# personal is important to avoid sending things people don't want.
+def forward_response_comment(mimp):
+    recu = dbacc.cfbk("MUser", "dsId", mimp["penid"], required=True)
+    membic = dbacc.cfbk("Membic", "dsId", mimp["dsId"], required=True)
+    mdets = json.loads(membic.get("details") or "{}")
+    # forward to recipient first in case anything goes wrong
+    subj = mimp["subject"]
+    body = mimp["from"] + " responded to your membic:\n\n"
+    body += ellipsis(mimp["body"], 1000)  # chop if long, might be unwelcome
+    body += "\n"
+    body += "> title: " + (mdets.get("title") or mdets.get("name") or "") + "\n"
+    body += "> link: " + (membic.get("url") or membic.get("rurl") or "") + "\n"
+    body += "> " + ellipsis(membic["text"], 500) + "\n\n"
+    logging.info("got this far")
+    body += "To respond, simply reply to this message. You can block response notices from " + mimp["emaddr"] + " in your profile audience settings: " + SITEROOT + "/profile/" + str(mimp["penid"]) + "?go=audience&uid=" + str(mimp["muser"]["dsId"]) + "\n"
+    util.send_mail(recu["email"], subj, body, domain=mconf.domain,
+                   sender="forwarding", replyto=mimp["muser"]["email"])
+    # let the sender know their response was forwarded
+    subj = mimp["subject"]  # "Re: " already in subject
+    body = "Your comment has been forwarded to " + recu["name"] + " so they can respond to you directly.\n\n"
+    body += email_quote_original(mimp) + "\n"
+    util.send_mail(mimp["emaddr"], subj, body, domain=mconf.domain,
+                   sender="forwarding")
+    logging.info("Response comment forwarded " + str(mimp["muser"]["dsId"]) +
+                 "->" + str(recu["dsId"]) + " re: " + membic["dsId"])
+
+
+def reject_fwd(mimp, error):
+    logger.info("reject_fwd " + error["det"] + " " + mimp_summary(mimp))
+    if not mimp.get("muser"):
+        return  # Ignore email. No response or forwarding.
+    subj = "Response forwarding failure for " + ellipsis(mimp["subject"])
+    body = "Your Membic response could not be forwarded.\n"
+    body += error["err"] + "\n"
+    body += error["det"] + "\n\n"
+    body += "If something went wrong, please forward this message to " + SUPPADDR + " so we can look into it.\n"
+    util.send_mail(mimp["emaddr"], subj, body, domain=mconf.domain,
+                   sender="forwarding")
+    logging.info("Response forwarding rejection sent")
+
+
+# mimp = {"from": "Membic User <test@example.com>",
+#         "subject": "Re: title or name from membic with ellipsis if needed...",
+#         "body": "Whatever they felt like typing. Ignore any quoted stuff.\n" +
+#         "> [penname] Sender Name\n" +
+#         "> [dsId] 16371\n" +    # Sender MUser dsId
+#         "> [penid] 2240\n" +    # Membic penid
+#         "> [ctmid] 2057\n" +    # Membic ctmid
+#         "> [srcrev] 14643\n" +  # Membic srcrev
+#         "signature and other trailing text to also pass along"}
+def process_respfwd_message(mimp):
+    try:
+        set_mimp_emaddr_fields(mimp)
+        # check they have an account
+        if not mimp["muser"]:
+            reject_fwd(mimp, {"err": "No account found.", "det": "Membic was unable to locate an account for \"" + mimp["emaddr"] + "\". If you have a Membic account, you can add this address to Alt Email in your profile settings, otherwise you are welcome to create an account at " + SITEROOT})
+            return
+        read_body_fields(mimp, ["penname", "dsId", "penid", "ctmid", "srcrev"])
+        ptobj = profile_or_theme_for_resp(mimp)
+        # check they are following the theme or profile
+        if not verify_following(mimp["muser"], ptobj):
+            reject_fwd(mimp, {"err": "Not following.", "det": "To comment, you must be associated with " + ptobj["name"] + ". Open " + append_cred(mimp["muser"], link_for_object(ptobj)) + " and choose \"Follow\" in the settings."})
+            return
+        # check they are not blocked
+        if user_contact_blocked(mimp, ptobj):
+            # Continue as if user was not found.  No email response or forward.
+            mimp["muser"] = None
+            raise ValueError("User responses blocked.")
+        forward_response_comment(mimp)
+    except Exception as e:
+        reject_fwd(mimp, {"err": "Response forward error.", "det": str(e)})
 
 
 def echo_test_message(mimp):
@@ -212,19 +384,26 @@ def echo_test_message(mimp):
 # as an "account you own", and that setup may not be possible if
 # baz@other.org simply forwards to foo@gmail.com.  In terms of mail-in
 # membics, the only reasonable choice in this case is to go with the
-# original sending address.  Why mail-ins are not enabled by default.
+# original sending address.
 def find_from_address(msg):
     sender = msg.get("X-Google-Original-From")
     if not sender:
         sender = msg.get("From")
+    # If someone spoofs the sender address to be from the site itself, the
+    # processing could be left chasing it's own tail.  Disallow.
+    if sender and re.search(mconf.domain, sender, re.IGNORECASE):
+        raise ValueError("Email automation may not originate from " +
+                         mconf.domain)
     return sender
 
 
-def process_inbound_mail():
-    """ Read inbound email, create membics and clear from inbox. """
+def process_mailbox(dets):
+    """ Read mailbox messages, process each, clear from inbox. """
+    logpre = "process_mailbox " + dets["task"] + " "
+    logging.info(logpre + "started")
     try:
         msvr = imaplib.IMAP4_SSL(mconf.email["imap"])  # port defaults to 993
-        msvr.login(MAILINADDR, MAILINPASS)
+        msvr.login(dets["addr"], dets["pwd"])
         msvr.select("inbox")  # case doesn't seem to matter
         _, data = msvr.search(None, "ALL")   # returns list of 32bit mail ids
         # data will look something like [b'1 2 3'], so data[0] is b'1 2 3'
@@ -244,14 +423,26 @@ def process_inbound_mail():
                     mimp = {"from": find_from_address(msg),
                             "subject": msg.get("subject"),
                             "body": msg.get_content()}
-                    process_email_message(mimp)
+                    dets["func"](mimp)
             msvr.store(mailid, "+FLAGS", "\\Deleted")
             msvr.expunge()
         msvr.close()
         msvr.logout()
-        logger.info("process_inbound_mail completed")
+        logger.info(logpre + "completed")
     except Exception as e:
-        logging.exception("process_inbound_mail failed " + str(e))
+        logging.exception(logpre + "failed " + str(e))
 
 
-process_inbound_mail()
+def run_check():
+    for arg in sys.argv:
+        logging.info(arg)
+    if len(sys.argv) < 2 or sys.argv[1] != "run":
+        logging.info("No \"run\" command line argument so not running.")
+        return
+    process_mailbox({"task":"mailin", "addr":MAILINADDR, "pwd":MAILINPASS,
+                     "func":process_mailin_message})
+    process_mailbox({"task":"respfwd", "addr":FWDADDR, "pwd":FWDPASS,
+                     "func":process_respfwd_message})
+
+
+run_check()

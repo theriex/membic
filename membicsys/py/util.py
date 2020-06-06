@@ -7,6 +7,7 @@
 #pylint: disable=logging-not-lazy
 #pylint: disable=broad-except
 #pylint: disable=invalid-name
+#pylint: disable=too-many-arguments
 import logging
 import flask
 import hmac
@@ -381,7 +382,7 @@ def fetch_image_data(inst, imgsrc):
 
 # If the caller is outside of the context of a web request, then the domain
 # must be passed in.  The support address must be set up in the hosting env.
-def send_mail(emaddr, subj, body, domain=None, sender="support"):
+def send_mail(emaddr, subj, body, domain=None, sender="support", replyto=""):
     domain = domain or flask.request.url.split("/")[2]
     fromaddr = "@".join([sender, domain])
     emaddr = emaddr or fromaddr
@@ -395,6 +396,8 @@ def send_mail(emaddr, subj, body, domain=None, sender="support"):
     msg["Subject"] = subj
     msg["From"] = fromaddr
     msg["To"] = emaddr
+    if replyto:
+        msg.add_header('reply-to', replyto)
     sctx = ssl.create_default_context()  # validate host and certificates
     # 465: secured with SSL. 587: not secured, but supports STARTTLS
     with smtplib.SMTP_SSL(mconf.email["smtp"], 465, context=sctx) as smtp:
