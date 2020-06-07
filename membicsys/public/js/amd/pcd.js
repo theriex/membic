@@ -968,6 +968,7 @@ return {
     //  name: display name for the page
     //  descr: text description for the page
     setPageDescription: function (descobj) {
+        ctx.actobj = null;  //clear any prev to avoid setup confusion
         ctx.descobj = descobj;
         descobj.owneredit = ownerEditableFieldsInfo();
         var fsz = "large";
