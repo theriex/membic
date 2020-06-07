@@ -181,30 +181,37 @@ def process_mailin_message(mimp):
         reject_email(mimp, str(e))
 
 
-# Read the specified parameter fields and strip them out of the body so the
-# quoted response content doesn't include them.
-def read_body_fields(mimp, fields):
-    btxt = ""
+# Separate out main body, quoted field info, and any sig from main body.  Set
+# the membic being referenced.
+def read_body_fields(mimp):
     lines = mimp["body"].split("\n")
+    for sec in ["body", "quoted", "sig"]:
+        mimp[sec] = ""
+    state = "body"
+    qpat = r"[^>]*>\s\[(\w+)\]\s(.*)"
     for line in lines:
-        fieldmatch = False
-        for fld in fields:
-            pat = r"[^>]*>\s\[" + fld + r"\]\s(.*)"
-            m = re.match(pat, line)
+        if not line.strip():
+            continue
+        if state in ["body", "quoted"]:
+            m = re.match(qpat, line)
             if m:
-                mimp[fld] = m.group(1)
-                fieldmatch = True
-        if not fieldmatch:
-            btxt += line + "\n"
-    mimp["body"] = btxt
-    # for fld in fields:
+                state = "quoted"
+                if m.group(1) == "dsId":
+                    mimp["dsId"] = m.group(2)
+            elif state == "quoted":
+                state = "sig"
+        mimp[state] += line.strip() + "\n"
+    # logging.info("read_body_fields")
+    # for fld in ["body", "quoted", "sig", "dsId"]:
     #     logging.info("    " + fld + ": " + mimp[fld])
+    mimp["membic"] = dbacc.cfbk("Membic", "dsId", mimp["dsId"], required=True)
 
 
 def profile_or_theme_for_resp(mimp):
-    ptobj = {"dsType":"MUser", "dsId":mimp["penid"]}
-    if mimp["ctmid"] and int(mimp["ctmid"]):
-        ptobj = {"dsType":"Theme", "dsId":mimp["ctmid"]}
+    membic = mimp["membic"]
+    ptobj = {"dsType":"MUser", "dsId":membic["penid"]}
+    if membic["ctmid"] and int(membic["ctmid"]):
+        ptobj = {"dsType":"Theme", "dsId":membic["ctmid"]}
     ptobj = dbacc.cfbk(ptobj["dsType"], "dsId", ptobj["dsId"], required=True)
     return ptobj
 
@@ -239,15 +246,15 @@ def verify_following(muser, ptobj):
 # Responses from a user may be blocked at either the theme or profile level.
 # Both audience entries should exist to enable managing blocking, so create
 # if needed.
-def user_contact_blocked(mimp, ptobj):
+def user_contact_blocked(muser, ptobj, membic):
     # check main contact point theme or profile
     where = ("WHERE srctype=\"" + ptobj["dsType"] + "\" AND srcid=" +
-             ptobj["dsId"] + " AND uid=" + mimp["muser"]["dsId"] + " LIMIT 1")
+             ptobj["dsId"] + " AND uid=" + muser["dsId"] + " LIMIT 1")
     res = dbacc.query_entity("Audience", where)
     if not res or len(res) < 1:
         res = [dbacc.write_entity({"dsType":"Audience",
-                                   "uid":mimp["muser"]["dsId"],
-                                   "name":mimp["muser"]["name"],
+                                   "uid":muser["dsId"],
+                                   "name":muser["name"],
                                    "srctype":ptobj["dsType"],
                                    "srcid":ptobj["dsId"],
                                    "lev":-1, "mech":"email"})]
@@ -255,26 +262,42 @@ def user_contact_blocked(mimp, ptobj):
         return True
     # check profile level if the main contact point was a theme
     if ptobj["dsType"] == "Theme":
-        where = ("WHERE srctype=\"MUser\" AND srcid=" + mimp["penid"] +
-                 " AND uid=" + mimp["muser"]["dsId"] + " LIMIT 1")
+        where = ("WHERE srctype=\"MUser\" AND srcid=" + membic["penid"] +
+                 " AND uid=" + muser["dsId"] + " LIMIT 1")
         res = dbacc.query_entity("Audience", where)
         if not res or len(res) < 1:
             res = [dbacc.write_entity({"dsType":"Audience",
-                                       "uid":mimp["muser"]["dsId"],
-                                       "name":mimp["muser"]["name"],
+                                       "uid":muser["dsId"],
+                                       "name":muser["name"],
                                        "srctype":"MUser",
-                                       "srcid":mimp["penid"],
+                                       "srcid":membic["penid"],
                                        "lev":-1, "mech":"email"})]
         if res[0]["blocked"]:
             return True
     return False
 
 
-def email_quote_original(mimp):
-    tstamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    qt = "On " + tstamp + " " + mimp["emaddr"] + " wrote:\n"
-    qt += textwrap.fill(mimp["body"], 76,
-                        initial_indent="> ", subsequent_indent="> ")
+def email_quote_original(mimp, tstamp=True, prefix="> "):
+    qt = ""
+    if tstamp:
+        tstamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        qt = "On " + tstamp + " " + mimp["emaddr"] + " wrote:\n"
+    if prefix:
+        qt += textwrap.fill(mimp["body"], 76,
+                            initial_indent="> ", subsequent_indent="> ")
+    else:
+        qt += mimp["body"]
+    for secname in ["quoted", "sig"]:
+        sec = mimp.get(secname)
+        if sec:
+            qt += "\n"
+            for line in sec.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+                if prefix and not line.startswith(prefix):
+                    line = prefix + line
+                qt += line + "\n"
     return qt
 
 
@@ -283,29 +306,28 @@ def email_quote_original(mimp):
 # communication decision.  The incoming response might be from a friend, and
 # the content might not be relevant to other theme members.  Keeping comms
 # personal is important to avoid sending things people don't want.
+#
+# The body of the message might potentially be long.  It's expected to be a
+# few lines of text, but it could be a pile.  Not truncating for now.  May
+# revisit later.
 def forward_response_comment(mimp):
-    recu = dbacc.cfbk("MUser", "dsId", mimp["penid"], required=True)
-    membic = dbacc.cfbk("Membic", "dsId", mimp["dsId"], required=True)
-    mdets = json.loads(membic.get("details") or "{}")
+    muser = mimp["muser"]
+    membic = mimp["membic"]
+    recu = dbacc.cfbk("MUser", "dsId", membic["penid"], required=True)
     # forward to recipient first in case anything goes wrong
     subj = mimp["subject"]
     body = mimp["from"] + " responded to your membic:\n\n"
-    body += ellipsis(mimp["body"], 1000)  # chop if long, might be unwelcome
-    body += "\n"
-    body += "> title: " + (mdets.get("title") or mdets.get("name") or "") + "\n"
-    body += "> link: " + (membic.get("url") or membic.get("rurl") or "") + "\n"
-    body += "> " + ellipsis(membic["text"], 500) + "\n\n"
-    logging.info("got this far")
-    body += "To respond, simply reply to this message. You can block response notices from " + mimp["emaddr"] + " in your profile audience settings: " + SITEROOT + "/profile/" + str(mimp["penid"]) + "?go=audience&uid=" + str(mimp["muser"]["dsId"]) + "\n"
+    body += email_quote_original(mimp, tstamp=False, prefix="") + "\n"
+    body += "To respond, simply reply to this message. You can block response notices from " + mimp["emaddr"] + " in your profile audience settings: " + SITEROOT + "/profile/" + str(membic["penid"]) + "?go=audience&uid=" + str(muser["dsId"]) + "\n"
     util.send_mail(recu["email"], subj, body, domain=mconf.domain,
-                   sender="forwarding", replyto=mimp["muser"]["email"])
+                   sender="forwarding", replyto=muser["email"])
     # let the sender know their response was forwarded
     subj = mimp["subject"]  # "Re: " already in subject
     body = "Your comment has been forwarded to " + recu["name"] + " so they can respond to you directly.\n\n"
     body += email_quote_original(mimp) + "\n"
     util.send_mail(mimp["emaddr"], subj, body, domain=mconf.domain,
                    sender="forwarding")
-    logging.info("Response comment forwarded " + str(mimp["muser"]["dsId"]) +
+    logging.info("Response comment forwarded " + str(muser["dsId"]) +
                  "->" + str(recu["dsId"]) + " re: " + membic["dsId"])
 
 
@@ -326,11 +348,9 @@ def reject_fwd(mimp, error):
 # mimp = {"from": "Membic User <test@example.com>",
 #         "subject": "Re: title or name from membic with ellipsis if needed...",
 #         "body": "Whatever they felt like typing. Ignore any quoted stuff.\n" +
-#         "> [penname] Sender Name\n" +
+#         "> ...
 #         "> [dsId] 16371\n" +    # Sender MUser dsId
-#         "> [penid] 2240\n" +    # Membic penid
-#         "> [ctmid] 2057\n" +    # Membic ctmid
-#         "> [srcrev] 14643\n" +  # Membic srcrev
+#         "> ...
 #         "signature and other trailing text to also pass along"}
 def process_respfwd_message(mimp):
     try:
@@ -339,14 +359,17 @@ def process_respfwd_message(mimp):
         if not mimp["muser"]:
             reject_fwd(mimp, {"err": "No account found.", "det": "Membic was unable to locate an account for \"" + mimp["emaddr"] + "\". If you have a Membic account, you can add this address to Alt Email in your profile settings, otherwise you are welcome to create an account at " + SITEROOT})
             return
-        read_body_fields(mimp, ["penname", "dsId", "penid", "ctmid", "srcrev"])
+        read_body_fields(mimp)  # sets mimp["membic"]
+        if int(mimp["muser"]["dsId"]) == int(mimp["membic"]["penid"]):
+            reject_fwd(mimp, {"err": "No self comment.", "det": "You emailed a comment for your own membic. It was not forwarded."})
+            return
         ptobj = profile_or_theme_for_resp(mimp)
         # check they are following the theme or profile
         if not verify_following(mimp["muser"], ptobj):
             reject_fwd(mimp, {"err": "Not following.", "det": "To comment, you must be associated with " + ptobj["name"] + ". Choose \"Follow\" in your profile settings: " + append_cred(mimp["muser"], link_for_object(ptobj)) + "&go=settings"})
             return
         # check they are not blocked
-        if user_contact_blocked(mimp, ptobj):
+        if user_contact_blocked(mimp["muser"], ptobj, mimp["membic"]):
             # Continue as if user was not found.  No email response or forward.
             mimp["muser"] = None
             raise ValueError("User responses blocked.")
