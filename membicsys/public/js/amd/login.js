@@ -25,15 +25,17 @@ app.login = (function () {
         //probably up to date, but that's not guaranteed given server call
         //timing.  Best to just just redraw.
         app.refmgr.getFull("MUser", authobj.authId, function (muser) {
-            //no URL commands currently being supported.
-            //if(app.startParams.cmd === "blah")
-            //    app.statemgr.setState("obtype", "obid", {extraobj})
+            //If they have not activated their account yet, then go to their
+            //empty profile so they can do that
             if(authobj.status === "Pending") {
-                //If they have not activated their account yet, then go to
-                //their empty profile so they can take the next step without
-                //having to navigate.
                 app.statemgr.setState("MUser", muser.dsId); }
-            else {  //redisplay now that user info is available
+            //"go" params are typically provided in notification email
+            //links. They are contextual jumps into app functions within the
+            //current state.
+            else if(app.startParams.go) {
+                app.statemgr.redispatch({go:app.startParams.go}); }
+            //By default, redisplay now that user info is available.
+            else {
                 app.statemgr.redispatch(); } });
     }
 

@@ -304,8 +304,15 @@ app.pcd = (function () {
     //leaving the passthrough mechanism in place since URL driven actions
     //might be needed again.
     function processExtraObject (extraobj) {
-        if(extraobj) {
-            jt.log("processExtraObject ignored " + JSON.stringify(extraobj)); }
+        if(extraobj) { switch(extraobj.go) {
+            case "follow": return app.fork(
+                {descr:"pxob follow", ms:100, func:app.pcd.settings});
+            case "audience": return app.fork(
+                {descr:"pxob audience", ms:100, func:function () {
+                    app.pcd.togshare();  //open sharing area
+                    app.theme.audience(app.startParams.uid); }});
+            default: jt.log("pcd.processExtraObject ignored " +
+                            JSON.stringify(extraobj)); } }
     }
 
 

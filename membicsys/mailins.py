@@ -343,7 +343,7 @@ def process_respfwd_message(mimp):
         ptobj = profile_or_theme_for_resp(mimp)
         # check they are following the theme or profile
         if not verify_following(mimp["muser"], ptobj):
-            reject_fwd(mimp, {"err": "Not following.", "det": "To comment, you must be associated with " + ptobj["name"] + ". Open " + append_cred(mimp["muser"], link_for_object(ptobj)) + " and choose \"Follow\" in the settings."})
+            reject_fwd(mimp, {"err": "Not following.", "det": "To comment, you must be associated with " + ptobj["name"] + ". Choose \"Follow\" in your profile settings: " + append_cred(mimp["muser"], link_for_object(ptobj)) + "&go=settings"})
             return
         # check they are not blocked
         if user_contact_blocked(mimp, ptobj):

@@ -148,8 +148,8 @@ return {
 
     //Dispatch the current state again.  Basically a redraw in response to a
     //system wide data change, like the user signing in.
-    redispatch: function () {
-        dispatchState(); 
+    redispatch: function (extra) {
+        dispatchState(history.state, extra);
     },
 
 

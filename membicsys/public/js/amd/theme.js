@@ -171,10 +171,13 @@ app.theme = (function () {
     }
 
 
-    function displayAudience(co) {
+    function displayAudience (co, uid) {
         var levn = association(app.pcd.getDisplayContext().actobj.contextobj);
+        var currFollower = null;
         var ams = [];
         co.followers.forEach(function (f, idx) {
+            if(f.uid === uid) {
+                currFollower = f; }
             var assoc = nameForLevel(f.lev);
             if(levn === "Founder" && assoc !== "Founder") {
                 assoc = ["a", {href:"#association",
@@ -213,10 +216,13 @@ app.theme = (function () {
                          ["th", ""]]]);
             jt.out("pcdaudcontdiv", jt.tac2html(
                 ["table", {cla:"followerstable"}, ams])); }
+        if(uid && currFollower) {
+            confirm("To block or unblock mail from \"" + currFollower.name +
+                    "\" click their email icon in the Audience description."); }
     }
 
 
-    function fetchAudienceInfo(dsType, dsId) {
+    function fetchAudienceInfo(dsType, dsId, uid) {
         var authobj = app.login.authenticated();
         var url = app.dr("/api/audinf") + "?an=" + authobj.email + "&at=" +
             authobj.token + "&dsType=" + dsType + "&dsId=" + dsId +
@@ -224,7 +230,7 @@ app.theme = (function () {
         jt.call("GET", url, null,
                 function (aios) {
                     app.refmgr.put(aios[0]);
-                    displayAudience(aios[0]); },
+                    displayAudience(aios[0], uid); },
                 function(code, errtxt) {
                     jt.out("pcdaudcontdiv", "Audience fetch failed " + code +
                            ": " + errtxt); },
@@ -237,15 +243,15 @@ app.theme = (function () {
     }
 
 
-    function fetchAndDisplayAudience (dsType, dsId) {
+    function fetchAndDisplayAudience (dsType, dsId, uid) {
         var atn = audObjType(dsType);
         var co = app.refmgr.cached(atn, dsId);
         if(!co) {
             jt.out("pcdaudcontdiv", "Fetching audience details...");
             return app.fork({descr:"fetch " + atn + dsId, ms:50,
                              func:function () {
-                                 fetchAudienceInfo(dsType, dsId); }}); }
-        displayAudience(co);
+                                 fetchAudienceInfo(dsType, dsId, uid); }}); }
+        displayAudience(co, uid);
     }
 
 
@@ -437,12 +443,12 @@ return {
     },
 
 
-    audience: function () {
+    audience: function (uid) {
         var div = jt.byId("pcdaudcontdiv");
         if(!div.innerHTML) {
             div.style.display = "none";  //toggled on in next step
             var obj = app.pcd.getDisplayContext().actobj.contextobj;
-            fetchAndDisplayAudience(obj.dsType, obj.dsId); }
+            fetchAndDisplayAudience(obj.dsType, obj.dsId, uid); }
         if(div.style.display === "none") {
             div.style.display = "block"; }
         else {
