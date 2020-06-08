@@ -420,6 +420,32 @@ def find_from_address(msg):
     return sender
 
 
+def get_from_subject_body(msg):
+    mimp = {"from": find_from_address(msg),
+            "subject": msg.get("subject"),
+            "body": None}
+    try:
+        mimp["body"] = msg.get_content()
+    except Exception as e:
+        # 08jun20 python-3.8.2/lib/python3.8/email/contentmanager.py KeyError
+        # 'multipart/alternative' in get_content.  Recover by walking.
+        for part in msg.walk():
+            if part.get_content_type() == "text/plain":
+                # Expecting most email will have a plain text component if
+                # it was written in a standard email client.
+                mimp["body"] = part.get_payload()
+        if not mimp["body"]:  # couldn't recover
+            logging.exception("get_content failure " + str(e) + " from: " +
+                              mimp["from"] +", subject: " + mimp["subject"])
+            logging.info("start of message parts walk:")
+            for part in msg.walk():
+                logging.info("gfsb walk part " + part.get_content_type() +
+                             ": " + str(part))
+            logging.info("end of message parts walk:")
+            mimp = None
+    return mimp
+
+
 def process_mailbox(dets):
     """ Read mailbox messages, process each, clear from inbox. """
     logpre = "process_mailbox " + dets["task"] + " "
@@ -443,9 +469,7 @@ def process_mailbox(dets):
                     # parse method recommends always specifying policy
                     msg = email.message_from_bytes(response_part[1],
                                                    policy=policy.SMTP)
-                    mimp = {"from": find_from_address(msg),
-                            "subject": msg.get("subject"),
-                            "body": msg.get_content()}
+                    mimp = get_from_subject_body(msg)
                     dets["func"](mimp)
             msvr.store(mailid, "+FLAGS", "\\Deleted")
             msvr.expunge()

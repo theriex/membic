@@ -489,7 +489,7 @@ app.membic = (function () {
         jt.out("dlgbsmsgdiv" + cdx, "");
         var bhtml = jt.byId("dlgbsbdiv" + cdx).innerHTML;
         jt.out("dlgbsbdiv" + cdx, "Saving...");
-        var membic = app.pcd.getDisplayContext().actobjgg.itlist[cdx];
+        var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
         var updm = {dsType:"Membic", dsId:membic.dsId};
         Object.keys(formElements).forEach(function (key) {
             var chgval = formElements[key].changed(cdx, membic);
