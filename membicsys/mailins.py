@@ -339,7 +339,8 @@ def reject_fwd(mimp, error):
     body = "Your Membic response could not be forwarded.\n"
     body += error["err"] + "\n"
     body += error["det"] + "\n\n"
-    body += "If something went wrong, please forward this message to " + SUPPADDR + " so we can look into it.\n"
+    body += "If something went wrong, please forward this message to " + SUPPADDR + " so we can look into it.\n\n"
+    body += email_quote_original(mimp) + "\n"
     util.send_mail(mimp["emaddr"], subj, body, domain=mconf.domain,
                    sender="forwarding")
     logging.info("Response forwarding rejection sent")
