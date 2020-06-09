@@ -284,7 +284,8 @@ def email_quote_original(mimp, tstamp=True, prefix="> "):
         qt = "On " + tstamp + " " + mimp["emaddr"] + " wrote:\n"
     if prefix:
         qt += textwrap.fill(mimp["body"], 76,
-                            initial_indent="> ", subsequent_indent="> ")
+                            initial_indent=prefix, subsequent_indent=prefix)
+        qt += "\n" + prefix  # replace separator line
     else:
         qt += mimp["body"]
     for secname in ["quoted", "sig"]:
