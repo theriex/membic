@@ -29,9 +29,7 @@ app.login = (function () {
             //empty profile so they can do that
             if(authobj.status === "Pending") {
                 app.statemgr.setState("MUser", muser.dsId); }
-            //"go" params are typically provided in notification email
-            //links. They are contextual jumps into app functions within the
-            //current state.
+            //reprocess any "go" params with authenticated user.  See app.init2
             else if(app.startParams.go) {
                 app.statemgr.redispatch({go:app.startParams.go}); }
             //By default, redisplay now that user info is available.

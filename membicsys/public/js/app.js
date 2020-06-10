@@ -72,7 +72,9 @@ var jt = {};   //Global access to general utility methods
     };
 
 
-    //secondary initialization load since single monolithic is dog slow
+    //Post module load app initialization.  startParams.go directives are
+    //processed in the initial display, and on statemgr.redispatch after the
+    //user is authenticated.
     app.init2 = function () {
         app.amdtimer.load.end = new Date();
         jt.log("load app: " + (app.amdtimer.load.end.getTime() - 
@@ -83,10 +85,7 @@ var jt = {};   //Global access to general utility methods
         //break out dynamic processing to give the static content a chance
         //to actually display. Just downloaded a bunch, show some screen.
         app.fork({descr:"App Start", ms:80, func:function () {
-            //Any special processing, such as passing in a URL to make a
-            //membic, needs to be handled after initial login
-            //authentication.  Save the initial params for reference before
-            //clearing the URL through setState.
+            //Save initial params before clearing the URL via setState.
             app.startParams = jt.parseParams("String");
             app.layout.init();
             app.fork({descr:"lightweight authentication",
@@ -100,7 +99,8 @@ var jt = {};   //Global access to general utility methods
                 jt.log(txt); }});
             app.refmgr.deserialize(app.pfoj);
             app.refmgr.put(app.pfoj);
-            app.statemgr.setState(app.pfoj, null, {forceReplace:true}); }});
+            app.statemgr.setState(app.pfoj, null, {go:app.startParams.go,
+                                                   forceReplace:true}); }});
     };
 
 

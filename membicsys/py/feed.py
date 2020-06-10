@@ -46,15 +46,19 @@ class FeedInfo():
     copy = "Public Domain"
 
 
+def comment_url(fi, membic):
+    url = fi.siteurl + "?go=reply&membicid=" + str(membic["dsId"])
+    return url
+
+
 def membic_url(fi, membic):
-    url = None
-    if "url" in membic:
-        url = membic["url"]
-        # pick up any stray unencoded ampersands and encode for valid xml
-        url = url.replace("&amp;", "&")
-        url = url.replace("&", "&amp;")
-    if not url:  # readers need a url. Use the site url if membic has nothing.
-        url = fi.siteurl.replace("&", "&amp;")
+    url = membic.get("url") or membic.get("rurl") or ""
+    # pick up any stray unencoded ampersands and encode for valid xml
+    url = url.replace("&amp;", "&")
+    url = url.replace("&", "&amp;")
+    if not url:
+        # readers require a url, use the comment url if nothing available.
+        url = comment_url(fi, membic).replace("&", "&amp;")
     return url
 
 
@@ -129,15 +133,17 @@ def rss_content(fi):
     txt += "<link>" + fi.siteurl.replace("&", "&amp;") + "</link>\n"
     txt += "<description><![CDATA[" + fi.description + "]]></description>\n"
     for membic in fi.membics:
-        membicurl = membic_url(fi, membic)
-        itemtitle = membic_text_from_spec(membic, fi.titlespec)
-        itemdesc = membic_text_from_spec(membic, fi.descspec)
+        sdets = {"membicurl": membic_url(fi, membic),
+                 "title": membic_text_from_spec(membic, fi.titlespec),
+                 "desc": membic_text_from_spec(membic, fi.descspec),
+                 "cmt": comment_url(fi, membic)}
         txt += "<item>\n"
-        txt += "<title><![CDATA[" + itemtitle + "]]></title>\n"
-        txt += "<link><![CDATA[" + membicurl + "]]></link>\n"
+        txt += "<title><![CDATA[" + sdets["title"] + "]]></title>\n"
+        txt += "<link><![CDATA[" + sdets["membicurl"] + "]]></link>\n"
         txt += "<guid>Membic" + membic["dsId"] + "</guid>\n"
         txt += "<pubDate>" + membic["modified"] + "</pubDate>\n"  # created
-        txt += "<description><![CDATA[" + itemdesc + "]]></description>\n"
+        txt += "<description><![CDATA[" + sdets["desc"] + "]]></description>\n"
+        txt += "<comments><![CDATA[" + sdets["cmt"] + "]]></comments>\n"
         txt += "</item>\n"
     txt += "</channel>\n</rss>\n"
     # Using "xml" rather than "rss+xml" because otherwise mobile Firefox

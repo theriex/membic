@@ -300,19 +300,26 @@ app.pcd = (function () {
 
 
     //The extraobj is used to drive additional actions passed along from
-    //login.verifyUserInfo.  Not currently supporting any of these but
-    //leaving the passthrough mechanism in place since URL driven actions
-    //might be needed again.
+    //app.init2 or login.verifyUserInfo.  It is up to the handler func
+    //to verify the user is authenticated that is required.
     function processExtraObject (extraobj) {
         if(extraobj) { switch(extraobj.go) {
             case "follow": return app.fork(
                 {descr:"pxob follow", ms:100, func:app.pcd.settings});
+            case "reply": return app.fork(
+                {descr:"pxob reply", ms:800, func:function () {
+                    var mid = app.startParams.membicid;
+                    var idx = ctx.actobj.itlist
+                        .findIndex((m) => m.dsId === mid);
+                    app.membic.toggleMembic(idx, "urlreplyparamexp"); }});
             case "audience": return app.fork(
                 {descr:"pxob audience", ms:100, func:function () {
+                    if(!app.login.authenticated()) { return; }
                     app.pcd.togshare();  //open sharing area
                     app.theme.audience(app.startParams.uid); }});
-            default: jt.log("pcd.processExtraObject ignored " +
-                            JSON.stringify(extraobj)); } }
+            default: if(extraobj.go) {
+                jt.log("pcd.processExtraObject ignored " +
+                       JSON.stringify(extraobj)); } } }
     }
 
 
@@ -833,13 +840,14 @@ return {
 
 
     settings: function (show) {
+        var auth = app.login.authenticated();
+        if(!auth) { return; }  //must be signed in for settings
         jt.byId("pcdsharediv").style.display = "none";
         var setdiv = jt.byId("pcdsettingsdiv");
         if(setdiv.style.display === "block" && !show) {
             setdiv.style.display = "none"; }
         else {
             setdiv.style.display = "block"; }
-        var auth = app.login.authenticated();  //must be signed in for settings
         var obj = ctx.actobj.contextobj;
         if(!obj || (obj.dsType === "MUser" && obj.dsId === auth.authId)) {
             writePersonalSettings("pcdsetcontdiv"); }

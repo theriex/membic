@@ -63,13 +63,11 @@ app.theme = (function () {
         var rssurl = "/feed" + app.statemgr.urlForInstance(setctx.tpo) +
             "?uid=" + authobj.authId;
         return jt.tac2html(
-            ["Use your personalized web feed",
+            ["Your personalized web feed is",
              ["br"],
              ["a", {href:rssurl,
                     onclick:jt.fs("window.open('" + rssurl + "')")},
-              rssurl],
-             ["br"],
-             "to respond directly to posts"]);
+              rssurl]]);
     }
 
 
