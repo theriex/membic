@@ -5,6 +5,7 @@
 #pylint: disable=missing-function-docstring
 #pylint: disable=logging-not-lazy
 #pylint: disable=inconsistent-return-statements
+#pylint: disable=line-too-long
 import py.mconf as mconf
 import logging
 import logging.handlers
@@ -171,37 +172,65 @@ def membic_poster_and_themes(membic):
     return ", ".join(names)
 
 
-def send_follower_notice(muser, membics):
+# The [dsId] line is required by forwarding, and should be placed to
+# maximize the chance of it being included in the response if the user is
+# selecting part of the notice email to respond to.  Everything else is for
+# human context, and/or verification and error recovery.
+def membic_notice_summary(membic):
+    body = ""
+    dets = json.loads(membic["details"] or "{}")
+    body += (dets.get("title") or dets.get("name") or "") + "\n"
+    body += (membic.get("url") or membic.get("rurl") or "") + "\n"
+    body += "[dsId] " + str(membic["dsId"]) + "\n"
+    body += membic["text"] + "\n"
+    body += membic_poster_and_themes(membic) + "\n\n"
+    return body
+
+
+# Daily notices, like all emails containing membic content, have the
+# potential of being forwarded to others.  They should not contain any links
+# with authentication credentials.
+def send_follower_notice(muser, membics, preview=False):
     subj = "Membic activity summary"
     body = "There are new membics in Profiles and Themes you are following:\n\n"
     for _, membic in membics.items():
-        dets = json.loads(membic["details"])
-        body += (dets["title"] or dets["name"]) + "\n"
-        body += (membic["url"] or membic["rurl"] or "No link provided") + "\n"
-        body += membic["text"] + "\n"
-        body += membic_poster_and_themes(membic) + "\n\n"
-    body += "To unsubscribe from these notices, change your follow settings"
-    body += " on https://membic.org\n"
+        body += membic_notice_summary(membic)
+    if len(membics) < 2:
+        body += "To send a comment, just reply to this email."
+    else:
+        body += "To comment on any membic, select it and reply to this email."
+    body += " These notices are from sources you have chosen to follow. To change who you are following, sign in at https://membic.org\n"
+    if preview:
+        logging.info("preview_daily upcoming send to " + muser["email"] +
+                     "\nsubj: " + subj +
+                     "\nbody: " + body)
+        return
     # Mail is sent from the default "support" account so that any responses
     # won't get handled by automation.
-    util.send_mail(muser["email"], subj, body, domain="membic.org")
+    util.send_mail(muser["email"], subj, body, domain=mconf.domain,
+                   sender="forwarding")
 
 
+# walk the audience checks in the source followers and if there are
+# changes, send a note to the source membership.  Helpful to know when
+# you've gotten a new follower or one has dropped off.
 def send_audience_change_notices(nd):
-    # walk the audience checks in the source followers and if there are
-    # changes, send a note to the source membership.  Helpful to know when
-    # you've gotten a new follower or one has dropped off.
     logging.info("send_audience_change_notices not implemented yet")
+
+
+# might get the same membic from more than one source so consolidate.
+def notice_membics_for_user(muser):
+    membics = {}
+    for src in muser["sources"]:
+        for membicid, membic in src["membics"].items():
+            membics[membicid] = membic
+    return membics
 
 
 def send_follower_notifications(nd, mn):
     uids = []
     for uid, muser in nd["musers"].items():
-        # might get the same membic from more than one source so consolidate
-        membics = {}
-        for src in muser["sources"]:
-            for membicid, membic in src["membics"].items():
-                membics[membicid] = membic
+        membics = notice_membics_for_user(muser)
         send_follower_notice(muser, membics)
         uids.append(uid)
     send_audience_change_notices(nd)
@@ -213,11 +242,19 @@ def send_follower_notifications(nd, mn):
 
 
 def preview_daily():
+    muser = None
+    if len(sys.argv) > 2:
+        muser = dbacc.cfbk("MUser", "email", sys.argv[2])
     sts = dbacc.nowISO()[0:10] + "T00:00:00Z"
     ets = dbacc.dt2ISO(dbacc.ISO2dt(sts) + datetime.timedelta(hours=24))
     nd = fetch_notifications_data(sts, ets)
     verify_audiences(nd, updates="discard")
-    logging.info("preview_daily nd_as_string\n" + nd_as_string(nd))
+    if muser:
+        muser = nd["musers"][muser["dsId"]]
+        membics = notice_membics_for_user(muser)
+        send_follower_notice(muser, membics, preview=True)
+    else:
+        logging.info("preview_daily nd_as_string\n" + nd_as_string(nd))
 
 
 # Don't particularly care what time the server is using, or what time this

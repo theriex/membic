@@ -309,8 +309,9 @@ def email_quote_original(mimp, tstamp=True, prefix="> "):
 # personal is important to avoid sending things people don't want.
 #
 # The body of the message might potentially be long.  It's expected to be a
-# few lines of text, but it could be a pile.  Not truncating for now.  May
-# revisit later.
+# few lines of text, but it could be a pile.  Not truncating for now.  Can
+# revisit if needed later, there should not be any dependencies on the text
+# being sent, it is just to provide context for the comment.
 def forward_response_comment(mimp):
     muser = mimp["muser"]
     membic = mimp["membic"]
