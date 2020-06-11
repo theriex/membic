@@ -201,21 +201,75 @@ def send_follower_notice(muser, membics, preview=False):
         body += "To comment on any membic, select it and reply to this email."
     body += " These notices are from sources you have chosen to follow. To change who you are following, sign in at https://membic.org\n"
     if preview:
-        logging.info("preview_daily upcoming send to " + muser["email"] +
+        logging.info("send_follower_notice upcoming send to " + muser["email"] +
                      "\nsubj: " + subj +
                      "\nbody: " + body)
         return
-    # Mail is sent from the default "support" account so that any responses
-    # won't get handled by automation.
+    # Mail is sent from forwarding so responses can be handled automatically
     util.send_mail(muser["email"], subj, body, domain=mconf.domain,
                    sender="forwarding")
 
 
-# walk the audience checks in the source followers and if there are
-# changes, send a note to the source membership.  Helpful to know when
-# you've gotten a new follower or one has dropped off.
-def send_audience_change_notices(nd):
-    logging.info("send_audience_change_notices not implemented yet")
+def audience_summary_text(src):
+    dbobj = src["dbobj"]
+    txt = dbobj["name"] or (dbobj["dsType"] + dbobj["dsId"])
+    txt = "Following " + txt + ":\n"
+    if len(src["mars"]) == 0:
+        txt += "  No audience changes\n"
+    for audrec in src["mars"]:
+        txt += "  " + audrec["name"] + " via " + audrec["mech"] + "\n"
+    txt += "\n"
+    return txt
+
+
+def send_audience_change(muser, sources, preview=False):
+    cliset = json.loads(muser.get("cliset") or "{}")
+    if cliset.get("audchgem") == "disabled":
+        return
+    subj = "Audience updates since your last membic"
+    body = "These followers were updated since the last membic post.\n\n"
+    for _, src in sources.items():
+        if src["dsType"] == "MUser" and src["dsId"] == muser["dsId"]:
+            body += audience_summary_text(src)
+    themes = json.loads(muser.get("themes") or "{}")
+    for _, src in sources.items():
+        if src["dsType"] == "Theme" and themes.get(src["dsId"]):
+            if themes.get(src["dsId"])["lev"] > 0:  # your content
+                body += audience_summary_text(src)
+    body += "To invite followers, use the share menu from your profile or theme. To stop receiving audience update information when you post new membics, change the tracking in your profile audience."
+    if preview:
+        logging.info("send_audience_change upcoming send to " + muser["email"] +
+                     "\nsubj: " + subj +
+                     "\nbody: " + body)
+        return
+    util.send_mail(muser["email"], subj, body, domain=mconf.domain,
+                   sender="support")
+
+
+# nd["srcfs"] shows Audience records that were added or updated as a result
+# of walking the content.  It primarily corrects relationships that were
+# established before Audience records were kept, and is potentially helpful
+# for support.  But what the membic writer wants to know is audience changes
+# between this post and their last one, which requires querying Audience.
+def send_aud_change_notices(nd, previewuser=None):
+    for _, src in nd["sources"].items():  # see note_source for base fields
+        src["dbobj"] = dbacc.cfbk(src["dsType"], "dsId", src["dsId"],
+                                  required=True)
+        preb = json.loads(src["dbobj"].get("preb") or "[]")
+        src["ppct"] = "1970-01-01T00:00:00Z"  # previous post creation
+        for pmem in preb:
+            if pmem["created"] < nd["start"]:
+                src["ppct"] = pmem["created"]
+                break
+        where = ("WHERE srctype=\"" + src["dsType"] + "\" AND srcid=" +
+                 str(src["dsId"]) + " AND modified > \"" + src["ppct"] + "\"")
+        src["mars"] = dbacc.query_entity("Audience", where)
+    if previewuser:
+        send_audience_change(previewuser, nd["sources"], preview=True)
+        return
+    for _, src in nd["sources"]:
+        if src["dsType"] == "MUser":
+            send_audience_change(src["dbobj"], nd["sources"])
 
 
 # might get the same membic from more than one source so consolidate.
@@ -233,7 +287,7 @@ def send_follower_notifications(nd, mn):
         membics = notice_membics_for_user(muser)
         send_follower_notice(muser, membics)
         uids.append(uid)
-    send_audience_change_notices(nd)
+    send_aud_change_notices(nd)
     # Send the notifications data summary to support for general checking
     util.send_mail(None, "membic notifications data", nd_as_string(nd),
                    domain="membic.org")
@@ -250,9 +304,12 @@ def preview_daily():
     nd = fetch_notifications_data(sts, ets)
     verify_audiences(nd, updates="discard")
     if muser:
-        muser = nd["musers"][muser["dsId"]]
-        membics = notice_membics_for_user(muser)
-        send_follower_notice(muser, membics, preview=True)
+        follower = nd["musers"].get(muser["dsId"])
+        if follower:
+            membics = notice_membics_for_user(follower)
+            send_follower_notice(follower, membics, preview=True)
+        else:
+            send_aud_change_notices(nd, previewuser=muser)
     else:
         logging.info("preview_daily nd_as_string\n" + nd_as_string(nd))
 
