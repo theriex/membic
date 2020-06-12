@@ -187,6 +187,10 @@ def update_association(muser, ao, prof, ras):
             verify_authorized_theme_member_change(muser, ao, prof, ras)
             update_theme_membership(ao, prof, assoc)
             ao = dbacc.write_entity(ao, vck=ao["modified"])
+            if muser["dsId"] != prof["dsId"]:  # reflect follower info
+                update_profile_association(prof, ao, ras)
+                prof = dbacc.write_entity(prof, vck=prof["modified"])
+                dbacc.entcache.cache_put(prof)  # latest for next fetch
             objs.append(ao)
     if len(objs) > 0:  # Note audience change
         update_audience_record({"uid":prof["dsId"], "name":prof["name"],
