@@ -267,7 +267,7 @@ def send_aud_change_notices(nd, previewuser=None):
     if previewuser:
         send_audience_change(previewuser, nd["sources"], preview=True)
         return
-    for _, src in nd["sources"]:
+    for _, src in nd["sources"].items():
         if src["dsType"] == "MUser":
             send_audience_change(src["dbobj"], nd["sources"])
 
