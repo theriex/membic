@@ -147,115 +147,160 @@ app.theme = (function () {
     }
 
 
-    function blockHTML (f, idx) {
-        var emb;
-        //You may not block email contact from members.  Demote them first.
-        var mayBlock = (f.lev <= 0 && app.theme.mayViewAudience() === "edit");
-        if(f.blocked) {
-            emb = ["img", {src:app.dr("img/emailgenprohib.png")}];
-            if(mayBlock) {
-                emb = ["a", {href:"#unblock" + f.uid, 
-                             title:"allow email contact from " + f.name,
-                             onclick:jt.fs("app.theme.blockFollower(" + idx +
-                                           ",false)")}, emb]; } }
-        else {
-            emb = ["img", {src:app.dr("img/email.png")}];
-            if(mayBlock) {
-                emb = ["a", {href:"#block" + f.uid, 
-                             title:"block email from " + f.name,
-                             onclick:jt.fs("app.theme.blockFollower('" + idx +
-                                           "',true)")}, emb]; } }
-        return [emb, ["span", {id:"fblockstatspan" + idx}, ""]];
-    }
-
-
-    function displayAudience (co, uid) {
-        var levn = association(app.pcd.getDisplayContext().actobj.contextobj);
-        var currFollower = null;
-        var ams = [];
-        co.followers.forEach(function (f, idx) {
-            if(f.uid === uid) {
-                currFollower = f; }
+    var audmgr = {
+        followerLinkHTML: function (f) {
+            return ["a", {href:"#" + f.uid, 
+                          title:"Show profile for " + f.name,
+                          onclick:jt.fs("app.statemgr.setState('MUser','" +
+                                        f.uid + "')")},
+                    [["img", {cla:"followerimg",
+                              src:app.login.uidimgsrc(f.uid)}],
+                     ["span", {cla:"followernamespan"}, f.name]]];
+        },
+        assocHTML: function (f, idx) {
+            var levn = association(app.pcd.getActobjContext());
             var assoc = nameForLevel(f.lev);
             if(levn === "Founder" && assoc !== "Founder") {
                 assoc = ["a", {href:"#association",
                                onclick:jt.fs("app.theme.chgassoc(" + idx + ")"),
                                title:"Change association for " + f.name},
                          assoc]; }
-            var emb = blockHTML(f, idx);
-            ams.push(["tr",
-                      [["td",
-                        ["a", {href:"#" + f.uid, 
-                               title:"Show profile for " + f.name,
-                               onclick:jt.fs("app.statemgr.setState('MUser','" +
-                                             f.uid + "')")},
-                         [["img", {cla:"followerimg",
-                                   src:app.login.uidimgsrc(f.uid)}],
-                          ["span", {cla:"followernamespan"}, f.name]]]],
-                       ["td", 
-                        ["span", {cla:"flevspan"},
-                         assoc]],
-                       ["td", {cla:"fmechtd"},
-                        ["span", {cla:"fmechspan"}, f.mech]],
-                       ["td", {cla:"fblocktd"},
-                        ["span", {cla:"fblockspan",
-                                  id:"fblockspan" + idx}, emb]]]]);
-            ams.push(["tr",
-                      ["td", {colspan:4},
-                       ["div", {id:"audlevdiv" + idx, cla:"audlevdiv",
-                                style:"display:none;"}]]]); });
-        if(!ams.length) {
-            jt.out("pcdaudcontdiv", "No followers seen yet."); }
-        else {
-            ams.splice(0, 0,
-                       ["tr",
-                        [["th", {colspan:2}, "Audience"],
-                         ["th", ""],
-                         ["th", ""]]]);
-            jt.out("pcdaudcontdiv", jt.tac2html(
-                ["table", {cla:"followerstable"}, ams])); }
-        if(uid && currFollower) {
-            confirm("To block or unblock mail from \"" + currFollower.name +
-                    "\" click their email icon in the Audience description."); }
-    }
-
-
-    function fetchAudienceInfo(dsType, dsId, uid) {
-        var authobj = app.login.authenticated();
-        var url = app.dr("/api/audinf") + "?an=" + authobj.email + "&at=" +
-            authobj.token + "&dsType=" + dsType + "&dsId=" + dsId +
-            jt.ts("&cb=", "minute");  //use refmgr cache, not browser
-        jt.call("GET", url, null,
-                function (aios) {
-                    app.refmgr.put(aios[0]);
-                    displayAudience(aios[0], uid); },
-                function(code, errtxt) {
-                    jt.out("pcdaudcontdiv", "Audience fetch failed " + code +
-                           ": " + errtxt); },
-                jt.semaphore("theme.fetchAudienceInfo"));
-    }
-
-
-    function audObjType (dsType) {
-        return dsType.toLowerCase() + "audience";
-    }
-
-
-    function fetchAndDisplayAudience (dsType, dsId, uid) {
-        var atn = audObjType(dsType);
-        var co = app.refmgr.cached(atn, dsId);
-        if(!co) {
-            jt.out("pcdaudcontdiv", "Fetching audience details...");
-            return app.fork({descr:"fetch " + atn + dsId, ms:50,
-                             func:function () {
-                                 fetchAudienceInfo(dsType, dsId, uid); }}); }
-        displayAudience(co, uid);
-    }
+            assoc = ["span", {cla:"flevspan"}, assoc];
+            return assoc;
+        },
+        followMechHTML: function (f) {
+            return ["span", {cla:"fmechspan"}, f.mech];
+        },
+        mayBlockEmail: function (f) {
+            //You may not block email contact from members.  Demote them first.
+            return f.lev <= 0 && app.theme.mayViewAudience() === "edit";
+        },
+        blockHTML: function (f, idx) {
+            var emb;
+            if(f.blocked) {
+                emb = ["img", {src:app.dr("img/emailgenprohib.png")}];
+                if(audmgr.mayBlockEmail(f)) {
+                    emb = ["a", {href:"#unblock" + f.uid, 
+                                 title:"allow email contact from " + f.name,
+                                 onclick:jt.fs("app.theme.blockFollower(" +
+                                               idx + ",false)")}, emb]; } }
+            else {
+                emb = ["img", {src:app.dr("img/email.png")}];
+                if(audmgr.mayBlockEmail(f)) {
+                    emb = ["a", {href:"#block" + f.uid, 
+                                 title:"block email from " + f.name,
+                                 onclick:jt.fs("app.theme.blockFollower('" +
+                                               idx + "',true)")}, emb]; } }
+            return [emb, ["span", {id:"fblockstatspan" + idx}, ""]];
+        },
+        mailBlockHTML: function (f, idx) {
+            return ["span", {cla:"fblockspan", id:"fblockspan" + idx},
+                    audmgr.blockHTML(f, idx)];
+        },
+        dispatchstr: function (fname) {
+            return jt.fs("app.theme.managerDispatch('audmgr','" + fname + "')");
+        },
+        updateNoticesHTML: function () {
+            var pageobj = app.pcd.getActobjContext();
+            var profile = app.login.myProfile();
+            if(pageobj.dsId !== profile.dsId) {
+                return ""; }
+            var selopts = [{val:"enabled", txt:"Notify When Updated"},
+                           {val:"disabled", txt:"No Update Email"}];
+            selopts = selopts.map(function (opt) {
+                return ["option", {
+                    value:opt.val, 
+                    selected:jt.toru(profile.cliset.audchgem === opt.val)}, 
+                        opt.txt]; });
+            return jt.tac2html(
+                [["select", {id:"audchgnoticesel",
+                             onchange:audmgr.dispatchstr("noticesChange")},
+                  selopts],
+                 ["span", {id:"audchgnoticesavespan"}]]);
+        },
+        audChgNoticeSelVal: function () {
+            var sel = jt.byId("audchgnoticesel");
+            return sel.options[sel.selectedIndex].value;
+        },
+        noticesChange: function () {
+            var sel = audmgr.audChgNoticeSelVal();
+            jt.out("audchgnoticesavespan", "");
+            if(sel !== app.login.myProfile().cliset.audchgem) {
+                jt.out("audchgnoticesavespan", jt.tac2html(
+                    ["button", {type:"button",
+                                onclick:audmgr.dispatchstr("noticesSave")},
+                     "Save"])); }
+        },
+        noticesSave: function () {
+            var prof = app.login.myProfile();
+            prof.cliset.audchgem = audmgr.audChgNoticeSelVal();
+            app.login.updateProfile(
+                {dsType:prof.dsType, dsId:prof.dsId, cliset:prof.cliset},
+                function () {  //updated account already cached
+                    audmgr.noticesChange(); },
+                function (code, errtxt) {
+                    jt.log("noticesSave failed " + code + ": " + errtxt); });
+        },
+        display: function (co, uid) {
+            var currFollower = null;
+            var ams = [];
+            co.followers.forEach(function (f, idx) {
+                if(f.uid === uid) {
+                    currFollower = f; }
+                ams.push(["tr", [
+                    ["td", audmgr.followerLinkHTML(f)],
+                    ["td", audmgr.assocHTML(f, idx)],
+                    ["td", {cla:"fmechtd"}, audmgr.followMechHTML(f)],
+                    ["td", {cla:"fblocktd"}, audmgr.mailBlockHTML(f, idx)]]]);
+                ams.push(["tr",
+                    ["td", {colspan:4},
+                     ["div", {id:"audlevdiv" + idx, cla:"audlevdiv",
+                              style:"display:none;"}]]]); });
+            if(!ams.length) {
+                jt.out("pcdaudcontdiv", "No followers seen yet."); }
+            else {
+                ams.splice(0, 0, ["tr", [
+                    ["th", {colspan:4}, ["Audience", "&nbsp;",
+                                         audmgr.updateNoticesHTML()]]]]);
+                jt.out("pcdaudcontdiv", jt.tac2html(
+                    ["table", {cla:"followerstable"}, ams])); }
+            if(uid && currFollower) {
+                confirm("To block or unblock mail from \"" + currFollower.name +
+                        "\" click their email icon."); }
+        },
+        audtype: function (dsType) {
+            return dsType.toLowerCase() + "audience";
+        },
+        fetchInfo: function (dsType, dsId, uid) {
+            var authobj = app.login.authenticated();
+            var url = app.dr("/api/audinf") + "?an=" + authobj.email + "&at=" +
+                authobj.token + "&dsType=" + dsType + "&dsId=" + dsId +
+                jt.ts("&cb=", "minute");  //use refmgr cache, not browser
+                jt.call("GET", url, null,
+                        function (aios) {
+                            app.refmgr.put(aios[0]);
+                            audmgr.display(aios[0], uid); },
+                        function(code, errtxt) {
+                            jt.out("pcdaudcontdiv", "Audience fetch failed " +
+                                   code + ": " + errtxt); },
+                        jt.semaphore("theme.audmgr.fetchInfo"));
+        },
+        fetchAndDisplay: function (dsType, dsId, uid) {
+            var atn = audmgr.audtype(dsType);
+            var co = app.refmgr.cached(atn, dsId);
+            if(!co) {
+                jt.out("pcdaudcontdiv", "Fetching audience details...");
+                return app.fork({descr:"fetch " + atn + dsId, ms:50,
+                                 func:function () {
+                                     audmgr.fetchInfo(dsType, dsId, uid); }}); }
+            audmgr.display(co, uid);
+        }
+    };
 
 
     function audLevelAdjustHTML (idx) {
-        var obj = app.pcd.getDisplayContext().actobj.contextobj;
-        var aud = app.refmgr.cached(audObjType(obj.dsType), obj.dsId);
+        var obj = app.pcd.getActobjContext();
+        var aud = app.refmgr.cached(audmgr.audtype(obj.dsType), obj.dsId);
         var follower = aud.followers[idx];
         var aas = {Founder:[],
                    Moderator:[
@@ -360,8 +405,8 @@ return {
         if(!confirm(cfrm)) {
             return; }
         var authobj = app.login.authenticated();
-        var theme = app.pcd.getDisplayContext().actobj.contextobj;
-        var aud = app.refmgr.cached(audObjType(theme.dsType), theme.dsId);
+        var theme = app.pcd.getActobjContext();
+        var aud = app.refmgr.cached(audmgr.audtype(theme.dsType), theme.dsId);
         var amb = aud.followers[idx];
         jt.out("audlevdiv" + idx, "Updating " + theme.name + "...");
         var data = jt.objdata(
@@ -373,7 +418,7 @@ return {
                     //Audience entry updated on server.  Update local record.
                     amb.lev = levelForAssociationName(association);
                     amb.blocked = "";  //members may not be blocked
-                    displayAudience(aud); },
+                    audmgr.display(aud); },
                 function (code, errtxt) {
                     jt.out("audlevdiv" + idx, "Update failed " + code + ": " +
                            errtxt); },
@@ -405,7 +450,7 @@ return {
 
 
     settingsUpdate: function () {
-        var theme = app.pcd.getDisplayContext().actobj.contextobj;
+        var theme = app.pcd.getActobjContext();
         var tu = {dsType:"Theme", dsId:theme.dsId};
         app.pcd.readCommonSettingsFields(tu, theme);  //hashtag, colors
         tu.keywords = jt.byId("kwrdsin").value.trim() || "UNSET_VALUE";
@@ -445,8 +490,8 @@ return {
         var div = jt.byId("pcdaudcontdiv");
         if(!div.innerHTML) {
             div.style.display = "none";  //toggled on in next step
-            var obj = app.pcd.getDisplayContext().actobj.contextobj;
-            fetchAndDisplayAudience(obj.dsType, obj.dsId, uid); }
+            var obj = app.pcd.getActobjContext();
+            audmgr.fetchAndDisplay(obj.dsType, obj.dsId, uid); }
         if(div.style.display === "none") {
             div.style.display = "block"; }
         else {
@@ -465,15 +510,15 @@ return {
 
 
     blockFollower: function (idx, block, confirmed) {
-        var obj = app.pcd.getDisplayContext().actobj.contextobj;
-        var aud = app.refmgr.cached(audObjType(obj.dsType), obj.dsId);
+        var obj = app.pcd.getActobjContext();
+        var aud = app.refmgr.cached(audmgr.audtype(obj.dsType), obj.dsId);
         var f = aud.followers[idx];
         if(block) {
             f.blocked = "blocked"; } //authId|timestamp filled out on save
         else {
             f.blocked = ""; }
         var savebutton = jt.byId("fblockstatspan" + idx).innerHTML;
-        jt.out("fblockspan" + idx, jt.tac2html(blockHTML(f, idx)));
+        jt.out("fblockspan" + idx, jt.tac2html(audmgr.blockHTML(f, idx)));
         if(!confirmed) {
             if(savebutton) {
                 jt.out("fblockstatspan" + idx, ""); }  //cancel save
@@ -496,7 +541,7 @@ return {
                     function (code, errtxt) {
                         jt.log("blockFollower " + code + " " + errtxt);
                         jt.out("fblockstatspan" + idx, "Failed.");
-                        app.refmgr.uncache(audObjType(obj.dsType),
+                        app.refmgr.uncache(audmgr.audtype(obj.dsType),
                                            obj.dsId); },
                     jt.semaphore("theme.blockFollower")); }
     },
@@ -524,7 +569,12 @@ return {
 
 
     nameForLevel: function (lev) { return nameForLevel(lev); },
-    profassoc: function (t, i) { return profassoc(t, i); }
+    profassoc: function (t, i) { return profassoc(t, i); },
+    managerDispatch: function (mgrname, fname, ...args) {
+        switch(mgrname) {
+        case "audmgr": return audmgr[fname].apply(app.theme, args);
+        default: jt.log("theme.managerDispatch unknown manager: " + mgrname); }
+    }
             
 }; //end of returned functions
 }());

@@ -910,6 +910,7 @@ return {
         appendNextMatchingItemToContent();
     },
     getDisplayContext: function () { return ctx; },
+    getActobjContext: function () { return ctx.actobj.contextobj; },
     resumeFilterContent: function (ts) {
         if(ctx.fist.ts === ts) {
             app.pcd.filterContent(); }
