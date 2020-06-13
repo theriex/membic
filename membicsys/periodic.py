@@ -226,6 +226,12 @@ def send_audience_change(muser, sources, preview=False):
     cliset = json.loads(muser.get("cliset") or "{}")
     if cliset.get("audchgem") == "disabled":
         return
+    updated = False
+    for _, src in sources.items():
+        if len(src["mars"]) > 0:
+            updated = True
+    if not updated:
+        return
     subj = "Audience updates since your last membic"
     body = "These followers were updated since the last membic post.\n\n"
     for _, src in sources.items():
