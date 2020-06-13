@@ -655,6 +655,20 @@ def membicsave():
     return "[" + res + "]"
 
 
+# Like membicsave, except called by an administrator passing the membicid.
+# Typically used after making a change to a membic in the database.
+def rebmembic():
+    try:
+        util.administrator_auth()
+        mid = dbacc.reqarg("membicid", "dbid", required=True)
+        membic = dbacc.cfbk("Membic", "dsId", int(mid), required=True)
+        muser = dbacc.cfbk("MUser", "dsId", membic["penid"], required=True)
+        update_membic_and_preb(muser, membic, membic)
+    except ValueError as e:
+        return util.serve_value_error(e)
+    return "redmembic updated Membic " + str(mid)
+
+
 # Return the followers for the given theme or profile as specified in the
 # dsType and dsId parameters. Only available for your own profile or a theme
 # you are a member of.  All members can see the followers, but only founders

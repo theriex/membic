@@ -120,6 +120,11 @@ def prebsweep():
     ## Fill any empty/null preb values.
     return util.secure(util.prebsweep)
 
+@app.route('/api/membicrefresh')
+def rebmembic():
+    ## Rebuild the given membicid as if it was being updated
+    return util.secure(useract.rebmembic)
+
 @app.route('/api/supphelp')
 def supphelp():
     ## Return an access url for the given email

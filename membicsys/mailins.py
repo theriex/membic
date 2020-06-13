@@ -35,10 +35,13 @@ FWDADDR = "forwarding" + "@" + mconf.domain
 FWDPASS = mconf.email["forwarding"]
 
 # The processing here needs to use the same core processing as membicsave.
+# Important to set the membic "rurl" field (not the "url" field), so it is
+# clear the link page meta info has not been read yet.  The title is set to
+# the url in the interim.
 def make_mail_in_membic(mimp):
     muser = mimp["muser"]
     membic = {"dsType":"Membic", "ctmid":"", "penid":muser["dsId"],
-              "penname":muser["name"], "url":mimp["url"], "revtype":"article",
+              "penname":muser["name"], "rurl":mimp["url"], "revtype":"article",
               "details":json.dumps({"title":mimp["url"]}),
               "text":mimp["whymem"]}
     mimp["tags"] = {}
