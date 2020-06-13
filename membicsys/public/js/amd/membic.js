@@ -180,6 +180,11 @@ app.membic = (function () {
         switch(errt) {
         case "signin":
             jt.out("mcmtdiv" + cdx, "Sign In to comment");
+            if(app.solopage()) {
+                jt.out("mcmtdiv" + cdx, jt.tac2html(
+                    ["a", {href:app.docroot,
+                           onclick:jt.fs("window.open('" + app.docroot + "')")},
+                     "Sign In to comment"])); }
             break;
         case "follow":
             if(!ack) {
@@ -1081,13 +1086,18 @@ app.membic = (function () {
             closed: function () { return ""; },
             expanded: function (ignore /*cdx*/, membic) {
                 var cretxt = jt.colloquialDate(membic.created, "compress");
+                var linkattrs = {href:"#" + membic.penid,
+                                 title:"Visit " + membic.penname,
+                                 onclick:jt.fs("app.statemgr.setState('MUser'" +
+                                               ",'" + membic.penid + "')")};
+                if(app.solopage()) {
+                    linkattrs.onclick = jt.fs("window.open('" + app.docroot +
+                                              "/profile/" + membic.penid +
+                                              "')"); }
                 return jt.tac2html(
                     [["span", {cla:"mascrespan"}, cretxt],
                      ["span", {cla:"masbyline"},
-                      ["a", {href:"#" + membic.penid,
-                             title:"Visit " + membic.penname,
-                             onclick:jt.fs("app.statemgr.setState('MUser','" +
-                                           membic.penid + "')")},
+                      ["a", linkattrs,
                        [["img", {src:app.login.profimgsrc(membic.penid)}],
                         ["span", {cla:"penlight"}, membic.penname]]]]]); },
             changed: function () { return false; },
