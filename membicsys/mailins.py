@@ -68,6 +68,16 @@ def ellipsis(text, maxlen=60):
     return text
 
 
+def httpfree(url):
+    if url.startswith("http"):
+        idx = url.find("//")
+        if idx >= 0:
+            url = url[idx + 2:]
+    if url.startswith("www."):
+        url = url[4:]
+    return url
+
+
 def mimp_summary(mimp):
     mid = mimp.get("prebmembic")
     if mid:
@@ -83,10 +93,16 @@ def mimp_summary(mimp):
 def confirm_receipt(mimp):
     logger.info("confirm_receipt " + mimp_summary(mimp))
     # send confirmation response letting them know it posted
-    subj = "Membic created for " + ellipsis(mimp["url"])
-    body = "Mail-In Membic " + mimp["prebmembic"]["dsId"] + " created:\n"
-    # reference the original url in case the membic creation process moves
-    # the membic url to rurl.
+    subj = "Re: Mail-In Membic for " + ellipsis(httpfree(mimp["url"]))
+    body = "Your mail-in membic was received.  Go to your profile "
+    body += util.my_login_url(mimp["muser"], SITEROOT)
+    body += " to confirm details.\n"
+    body += "\n"
+    body += "This message is an automated response. If you have any questions or concerns, forward this message with your comments to " + SUPPADDR + "\n"
+    body += "\n"
+    tstamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    body += "On " + tstamp + " " + mimp["emaddr"] + " sent:\n"
+    # reference mimp["url"] or membic["rurl"], membic["url"] is empty.
     body += " [url]: " + mimp["url"] + "\n"
     body += "[text]: " + mimp["whymem"] + "\n"
     for tag, pn in mimp["tags"].items():
@@ -95,9 +111,6 @@ def confirm_receipt(mimp):
             stat = pn["name"]
         body += "    #" + tag + ": " + stat + "\n"
     body += "\n"
-    body += "You can view or edit this membic from your profile at "
-    body += util.my_login_url(mimp["muser"], SITEROOT) + "\n\n"
-    body += "This message is an automated response to your Mail-In Membic. If you have any questions or concerns, forward this message to " + SUPPADDR + " along with your comments so we can look into it. Thanks for using Membic!\n"
     util.send_mail(mimp["emaddr"], subj, body, domain=mconf.domain,
                    sender="me")
     logging.info("Confirmation email sent")
@@ -246,15 +259,18 @@ def verify_following(muser, ptobj):
     return False
 
 
-# Responses from a user may be blocked at either the theme or profile level.
-# Both audience entries should exist to enable managing blocking, so create
-# if needed.
+# Responses from a user may be blocked at either the theme level or the
+# profile level.  Both audience entries should exist to enable managing
+# blocking, so create if needed.
 def user_contact_blocked(muser, ptobj, membic):
     # check main contact point theme or profile
     where = ("WHERE srctype=\"" + ptobj["dsType"] + "\" AND srcid=" +
              ptobj["dsId"] + " AND uid=" + muser["dsId"] + " LIMIT 1")
     res = dbacc.query_entity("Audience", where)
     if not res or len(res) < 1:
+        logging.warning("user_contact_blocked found no Audience " + where +
+                        ". Expected to find follower if they were able" +
+                        "to send a response. Created follower record.")
         res = [dbacc.write_entity({"dsType":"Audience",
                                    "uid":muser["dsId"],
                                    "name":muser["name"],
@@ -262,6 +278,8 @@ def user_contact_blocked(muser, ptobj, membic):
                                    "srcid":ptobj["dsId"],
                                    "lev":-1, "mech":"email"})]
     if res[0]["blocked"]:
+        # If they were blocked at the main follower level, then there
+        # is no need for further audience setting checks.
         return True
     # check profile level if the main contact point was a theme
     if ptobj["dsType"] == "Theme":
@@ -269,12 +287,16 @@ def user_contact_blocked(muser, ptobj, membic):
                  " AND uid=" + muser["dsId"] + " LIMIT 1")
         res = dbacc.query_entity("Audience", where)
         if not res or len(res) < 1:
+            # If they are not blocked at the theme level, create a local
+            # profile audience entry to enable blocking at the personal
+            # level.  They were following the theme, not the profile, so the
+            # lev should be initialized to zero.
             res = [dbacc.write_entity({"dsType":"Audience",
                                        "uid":muser["dsId"],
                                        "name":muser["name"],
                                        "srctype":"MUser",
                                        "srcid":membic["penid"],
-                                       "lev":-1, "mech":"email"})]
+                                       "lev":0, "mech":"email"})]
         if res[0]["blocked"]:
             return True
     return False
