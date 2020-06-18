@@ -401,8 +401,10 @@ app.readurl = (function () {
                          "album", "starring", "address", "year"];
         detfields.forEach(function (detfld) {
             if(ctx.m.details[detfld]) {
-                rfs.push(detfld); } });
-        ctx.msgs.push("Filled out: " + rfs.join(", "));
+                //don't report the default url title as having been filled in.
+                if(detfld !== "title" || ctx.m.details[detfld] !== ctx.m.rurl) {
+                    rfs.push(detfld); } } });
+        ctx.msgs.push("Filled out: " + (rfs.join(", ") || "Nothing"));
     }
 
 
