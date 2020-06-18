@@ -351,7 +351,7 @@ app.membic = (function () {
         tm.url = membic.url || membic.rurl;
         tm.details = membic.details || {};
         tm.revtype = membic.revtype || "article";
-        tm.rating = ratmgr.rati.dfltv;
+        tm.rating = membic.rating || ratmgr.rati.dfltv;
         tm.svcdata = tm.svcdata || {};
         tm.svcdata.urlreader = membic.svcdata.urlreader;
         saveMembic("mergeURLReadInfoIntoSavedMembic", tm);
@@ -1264,11 +1264,14 @@ app.membic = (function () {
                 clearTimeout(apto); }
             apto = null; }
         //May only edit membic from your own profile display
-        if(!apto && mayEdit(membic) && membicDetailsUnread(membic)) {
-            var des = "Followup read Membic " + membic.dsId;
-            jt.log(des);
-            apto = app.fork({descr:des, ms:800, func:function () {
-                startReader(membic); }}); }
+        if(!apto && membicDetailsUnread(membic)) {
+            //Hold off on any scheduling until after user info verified
+            var authobj = app.login.authenticated();
+            if(authobj.verifyUserInfoComplete) {
+                var des = "Followup read Membic " + membic.dsId;
+                jt.log(des);
+                apto = app.fork({descr:des, ms:800, func:function () {
+                    startReader(membic); }}); } }
     }
 
 

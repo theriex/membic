@@ -25,6 +25,7 @@ app.login = (function () {
         //probably up to date, but that's not guaranteed given server call
         //timing.  Best to just just redraw.
         app.refmgr.getFull("MUser", authobj.authId, function (muser) {
+            authobj.verifyUserInfoComplete = new Date().toISOString();
             //If they have not activated their account yet, then go to their
             //empty profile so they can do that
             if(authobj.status === "Pending") {

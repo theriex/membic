@@ -63,6 +63,8 @@ var jt = {};   //Global access to general utility methods
         var forknote = app.forks[tobj.descr];
         forknote.count += 1;
         forknote.latest = new Date().toISOString();
+        //showing each fork produces a lot of lines from filtering membics
+        //jt.log("app.fork " + tobj.descr + " " + tobj.ms + "ms");
         return setTimeout(tobj.func, tobj.ms);
     };
 

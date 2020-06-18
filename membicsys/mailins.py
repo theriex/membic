@@ -103,13 +103,15 @@ def confirm_receipt(mimp):
     tstamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     body += "On " + tstamp + " " + mimp["emaddr"] + " sent:\n"
     # reference mimp["url"] or membic["rurl"], membic["url"] is empty.
-    body += " [url]: " + mimp["url"] + "\n"
-    body += "[text]: " + mimp["whymem"] + "\n"
+    body += ">  [url]: " + mimp["url"] + "\n"
+    body += textwrap.fill("[text]: " + mimp["whymem"], 76, initial_indent="> ",
+                          subsequent_indent="> ")
+    body += "\n"
     for tag, pn in mimp["tags"].items():
         stat = "Ignored"
         if pn:
             stat = pn["name"]
-        body += "    #" + tag + ": " + stat + "\n"
+        body += ">     #" + tag + ": " + stat + "\n"
     body += "\n"
     util.send_mail(mimp["emaddr"], subj, body, domain=mconf.domain,
                    sender="me")

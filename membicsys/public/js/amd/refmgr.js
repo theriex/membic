@@ -164,17 +164,18 @@ return {
             console.trace(); }
         var url = app.dr("/api/fetchobj?dt=" + dsType + "&di=" + dsId +
                          jt.ts("&cb=", "second"));
+        var logpre = "refmgr.getFull " + dsType + " " + dsId + " ";
         jt.call("GET", url, null,
                 function (objs) {
                     var retobj = null;
                     if(objs.length > 0) {
                         retobj = objs[0];
+                        jt.log(logpre + "cached.");
                         deserialize(retobj);
                         app.refmgr.put(retobj); }
                     contf(retobj); },
                 function (code, errtxt) {
-                    jt.log("refmgr.getFull " + dsType + " " + dsId + " " +
-                           code + ": " + errtxt);
+                    jt.log(logpre + code + ": " + errtxt);
                     contf(null); },
                 jt.semaphore("refmgr.getFull" + dsType + dsId));
     },
