@@ -437,16 +437,21 @@ app.readurl = (function () {
     ////////////////////////////////////////
 return {
 
-    getInfo: function (membic, url) {
+    getInfo: function (membic, url, fetchmech) {
         jt.log("app.readurl fetching " + url);
         var apiurl = app.login.authURL("/api/urlcontents") +
             "&url=" + jt.enc(url) + jt.ts("&cb=", "second");
+        if(fetchmech) {
+            apiurl += "&fetchmech=" + fetchmech; }
         jt.call("GET", apiurl, null,
                 function (json) {
                     jt.log("app.readurl success: " + url);
                     var ctx = {m:membic, u:url, msgs:[],
                                html:jt.dec(json[0].content)};
                     setMembicFields(ctx);
+                    if(ctx.msgs.slice(-1)[0] === "Filled out: Nothing" &&
+                       !fetchmech) {
+                        return app.readurl.getInfo(membic, url, "curl"); }
                     app.membic.readerFinish(membic, "success",
                                             ctx.msgs.join("|")); },
                 //Error may be from call to url, not a local server error

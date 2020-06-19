@@ -272,6 +272,15 @@ app.membic = (function () {
     }
 
 
+    //If no mid, then this assumes a new membic was just added and that it
+    //is therefore the first element in mbcs.
+    function findMembic(mid, mbcs) {
+        if(!mid) {  //assume a new membic was just added
+            return mbcs[0]; }
+        return mbcs.find((mbc) => mbc.dsId === mid);
+    }
+
+
     //The caller is responsible for clearing any cached Themes that no
     //longer contain the membic being saved.  On return, this will display
     //the user profile, with the membic open for further editing.  The top
@@ -295,14 +304,13 @@ app.membic = (function () {
                     savind = "";
                     pots.forEach(function (pot) {  //deserialize so ready to use
                         app.refmgr.deserialize(pot); });
-                    var srcmem = pots[0].preb[0];  //profile membic
-                    clearCachedThemesForMembic(srcmem);  //outdated edit or add
+                    var updmbc = findMembic(savemembic.dsId, pots[0].preb);
+                    clearCachedThemesForMembic(updmbc);
                     pots.forEach(function (pot) {  //update all given data
                         app.refmgr.put(pot); });
-                    expandedMembics[srcmem.dsId] = "expandedpostsave";
                     app.pcd.fetchAndDisplay(pots[0].dsType, pots[0].dsId);
                     if(contf) {
-                        contf(srcmem); } },
+                        contf(updmbc); } },
                 function (code, errtxt) {
                     savind = "";
                     jt.log("saveMembic " + savemembic.dsId + " " + code + ": " +
@@ -310,6 +318,17 @@ app.membic = (function () {
                     if(failf) {
                         failf(code, errtxt); } },
                 jt.semaphore("membic.saveMembic"));
+    }
+
+
+    function membicDetailsMissing (membic) {
+        if(!mayEdit(membic)) {
+            return false; }  //can't change, so don't try and read.
+        if(!membic.rurl) {
+            return false; }  //nothing to read, so don't try.
+        if(!membic.imguri && membic.details.title === membic.rurl) {
+            return true; }
+        return false;
     }
 
 
@@ -339,6 +358,8 @@ app.membic = (function () {
     }
 
 
+    //Called from readerFinish.  Avoids possible write collision timing
+    //between user save and reader save.
     function mergeURLReadInfoIntoSavedMembic (membic) {
         if(savind) {  //currently saving, wait and retry
             return app.fork({descr:"Merge Details " + membic.rurl,
@@ -354,7 +375,13 @@ app.membic = (function () {
         tm.rating = membic.rating || ratmgr.rati.dfltv;
         tm.svcdata = tm.svcdata || {};
         tm.svcdata.urlreader = membic.svcdata.urlreader;
-        saveMembic("mergeURLReadInfoIntoSavedMembic", tm);
+        saveMembic("mergeURLReadInfoIntoSavedMembic", tm, function (membic) {
+            //This is called while the display is being rebuilt.  If the
+            //reader ran in the background while the membic was collapsed
+            //(e.g. mail-in), then open the membic to show it was changed
+            //and allow the user to check the details.  If they clicked the
+            //Refetch button, then leave it open.
+            app.membic.toggleMembic(-1, "expandedpostsave", membic); });
     }
 
 
@@ -516,7 +543,7 @@ app.membic = (function () {
         //If an error occurs, leave expanded with message.
         saveMembic("updateMembic", updm,
             function (srcmembic) {
-                expandedMembics[srcmembic.dsId] = ""; },  //close
+                app.membic.toggleMembic(-1, "closed", srcmembic); },
             function (code, txt) {
                 jt.out("dlgbsmsgdiv" + cdx, "Save failed " + code + ": " + txt);
                 jt.out("dlgbsbdiv" + cdx, bhtml);
@@ -549,8 +576,8 @@ app.membic = (function () {
         clearCachedThemesForMembic(membic);
         var updm = {dsType:"Membic", dsId:membic.dsId, srcrev:"-604"};
         saveMembic("markMembicDeleted", updm,
-            function () {
-                expandedMembics[membic.dsId] = "";  //close (seems correct)
+            function (delmem) {
+                app.membic.toggleMembic(-1, "closed", delmem);
                 app.statemgr.redispatch(); },  //redraw content
             function (code, txt) {
                 jt.out("dlgbsmsgdiv" + cdx, "Delete failed " + code + ": " +
@@ -715,6 +742,19 @@ app.membic = (function () {
     };
 
 
+    function togIfEdit(attrs, cdx, membic, editablefstr) {
+        if(mayEdit(membic)) {
+            if(editablefstr) {
+                attrs.contenteditable = "true";
+                attrs.oninput = editablefstr; }
+            else {
+                attrs.style = "cursor:crosshair;";
+                attrs.onclick = jt.fs("app.membic.toggleMembic(" +
+                                      cdx + ")"); } }
+        return attrs;
+    }
+
+
     var detmgr = {
         //Return a new object with the fields used for the details area of
         //membic display and editing form.  The name/title fields are handled
@@ -739,10 +779,9 @@ app.membic = (function () {
                 if(detobj[key]) { html.push(jt.tac2html(
                     ["tr",
                      [["td", {cla:"detailattrtd"}, key],
-                      ["td", {cla:"detailvaltd", 
-                              id:"detail" + key + "valtd" + cdx,
-                              contenteditable:jt.toru(edit, "true"),
-                              oninput:jt.toru(edit, chgfstr)}, 
+                      ["td", togIfEdit({cla:"detailvaltd",
+                                        id:"detail" + key + "valtd" + cdx},
+                                       cdx, membic, jt.toru(edit, chgfstr)),
                        detobj[key]]]])); } });
             if(edit) {
                 Object.keys(detobj).forEach(function (key) {
@@ -959,7 +998,8 @@ app.membic = (function () {
         //still way better than clicking a pulldown.
         keywordsHTML: function (cdx, membic, edit, skcsv) {
             if(!edit) {
-                return jt.tac2html(["div", {cla:"mdkwsdiv"},
+                return jt.tac2html(["div", togIfEdit({cla:"mdkwsdiv"},
+                                                     cdx, membic),
                                     membic.keywords]); }
             skcsv = skcsv || membic.keywords;
             var html = [];
@@ -1135,15 +1175,18 @@ app.membic = (function () {
             actionButtons: function (cdx, membic) {
                 var edited = membicEdited(cdx, membic);
                 var mkb = formElements.dlgbs.makeActionButton;
+                var ret = [];
                 if(edited) {
-                    return [mkb("Cancel",
-                                jt.fs("app.membic.toggleMembic(" + cdx + ")")),
-                            mkb("Save", dispatchFStr(cdx, "dlgbs.save"))]; }
-                if(membicDetailsUnread(membic)) {
-                    return [mkb("Read Details",
-                                dispatchFStr(cdx, "dlgbs.read"))]; }
-                return [mkb("Done Editing", 
-                            jt.fs("app.membic.toggleMembic(" + cdx + ")"))]; },
+                    ret.push(mkb("Cancel",
+                        jt.fs("app.membic.toggleMembic(" + cdx + ")")));
+                    ret.push(mkb("Save", dispatchFStr(cdx, "dlgbs.save"))); }
+                else {
+                    if(membicDetailsMissing(membic)) {
+                        ret.push(mkb("Refetch",
+                                     dispatchFStr(cdx, "dlgbs.read"))); }
+                    ret.push(mkb("Done Editing",
+                        jt.fs("app.membic.toggleMembic(" + cdx + ")"))); }
+                return jt.tac2html(ret); },
             makeActionButton: function (name, fstr, disabled) {
                 var bas = {type:"button", cla:"membicformbutton", onclick:fstr};
                 if(disabled) {
@@ -1178,9 +1221,8 @@ app.membic = (function () {
         text: {
             closed: function (cdx, membic) {
                 return jt.tac2html(
-                    ["div", {cla:"mdtxtdiv", id:"mdtxtdiv" + cdx,
-                             onclick:jt.toru(mayEdit(membic), jt.fs(
-                                 "app.membic.toggleMembic(" + cdx + ")"))},
+                    ["div", togIfEdit({cla:"mdtxtdiv", id:"mdtxtdiv" + cdx},
+                                      cdx, membic),
                      jt.linkify(membic.text)]); },
             expanded: function (cdx, membic) {
                 if(!mayEdit(membic)) {
@@ -1280,10 +1322,22 @@ app.membic = (function () {
     ////////////////////////////////////////
 return {
 
-    toggleMembic: function (idx, exp) {
-        var membic = app.pcd.getDisplayContext().actobj.itlist[idx];
+    //If this method is called while the membics are being filtered, then it
+    //is possible some or all of the UI element updates may fail.  That's
+    //tolerable as the expandedMembics entry will have been updated and the
+    //display state will reflect that when the membic is rendered.
+    toggleMembic: function (idx, exp, membic) {
+        var mbcs = app.pcd.getDisplayContext().actobj.itlist;
+        membic = membic || mbcs[idx];
+        if(idx < 0) {
+            idx = mbcs.findIndex((mbc) => mbc.dsId === membic.dsId); }
         var expid = membicExpId(membic);
-        expandedMembics[expid] = exp || !expandedMembics[expid];
+        if(exp === "closed") {
+            expandedMembics[expid] = ""; }
+        else if(exp) {
+            expandedMembics[expid] = exp; }
+        else {
+            expandedMembics[expid] = !expandedMembics[expid]; }
         var disp = formElementsVerb(expid);
         Object.keys(formElements).forEach(function (key) {
             jt.out("mf" + key + idx, formElements[key][disp](idx, membic)); });

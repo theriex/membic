@@ -8,6 +8,7 @@
 #pylint: disable=broad-except
 #pylint: disable=invalid-name
 #pylint: disable=too-many-arguments
+#pylint: disable=subprocess-run-check
 import logging
 import flask
 import hmac
@@ -26,6 +27,7 @@ from email.mime.text import MIMEText
 import smtplib
 import ssl
 import os
+import subprocess
 
 
 def respond(contentstr, mimetype="text/html"):
@@ -640,11 +642,18 @@ def urlcontents():
     try:
         authenticate()  # must be signed in to fetch url info
         url = dbacc.reqarg("url", "string", required=True)
-        logging.info("urlcontents " + url)
-        resp = requests.get(url)
-        if resp.status_code != 200:
-            srverr(resp.text, resp.status_code)
-        ench = "{\"content\":\"" + urllib.parse.quote(resp.text) + "\"}"
+        fetchmech = dbacc.reqarg("fetchmech", "string")
+        if fetchmech == "curl":
+            logging.info("urlcontents (curl) " + url)
+            result = subprocess.run(["curl", url], stdout=subprocess.PIPE)
+            resp = result.stdout.decode('utf-8')
+            ench = "{\"content\":\"" + urllib.parse.quote(resp) + "\"}"
+        else:
+            logging.info("urlcontents " + url)
+            resp = requests.get(url)
+            if resp.status_code != 200:
+                srverr(resp.text, resp.status_code)
+                ench = "{\"content\":\"" + urllib.parse.quote(resp.text) + "\"}"
     except ValueError as e:
         logging.info("urlcontents failed: " + str(e))
         return serve_value_error(e)

@@ -298,7 +298,7 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mdkwaddnewdiv input { margin:0px 5px; }
 .mdkwaddnewdiv button { vertical-align:middle; margin:2px; padding:0px 4px 1px;
   background:url('../img/white60percent.png'); font-weight:bold; }
-.mbtkebabimg { padding:0px 5px 0px 6px; max-height:16px; 
+.mbtkebabimg { padding:0px 8px 0px 6px; max-height:16px;
   vertical-align:middle; }
 .revtypeimg { width:30px; height:30px; vertical-align:middle; }
 .masactbimg { max-width:30px; max-height:30px; vertical-align:middle; 
