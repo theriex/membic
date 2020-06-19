@@ -387,15 +387,14 @@ return {
     rotateBackgroundPic: function () {
         var body = jt.byId("bodyid");
         //pic00 is reserved as a placeholder and is not in the rotation
-        var pics = ["SnaefellsnesPenninsula.jpg", 
-                    "BigIslandKona.jpg",
-                    "RedwoodMoss.jpg", 
-                    "BlueHill.jpg",
-                    "QueeensGardenBryce.jpg", 
-                    //"Iceland.jpg",
-                    "GlassHouseLillies.jpg", 
-                    "BryceWood.jpg", 
-                    "NorthShore.jpg"];
+        var pics = ["SnaefellsnesPeninsula.png",  //1075x875 opa 100.0
+                    "BigIslandKona.png",  //1339x1249 opa 65.0
+                    "RedwoodMoss.png",  //1024x965 opa 60.0
+                    "BlueHill.png",  //1024x653 opa 65.0
+                    "QueensGardenBryce.png",  //1024x503 opa 70.0
+                    "GlassHouseLillies.png",  //1024x768 opa 45.0
+                    "BryceWood.png",  //1024x768 opa 70.0
+                    "NorthShore.png"];
         //bgpicidx is 1 based for easier init and to avoid confusion with pic00
         if(!app.bgpicidx) {  //choose starting index based on todays date
             app.bgpicidx = (new Date().getDate() % pics.length) + 1; }
