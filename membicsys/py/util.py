@@ -653,7 +653,7 @@ def urlcontents():
             resp = requests.get(url)
             if resp.status_code != 200:
                 srverr(resp.text, resp.status_code)
-                ench = "{\"content\":\"" + urllib.parse.quote(resp.text) + "\"}"
+            ench = "{\"content\":\"" + urllib.parse.quote(resp.text) + "\"}"
     except ValueError as e:
         logging.info("urlcontents failed: " + str(e))
         return serve_value_error(e)

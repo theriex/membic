@@ -1398,6 +1398,7 @@ return {
                 return; }  //fix why memorable if needed
             addmem.text = jt.byId("whymemin").value;
             addmem.rating = ratmgr.rati.dfltv;
+            addmem.revtype = "article";  //default val for initial save
             jt.out("amprocmsgdiv", "Writing membic...");
             jt.byId("ambuttonsdiv").style.display = "none";
             saveMembic("addMembic addit", addmem, 
