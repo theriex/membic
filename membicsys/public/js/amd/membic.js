@@ -192,7 +192,7 @@ app.membic = (function () {
                     ["a", {href:"#Follow",
                            onclick:jt.fs("app.membic.resperr(" + cdx +
                                          ",'follow',true)")},
-                     "Follow " + actobj.contextobj.name + " to comment"])); }
+                     "To comment, follow " + actobj.contextobj.name])); }
             else {  //clicked to follow
                 jt.out("mcmtdiv" + cdx, "");
                 app.pcd.settings(); }
@@ -742,15 +742,14 @@ app.membic = (function () {
     };
 
 
-    function togIfEdit(attrs, cdx, membic, editablefstr) {
-        if(mayEdit(membic)) {
-            if(editablefstr) {
+    function togIfEdit(attrs, cdx, membic, oninputfstr) {
+        if(expandedMembics[membicExpId(membic)]) {  //currently expanded
+            if(oninputfstr && mayEdit(membic)) {
                 attrs.contenteditable = "true";
-                attrs.oninput = editablefstr; }
-            else {
-                attrs.style = "cursor:crosshair;";
-                attrs.onclick = jt.fs("app.membic.toggleMembic(" +
-                                      cdx + ")"); } }
+                attrs.oninput = oninputfstr; } }
+        else { //currently collapsed
+            attrs.style = "cursor:crosshair;";
+            attrs.onclick = jt.fs("app.membic.toggleMembic(" + cdx + ")"); }
         return attrs;
     }
 
@@ -998,9 +997,13 @@ app.membic = (function () {
         //still way better than clicking a pulldown.
         keywordsHTML: function (cdx, membic, edit, skcsv) {
             if(!edit) {
-                return jt.tac2html(["div", togIfEdit({cla:"mdkwsdiv"},
-                                                     cdx, membic),
-                                    membic.keywords]); }
+                var kwrds = membic.keywords || "";
+                if(kwrds) {
+                    kwrds = [["span", {cla:"postnoteslabel"}, "Keywords: "],
+                             kwrds.replace(/\s/g, "&nbsp;")
+                             .split(",").join(", ")]; }
+                return jt.tac2html(
+                    ["div", togIfEdit({cla:"mdkwsdiv"}, cdx, membic), kwrds]); }
             skcsv = skcsv || membic.keywords;
             var html = [];
             kwmgr.keywordGroups(cdx, membic, skcsv).forEach(function (kg, idx) {

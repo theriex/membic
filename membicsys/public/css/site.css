@@ -274,8 +274,9 @@ dialog look ok, but breaks the Email input in the invite dialog. */
 .mfstars { float:right; }
 .mddlgbsdiv { clear:both; text-align:center; }
 .mddlgbsdiv button { margin:0px 12px 0px 5px; }
-.detailattrtd { font-style:italic; }
+.detailattrtd { font-style:italic; padding-right:2px; }
 .detnewattrin { width:64px; }
+.postnoteslabel { font-size:x-small; font-style:italic; }
 .postnotediv { display:inline-block; margin-left:4px; }
 .postnotediv img { max-width:25px; max-height:25px; vertical-align:middle; }
 .postnotediv button { vertical-align:middle; margin:2px; padding:0px 4px 1px;
