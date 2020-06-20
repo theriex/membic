@@ -267,7 +267,7 @@ def set_dispafter(newmbc, muser):
 
 def cankey_for_membic(newmbc):
     cankey = ""
-    if newmbc["details"]:
+    if newmbc.get("details"):
         dets = json.loads(newmbc["details"])
         if "title" in dets:
             cankey = dets["title"]
