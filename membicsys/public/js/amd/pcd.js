@@ -274,6 +274,8 @@ app.pcd = (function () {
             ctx.actobj.contextobj.keywords.csvarray().forEach(function (key) {
                 key = key.trim();
                 if(key) {
+                    if(/\S+\s\S+/.test(key)) {  //keyword has a space in it
+                        key = "&quot;" + key + "&quot;"; }
                     dlos.push(["option", {value:key}]); } }); }
         if(dlos.length) {
             srchinattrs.list = "srchinoptsdl"; }
@@ -339,6 +341,34 @@ app.pcd = (function () {
     }
 
 
+    //A search can consist of simple strings and/or quoted strings, possibly
+    //preceded by a "+" indicating that the string should be treated as an
+    //additional filter.  Save parsed search strings for quick access when
+    //applying across lots of membics.
+    function getParsedSearch (qstr) {
+        ctx.parsedSearches = ctx.parsedSearches || {};
+        var ps = ctx.parsedSearches[qstr];
+        if(ps) {
+            return ps; }
+        ps = {toks:[], pfts:[]};
+        ps.toks = qstr.toLowerCase().match(/\+?"[^"]*"*|\S+/g);
+        ps.pfts = ps.toks.filter((tok) => tok.indexOf("+") === 0);
+        ps.toks = ps.toks.filter((tok) => tok && tok.indexOf("+") !== 0);
+        var opstrip = function (tok) {
+            if(tok.indexOf("+") === 0) {
+                tok = tok.slice(1); }
+            if(tok.indexOf("\"") === 0) {
+                tok = tok.slice(1, -1); }
+            return tok; };
+        ps.toks = ps.toks.map((tok) => opstrip(tok));
+        ps.pfts = ps.pfts.map((pft) => opstrip(pft));
+        jt.log("new parsedSearch for: " + qstr + " -> toks: " + 
+               JSON.stringify(ps.toks) + ", pfts: " + JSON.stringify(ps.pfts));
+        ctx.parsedSearches[qstr] = ps;
+        return ps;
+    }
+
+
     //Queued membics (membic.dispafter > fist.ts) are not provided from
     //the RSS feed, but they display normally from within the app.
     function membicSearchMatch (membic, fist) {
@@ -358,10 +388,11 @@ app.pcd = (function () {
         if(membic.srcrev === "-604") {
             return false; }  //marked as deleted
         if(fist.qstr) {
-            var toks = fist.qstr.toLowerCase().split(/\s+/);
-            verifySearchFilterText(membic);
-            if(toks.some((token) => membic.srchFiltTxt.indexOf(token) >= 0)) {
-                return true; }  //have at least one text match
+            var ps = getParsedSearch(fist.qstr);
+            verifySearchFilterText(membic);  //sets srchFiltTxt as needed
+            if(ps.toks.some((tok) => membic.srchFiltTxt.indexOf(tok) >= 0) &&
+               ps.pfts.every((pft) => membic.srchFiltTxt.indexOf(pft) >= 0)) {
+                return true; }
             return false; }
         return true;  //if not any other condition, assume it's a match
     }
