@@ -213,6 +213,8 @@ def tagrepl(matchobj):
     return ""
 
 def verify_simple_html(val):
+    val = re.sub(r"&lt;", "<", val)
+    val = re.sub(r"&gt;", ">", val)
     return re.sub(r"<(/?)([^>]*)>", tagrepl, val)
 
 
@@ -324,7 +326,8 @@ def read_membic_data(muser):
                 newmbc[fld] = oldmbc[fld]
     else: # new membic instance
         set_dispafter(newmbc, muser)
-    read_values(newmbc, {"inflds": paramfields})
+    read_values(newmbc, {"inflds": paramfields,
+                         "special": {"text": "simplehtml"}})
     # showflds = ["dsType", "dsId", "ctmid", "penid", "srcrev"]
     # logging.debug("read_membic_data showflds newmbc:")
     # for fld in showflds:
