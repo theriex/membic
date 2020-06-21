@@ -13,18 +13,20 @@ app.pcd = (function () {
     var obacc = {MUser: {disptype:"profile", picfield:"profpic"},
                  Theme: {disptype:"theme", picfield:"picture"}};
     var dst = {type:"", id:"", tab:"", obj:null,
-               MUser: {desclabel: "About Me",
-                       descplace: "A message for visitors. Link to your site, or favorite quote?",
-                       descfield: "aboutme",
-                       piclabel: "Profile Pic",
-                       picfield: "profpic",
-                       dlparam: "u"},
-               Theme: {desclabel: "Description",
-                       descplace: "What is this theme focused on? What's appropriate to post?",
-                       descfield: "description", 
-                       piclabel: "Theme Pic",
-                       picfield: "picture",
-                       dlparam: "t"} };
+               profile: {
+                   name:{eid:"pcdnamespan", dfld:"name", srcfld:"name",
+                         plo:"Your Name Here", plp:"No Name Provided"},
+                   dscr:{eid:"pcddescrspan", dfld:"descr", srcfld:"aboutme",
+                         plo:"What kinds of links do you post?", plp:""}},
+               theme: {
+                   name:{eid:"pcdnamespan", dfld:"name", srcfld:"name",
+                         plo:"Theme Name Here", plp:"No Name Provided"},
+                   dscr:{eid:"pcddescrspan", dfld:"descr", srcfld:"description",
+                         plo:"What do you post to this theme?",
+                         plp:"No description given"}},
+               other: {
+                   name:{eid:"pcdnamespan", dfld:"name"},
+                   dscr:{eid:"pcddescrspan", dfld:"descr"}}};
     var standardOverrideColors = [
         //lower case for all colors defined here
         {name:"link", value:"#84521a", sel: "A:link,A:visited,A:active", 
@@ -422,6 +424,7 @@ app.pcd = (function () {
         var fullurl = app.docroot + app.pcd.linkForThemeOrProfile(obj).slice(1);
         app.pcd.setPageDescription({picsrc:picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
+                                    contextobj:obj,
                                     name:obj.name,
                                     descr:obj.description || obj.aboutme || "",
                                     exturl:fullurl,
@@ -683,25 +686,6 @@ app.pcd = (function () {
     }
 
 
-    function verifyDescripSave () {
-        var changed = false;
-        Object.keys(ctx.descobj.owneredit).forEach(function (key) {
-            var de = ctx.descobj.owneredit[key];
-            var dval = ctx.descobj[de.dfld];
-            var ival = jt.byId(de.eid).innerHTML;
-            if(dval !== ival) {
-                changed = true; } });
-        var savdiv = jt.byId("pcduppersavediv");
-        if(!changed && savdiv.innerHTML) {
-            savdiv.innerHTML = ""; }
-        else if(changed && !savdiv.innerHTML) {
-            savdiv.innerHTML = jt.tac2html(
-                ["button", {type:"button", id:"descrupdbutton",
-                            onclick:jt.fs("app.pcd.saveDescripChanges()")},
-                 "Save changes"]); }
-    }
-
-
     //After a pic has been uploaded, the local profile/theme information is
     //up to date except for the modified time.  Just set directly.
     function notePicUploadMod (mod) {
@@ -787,6 +771,82 @@ app.pcd = (function () {
     }
 
 
+    //Owner editable field manager.  Field values are within "span" tags
+    //because "div" tags may insert unwanted line breaks.
+    var oedmgr = {
+        dfstr: function (fname, argstr) {
+            return jt.fs("app.pcd.managerDispatch('oedmgr', '" + fname + "'," +
+                         (argstr || "") + ")"); },
+        dispdefs: function () {
+            return dst[ctx.descobj.disptype] || dst.other; },
+        fieldstate: function () {
+            var fs = "normal";
+            var prof = app.login.myProfile();
+            if(ctx.descobj.contextobj && prof) {  //potentially editable
+                var obj = ctx.descobj.contextobj;
+                if(obj.dsType === "MUser" && obj.dsId === prof.dsId) {
+                    fs = "editable"; }
+                else if(app.theme.association(obj) === "Founder") {
+                    fs = "editable"; }
+                if(fs === "editable" && ctx.descobj.editing) {
+                    fs = "editing"; } }
+            return fs; },
+        htmlattrs: function (fieldname, attrs) {
+            attrs.id = oedmgr.dispdefs()[fieldname].eid;
+            if(oedmgr.fieldstate() === "editable") {
+                attrs.style = attrs.style || "";
+                attrs.style += "cursor:crosshair;";
+                attrs.onclick = oedmgr.dfstr("startedit",
+                                             "'" + fieldname + "'"); }
+            return attrs; },
+        htmlvalue: function (fieldname, evtype) {
+            var fs = oedmgr.fieldstate();
+            var defs = oedmgr.dispdefs();
+            var html = ctx.descobj[defs[fieldname].dfld] || "";
+            if(!html && (fs !== "editing" || evtype === "blur")) {
+                if(fs !== "normal") {  //use placeholder text for owner
+                    html = defs[fieldname].plo; }
+                else {  //use public placeholder text
+                    html = defs[fieldname].plp; } }
+            if(fs !== "editing" && fieldname === "dscr") {
+                html = jt.linkify(html); }
+            return html; },
+        startedit: function (fieldname) {
+            ctx.descobj.editing = "enabled";  //note content made editable
+            app.pcd.settings("show");  //expose Update button to save changes
+            var focid = "";
+            Object.entries(oedmgr.dispdefs()).forEach(function ([field, defs]) {
+                var span = jt.byId(defs.eid);
+                span.onclick = null;
+                span.contentEditable = true;
+                jt.on(span, "focus", oedmgr.focuschange);
+                jt.on(span, "blur", oedmgr.focuschange);
+                span.style.cursor = "text";
+                if(field === fieldname) {
+                    focid = defs.eid; } });
+            if(focid) {
+                jt.byId(focid).focus(); } },
+        focuschange: function (event) {
+            //track any input changes so they don't get reset
+            Object.entries(oedmgr.dispdefs())
+                .forEach(function ([ignore, defs]) {
+                    if(defs.eid === event.target.id) {
+                        ctx.descobj[defs.dfld] = event.target.innerHTML;
+                        if(ctx.descobj[defs.dfld] === defs.plo ||
+                           ctx.descobj[defs.dfld] === defs.plp) {
+                            ctx.descobj[defs.dfld] = ""; } } });
+            if(oedmgr.dispdefs().name.eid === event.target.id) {
+                event.target.innerHTML = oedmgr.htmlvalue("name", event.type); }
+            else {
+                event.target.innerHTML = oedmgr.htmlvalue("dscr", event.type); }
+        },
+        readValues: function (pto) {
+            Object.entries(oedmgr.dispdefs())
+                .forEach(function ([ignore, defs]) {
+                    pto[defs.srcfld] = jt.byId(defs.eid).innerHTML; }); }
+    };
+
+
     function ownerEditableFieldsInfo () {
         var oef = {name:{eid:"pcdnamespan", dfld:"name"},
                    descr:{eid:"pcddescrspan", dfld:"descr"}};
@@ -807,41 +867,12 @@ app.pcd = (function () {
     }
 
 
-    function editableFieldValue (descobj, field) {
-        var de = descobj.owneredit[field];
-        var val = descobj[field];
-        if(val === "" || val === de.savdfltval) {
-            val = de.place; }
-        return val;
-    }
-
-
-    function makePlaceholderCheckFunction (de) {
-        var pcf = function (event) {
-            var elem = jt.byId(de.eid);
-            if(event.type === "blur" && !elem.innerHTML) {
-                elem.innerHTML = de.place; }
-            if(event.type === "focus" && elem.innerHTML === de.place) {
-                elem.innerHTML = ""; } };
-        return pcf;
-    }
-
-
-    function ownerEnableEdit () {
+    function ownerEnablePicUpload () {
         var obj = ctx.actobj.contextobj;
         if(obj && ((app.samePO(obj, app.login.myProfile())) ||
                    (app.theme.association(obj) === "Founder"))) {
             jt.on("pcdpicdiv", "click", togglePicUpload);
-            jt.byId("pcdpicdiv").style.cursor = "pointer";
-            Object.keys(ctx.descobj.owneredit).forEach(function (key) {
-                var de = ctx.descobj.owneredit[key];
-                var elem = jt.byId(de.eid);
-                elem.contentEditable = true;
-                elem.style.cursor = "pointer";
-                var pcf = makePlaceholderCheckFunction(de);
-                jt.on(elem, "focus", pcf);
-                jt.on(elem, "blur", pcf);
-                jt.on(elem, "input", verifyDescripSave); }); }
+            jt.byId("pcdpicdiv").style.cursor = "pointer"; }
     }
 
 
@@ -864,6 +895,7 @@ return {
 
 
     readCommonSettingsFields: function (obj, src) {
+        oedmgr.readValues(obj);
         obj.hashtag = jt.byId("hashin").value.trim() || "UNSET_VALUE";
         obj.cliset = src.cliset;  //unsaved changes in cached obj are ok
         standardOverrideColors.forEach(function (od) {
@@ -1021,12 +1053,12 @@ return {
                 ["img", {id:"pcdpicimg", src:descobj.picsrc}]],
                ["div", {id:"pcddescrdiv"},
                 [["div", {id:"pcdnamediv"},
-                  ["span", {id:"pcdnamespan", cla:"penfont"},
-                   editableFieldValue(descobj, "name")]],
+                  ["span", oedmgr.htmlattrs("name", {cla:"penfont"}),
+                   oedmgr.htmlvalue("name", descobj)]],
                  ["div", {id:"pcddescrdiv"},
-                  ["span", {cla:"descrspan", id:"pcddescrspan",
-                            style:"font-size:" + fsz + ";"},
-                   jt.linkify(editableFieldValue(descobj, "descr"))]]]]]],
+                  ["span", oedmgr.htmlattrs("dscr", {cla:"descrspan",
+                                            style:"font-size:" + fsz + ";"}),
+                   oedmgr.htmlvalue("dscr", descobj)]]]]]],
              ["div", {id:"pcduppersavediv"}],
              ["div", {id:"pcdpicuploaddiv"}]]));
     },
@@ -1054,7 +1086,7 @@ return {
         writeActionsArea();
         app.pcd.updateSearchLabelText();
         processExtraObject(actobj.extraobj);
-        ownerEnableEdit();
+        ownerEnablePicUpload();
         app.pcd.filterContent("init");
     },
 
@@ -1064,7 +1096,13 @@ return {
     picImgSrc: function (profOrThemeObj) { return picImgSrc(profOrThemeObj); },
     monitorImageUpload: function (cmd) { monitorImageUpload(cmd); },
     togglePicUpload: function () { togglePicUpload(); },
-    mailinHelp: function () { mailinHelp(); }
+    mailinHelp: function () { mailinHelp(); },
+
+    managerDispatch: function (mgrname, fname, ...args) {
+        switch(mgrname) {
+        case "oedmgr": return oedmgr[fname].apply(app.mymodule, args);
+        default: jt.log("pcd.managerDispatch no manager: " + mgrname); }
+    }
 
 };  //end of returned functions
 }());
