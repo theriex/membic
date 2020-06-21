@@ -146,10 +146,9 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
 
 /* >> intro layout */
-/* padding:4px 2px 0px 2px; makes the "Keywords" entry in the membic
-dialog look ok, but breaks the Email input in the invite dialog. */
 .liflab { font-size:small; font-weight:normal; text-align:right; 
-  padding:0px 2px 0px 2px; display:block; float:left; width:80px; }
+  /* 4px right pad enough for Create Theme */
+  padding:0px 4px 0px 2px; display:block; float:left; width:80px; }
 .overlab { font-size:small; padding:10px 0px 0px 2px; }
 .lifin { padding:0px; font-size:small; width:160px; }
 .lifbuttonsdiv { text-align:center; }

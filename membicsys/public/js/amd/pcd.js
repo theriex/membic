@@ -303,7 +303,7 @@ app.pcd = (function () {
 
     //The extraobj is used to drive additional actions passed along from
     //app.init2 or login.verifyUserInfo.  It is up to the handler func
-    //to verify the user is authenticated that is required.
+    //to verify the user is authenticated if that is required.
     function processExtraObject (extraobj) {
         if(extraobj) { switch(extraobj.go) {
             case "follow": return app.fork(
@@ -319,6 +319,8 @@ app.pcd = (function () {
                     if(!app.login.authenticated()) { return; }
                     app.pcd.togshare();  //open sharing area
                     app.theme.audience(app.startParams.uid); }});
+            case "settings": return app.fork(
+                {descr:"pxob settings", ms:100, func:app.pcd.settings});
             default: if(extraobj.go) {
                 jt.log("pcd.processExtraObject ignored " +
                        JSON.stringify(extraobj)); } } }
@@ -420,10 +422,10 @@ app.pcd = (function () {
         var fullurl = app.docroot + app.pcd.linkForThemeOrProfile(obj).slice(1);
         app.pcd.setPageDescription({picsrc:picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
-                                    exturl:fullurl,
-                                    rssurl:rssURLForObj(obj),
                                     name:obj.name,
-                                    descr:obj.description || obj.aboutme});
+                                    descr:obj.description || obj.aboutme || "",
+                                    exturl:fullurl,
+                                    rssurl:rssURLForObj(obj)});
         app.pcd.setPageActions({itlist:obj.preb,
                                 itmatchf:membicSearchMatch,
                                 itdispf:membicDisplayHTML,
@@ -652,8 +654,7 @@ app.pcd = (function () {
         jt.out(divid, jt.tac2html(
             [["div", {id:"settingsmenudiv"},
               [["button", {id:"cntb", title:"Create New Theme",
-                           onclick:jt.fs("app.theme.createTheme('" + divid +
-                                         "')")},
+                           onclick:jt.fs("app.theme.create('" + divid + "')")},
                 "Create&nbsp;Theme"],
                ["button", {title:"Sign Out And Clear Saved Data",
                            onclick:jt.fs("app.login.logout()")},

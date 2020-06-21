@@ -557,8 +557,8 @@ def themeupd():
             if theme_association(theme, muser["dsId"]) != "Founder":
                 raise ValueError("Not Founder of " + theme["name"])
         else:  # making a new instance
-            theme = {"dbType":"Theme", "hashtag":"", "name":"", "name_c":"",
-                     "modified":""}
+            theme = {"dsType":"Theme", "hashtag":"", "name":"", "name_c":"",
+                     "founders":str(muser["dsId"]), "modified":""}
         prevhash = theme["hashtag"]
         prevnamec = theme["name_c"]
         read_values(theme, {"inflds": ["name", "hashtag", "description",

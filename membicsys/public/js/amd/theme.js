@@ -449,6 +449,40 @@ return {
     },
 
 
+    create: function (divid, cmd) {
+        if(!cmd) {
+            jt.out(divid, jt.tac2html(
+                [["div", {cla:"cbdiv"},
+                  [["label", {fo:"tnamein", cla:"liflab"}, "Theme&nbsp;Name"],
+                   ["input", {type:"text", cla:"lifin", id:"tnamein",
+                              placeholder:"New Unique Theme Name"}]]],
+                 ["div", {cla:"cbdiv"},
+                  ["div", {cla:"infolinediv", id:"settingsinfdiv"}]],
+                 ["div", {id:"settingsbuttonsdiv"},
+                  [["button", {type:"button", id:"cancelbutton",
+                               onclick:jt.fs("app.pcd.settings('show')")},
+                    "Cancel"],
+                   ["button", {type:"button", id:"createbutton",
+                               onclick:jt.fs("app.theme.create('" + divid +
+                                             "','add')")},
+                    "Create"]]]])); }
+        else if(cmd === "add") {
+            jt.out("settingsinfdiv", "");
+            var bhtml = jt.byId("settingsbuttonsdiv").innerHTML;
+            jt.out("settingsbuttonsdiv", "Creating...");
+            var theme = {dsType:"Theme", name:jt.byId("tnamein").value,
+                         founders:app.login.myProfile.dsId};
+            app.theme.update(theme,
+                function (theme) {
+                    app.statemgr.setState("Theme", theme.dsId,
+                                          {go:"settings"}); },
+                function (code, errtxt) {
+                    jt.log("theme.create update error " + code + ": " + errtxt);
+                    jt.out("settingsbuttonsdiv", bhtml);
+                    jt.out("settingsinfdiv", errtxt); }); }
+    },
+
+
     settingsUpdate: function () {
         var theme = app.pcd.getActobjContext();
         var tu = {dsType:"Theme", dsId:theme.dsId};
