@@ -685,7 +685,7 @@ app.membic = (function () {
             return pn; },
         redrawUpdatedThemes: function (cdx, pns) {
             jt.out("postnotescontdiv" + cdx,
-                   tpmgr.themePostsHTML(cdx, true, pns, true));
+                   tpmgr.themePostsHTML(cdx, true, pns));
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             kwmgr.redrawKeywords(cdx, membic,
                                  kwmgr.selectedKeywords(cdx, membic)); },
@@ -712,9 +712,11 @@ app.membic = (function () {
                 tpmgr.redrawUpdatedThemes(cdx, pns);
                 break; }
             app.membic.formInput(cdx); },  //note any changes
-        themePostsHTML: function (cdx, editable, pns, activated) {
-            var labtxt = "Posted to: ";
-            if(activated || !pns.length) {
+        themePostsHTML: function (cdx, editable, pns) {
+            if(!editable && !pns.length) {
+                return ""; }
+            var labtxt = "Themes: ";
+            if(editable) {
                 labtxt = "Post to: "; }
             var links = [];
             var tidcsv = "";
@@ -729,15 +731,15 @@ app.membic = (function () {
                 [["span", {cla:"postnoteslabel", id:"postnoteslabel" + cdx,
                            "data-tidcsv":tidcsv}, labtxt],
                  links.join(" | ")]); },
-        membicThemePostsHTML: function (cdx, membic) {
+        membicThemePostsHTML: function (cdx, membic, readonly) {
             membic.svcdata = membic.svcdata || {};
             membic.svcdata.postctms = membic.svcdata.postctms || [];
             if(!mayEdit(membic) && !membic.svcdata.postctms.length) {
                 return ""; }
             return jt.tac2html(
                 ["div", {cla:"postnotescontdiv", id:"postnotescontdiv" + cdx},
-                 tpmgr.themePostsHTML(cdx, mayEdit(membic), 
-                                      membic.svcdata.postctms, false)]); },
+                 tpmgr.themePostsHTML(cdx, (!readonly && mayEdit(membic)),
+                                      membic.svcdata.postctms)]); },
         selectedPostThemes: function (cdx, membic) {
             var pne = jt.byId("postnoteslabel" + cdx);
             if(!pne) {  //checking for changes before post note element display
@@ -1269,7 +1271,10 @@ app.membic = (function () {
                 Object.keys(chgval).forEach(function (key) {
                     updobj.details[key] = chgval[key]; }); } },
         themes: {
-            closed: function () { return ""; },
+            closed: function (cdx, membic) {
+                return jt.tac2html(
+                    ["div", {cla:"mdptsdiv", id:"mdptsdiv" + cdx},
+                     tpmgr.membicThemePostsHTML(cdx, membic, true)]); },
             expanded: function (cdx, membic) {
                 return jt.tac2html(
                     ["div", {cla:"mdptsdiv", id:"mdptsdiv" + cdx},
