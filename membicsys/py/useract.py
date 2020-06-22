@@ -323,6 +323,19 @@ def cankey_for_membic(newmbc):
     return cankey
 
 
+def verify_membic_title_simplehtml(newmbc):
+    if not newmbc.get("details"):  # just in case somehow not available yet
+        return
+    dets = json.loads(newmbc["details"])
+    for fld in ["title", "name"]:
+        val = dets.get(fld)
+        if val:
+            val = verify_simple_html(val)
+            val = re.sub(r"\n", " ", val)
+            dets[fld] = val
+    newmbc["details"] = json.dumps(dets)
+
+
 def read_membic_data(muser):
     penname = muser["name"] or ("user" + muser["dsId"])
     emptyid = ""  # A dbid is 0 in the db, and "" in the app.
@@ -343,6 +356,7 @@ def read_membic_data(muser):
         set_dispafter(newmbc, muser)
     read_values(newmbc, {"inflds": paramfields,
                          "special": {"text": "simplehtml"}})
+    verify_membic_title_simplehtml(newmbc)
     # showflds = ["dsType", "dsId", "ctmid", "penid", "srcrev"]
     # logging.debug("read_membic_data showflds newmbc:")
     # for fld in showflds:

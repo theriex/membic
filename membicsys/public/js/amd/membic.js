@@ -1103,10 +1103,11 @@ app.membic = (function () {
             expanded: function (cdx, membic) {
                 if(!mayEdit(membic)) {
                     return formElements.title.closed(cdx, membic); }
+                var placetext = "Title for Membic";
                 return jt.tac2html(
                     ["span", editableWithPlaceholder(cdx, "mftitlespan",
-                                                     "Title for Membic"),
-                     titleForMembic(membic)]); },
+                                                     placetext),
+                     (exposeTags(titleForMembic(membic)) || placetext)]); },
             changed: function (cdx, membic) {
                 var mt = titleForMembic(membic);
                 var st = mt;  //unchanged if title not displayed yet
