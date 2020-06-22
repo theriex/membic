@@ -248,6 +248,7 @@ app.membic = (function () {
     function editableWithPlaceholder (cdx, idbase, placetxt) {
         return {cla:idbase, id:idbase + cdx, contenteditable:"true",
                 "data-placetext":placetxt,
+                //need to check for input so form can react to change text
                 oninput:jt.fs("app.membic.formInput(" + cdx + ")"),
                 onfocus:jt.fs("app.membic.placeholdercheck(event)"),
                 onblur:jt.fs("app.membic.placeholdercheck(event)")};
@@ -583,6 +584,17 @@ app.membic = (function () {
                 jt.out("dlgbsmsgdiv" + cdx, "Delete failed " + code + ": " +
                        txt);
                 jt.out("dlgbsbdiv" + cdx, bhtml); });
+    }
+
+
+    function exposeTags (text) {
+        //expose all html tags
+        text = text.replace(/<(\/?)([^>]*)>/g, function (ignore, p1, p2) {
+            p1 = p1 || "";
+            return "&lt;" + p1 + p2 + "&gt;"; });
+        //replace newlines with <br/> so they don't disappear
+        text = text.replace(/\n/g, "<br/>");
+        return text;
     }
 
 
@@ -1234,7 +1246,7 @@ app.membic = (function () {
                 return jt.tac2html(
                     ["div", editableWithPlaceholder(cdx, "mdtxtdiv",
                                                     placetext),
-                     (membic.text || placetext)]); },
+                     (exposeTags(membic.text) || placetext)]); },
             changed: function (cdx, membic) {
                 var mt = membic.text.trim();
                 var dt = jt.byId("mdtxtdiv" + cdx).innerHTML.trim();

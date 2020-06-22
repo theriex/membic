@@ -200,10 +200,24 @@ def update_association(muser, ao, prof, ras):
     return objs
 
 
+def prep_simple_html(val):
+    # On click to edit, the client will unpack existing html tags into their
+    # html escapes.  Reconvert so the parsing can work off real tags.
+    val = re.sub(r"&lt;", "<", val)
+    val = re.sub(r"&gt;", ">", val)
+    # Remove any <br> followed by an ending div tag to avoid double line breaks
+    val = re.sub(r"\<br/?\>\s*\</div\>", "</div>", val)
+    # Convert any remaining <br> into \n
+    val = re.sub(r"\<br/?\>", "\n", val)
+    # Firefox 77.0 will separate multi-line input into divs.  Convert to \n
+    val = re.sub(r"\<div\>(.*?)\</div\>", r"\1\n", val).strip()
+    # Allow a maximum of two newlines in a row (paragraph sep)
+    val = re.sub(r"\n\n\n+", "\n\n", val)
+    return val
+
+
 # Simple in this case means bold and italic tags only.  That allows some
 # minor visual interest.  Can expand later if really necessary.
-# test = "Try <i>this</i> as <br/><em>one</em>\n<b>test</b> case."
-# re.sub(r"<(/?)([^>]*)>", r"<\1\2>", test)
 def tagrepl(matchobj):
     tag = "<" + matchobj.group(1) + matchobj.group(2) + ">"
     if matchobj.group(2) == "i":
@@ -212,9 +226,9 @@ def tagrepl(matchobj):
         return tag
     return ""
 
+
 def verify_simple_html(val):
-    val = re.sub(r"&lt;", "<", val)
-    val = re.sub(r"&gt;", ">", val)
+    val = prep_simple_html(val)
     return re.sub(r"<(/?)([^>]*)>", tagrepl, val)
 
 
@@ -228,6 +242,7 @@ def read_values(obj, fldspec):
         if "special" in fldspec:
             if fld in fldspec["special"]:
                 if fldspec["special"][fld] == "simplehtml":
+                    logging.info("before verify_simple_html: " + val)
                     val = verify_simple_html(val)
         # logging.debug("   read_values " + fld + ": " + str(val))
         if val and str(val).lower() == "unset_value":
@@ -236,7 +251,7 @@ def read_values(obj, fldspec):
         elif val:  # Unchanged unless value given
             updlo[fld] = val
             obj[fld] = val
-    logging.debug("read_values: " + json.dumps(updlo))
+    logging.info("read_values: " + json.dumps(updlo))
 
 
 def verify_theme_name(prevnamec, theme):

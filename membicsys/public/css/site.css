@@ -79,7 +79,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
   width:36px; font-size:12px; vertical-align:middle; text-align:right; }
 #newmembicform input { width:218px; }
 #ambuttonsdiv { text-align:right; font-size:small; }
-#ambuttonsdiv button { margin-left:16px; }
+#ambuttonsdiv button { margin:2px 0px 0px 16px; }
 #newmembicurldiv { font-size:small; text-align:left; padding-left:39px; }
 #amprocmsgdiv { font-size:small; }
 
