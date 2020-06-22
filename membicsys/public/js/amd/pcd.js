@@ -438,6 +438,25 @@ app.pcd = (function () {
     }
 
     
+    //For a profile, display the themes they've posted to so people can
+    //easily jump from the person to a theme they are interested in
+    //following.  Makes the profile more interesting, especially for those
+    //who have not posted any text about themselves.  For a theme, it is
+    //better if people expand the membics they are interested in and
+    //discover the person from there.  Contribution over membership.
+    function updateAssocLinksDisplay (item) {
+        if(ctx.descobj.disptype === "profile" && item.svcdata &&
+           item.svcdata.postctms) {
+            item.svcdata.postctms.forEach(function (pn) {
+                if(!ctx.descobj.assoclinks[pn.ctmid]) {
+                    ctx.descobj.assoclinks[pn.ctmid] = pn;
+                    var aldiv = jt.byId("pcdassoclinksdiv");
+                    if(aldiv.innerText) {
+                        aldiv.innerHTML += " | "; }
+                    aldiv.innerHTML += app.membic.pnhtml(0, 0, pn); } }); }
+    }
+
+
     function forkResumeFilterContent () {
         var ts = ctx.fist.ts;
         ctx.fist.toid = app.fork(
@@ -475,6 +494,7 @@ app.pcd = (function () {
                 elem.id = "pcditemdiv" + (ctx.fist.idx - 1);
                 odiv.appendChild(elem);  //make available first, then fill
                 elem.innerHTML = ctx.actobj.itdispf(item, ctx.fist);
+                updateAssocLinksDisplay(item);
                 if(ctx.fist.idx < ctx.actobj.itlist.length) {  //more to display
                     forkResumeFilterContent();
                     break; } } } //resume rendering after yielding to UI
@@ -959,6 +979,7 @@ return {
                 clearTimeout(ctx.fist.toid); }
             jt.out("pcdcontdiv", "");  //refresh display content from scratch
             if(mode === "init") {  //refresh display from scratch
+                ctx.descobj.assoclinks = {};
                 ctx.fist = {idx:0, ts:new Date().toISOString(), pgs:1,
                             pz:41, //off by one helps avoid pg/overflow sync
                             qstr:"", dc:0, actobj:ctx.actobj,
@@ -1056,9 +1077,10 @@ return {
                   ["span", oedmgr.htmlattrs("name", {cla:"penfont"}),
                    oedmgr.htmlvalue("name", descobj)]],
                  ["div", {id:"pcddescrdiv"},
-                  ["span", oedmgr.htmlattrs("dscr", {cla:"descrspan",
-                                            style:"font-size:" + fsz + ";"}),
-                   oedmgr.htmlvalue("dscr", descobj)]]]]]],
+                  [["span", oedmgr.htmlattrs("dscr", {cla:"descrspan",
+                                             style:"font-size:" + fsz + ";"}),
+                    oedmgr.htmlvalue("dscr", descobj)],
+                   ["div", {id:"pcdassoclinksdiv"}]]]]]]],  //filled on display
              ["div", {id:"pcduppersavediv"}],
              ["div", {id:"pcdpicuploaddiv"}]]));
     },

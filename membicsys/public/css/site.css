@@ -172,6 +172,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 #picuploadformbuttonsdiv { text-align:center; padding:5px 0px 20px 0px; }
 #picuploadstatusdiv { font-size:medium; }
 #pcddescrdiv { height:110px; overflow:auto; }
+#pcdassoclinksdiv { font-size:small; }
 #pcdouterdiv { position:relative; }
 #pcduppercontentdiv { }
 #pcdnamediv { padding-top:5px; }

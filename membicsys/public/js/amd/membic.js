@@ -1533,7 +1533,8 @@ return {
     ratingEventDispatch: function (event) { ratmgr.handleEvent(event); },
     typesel: function (c, t, e) { typemgr.typesel(c, t, e); },
     themepost: function (c, m, i) { tpmgr.themepost(c, m, i); },
-    resperr: function (cdx, errt, ack) { resperr(cdx, errt, ack); }
+    resperr: function (cdx, errt, ack) { resperr(cdx, errt, ack); },
+    pnhtml: function (c, e, p) { return tpmgr.postNoteHTML(c, e, p); }
 
 }; //end of returned functions
 }());
