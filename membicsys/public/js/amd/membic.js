@@ -114,14 +114,16 @@ app.membic = (function () {
 
 
     function linkForMembic (membic) {
-        if(membic.url) {   //have normalized url from reader
-            return membic.url; }
-        if(membic.rurl) {  //have interim url, waiting for reader
-            return htmlSafeURL(membic.rurl); }
-        //ok to have a membic with no url if details specfied.  If no
-        //details, that will be evident from the title, so no need to log
-        //that situation here.
-        return "";   //no url
+        //ok to have a membic with no url provided details specfied.  If no
+        //details, that will be evident from the title, so no need to log.
+        var url = "";
+        if(!url && membic.url) {  //have normalized url from reader
+            url = membic.url; }
+        if(!url && membic.rurl) {  //have interim url, waiting for reader
+            url = htmlSafeURL(membic.rurl); }
+        if(url && !url.toLowerCase().startsWith("http")) {
+            url = "http://" + url; }
+        return url;
     }
 
 
