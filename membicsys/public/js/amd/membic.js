@@ -247,6 +247,21 @@ app.membic = (function () {
     }
 
 
+    //Lines starting with an all caps tag (e.g. "SECTION: ") are collapsed
+    //individually.  For display, newlines are converted to "<br>" tags, but
+    //the text passed in to here has \n delimiters.
+    function collapseText (text) {
+        var lines = text.split("\n");
+        lines = lines.map(function (line) {
+            if(line.match(/[A-Z0-9\s]{3,}:\s/)) {
+                return jt.ellipsis(line, 450); }
+            return line; });
+        text = lines.join("\n");
+        text = jt.ellipsis(text, 1400);
+        return text;
+    }
+
+
     function editableWithPlaceholder (cdx, idbase, placetxt) {
         return {cla:idbase, id:idbase + cdx, contenteditable:"true",
                 "data-placetext":placetxt,
@@ -1243,7 +1258,7 @@ app.membic = (function () {
                 return jt.tac2html(
                     ["div", togIfEdit({cla:"mdtxtdiv", id:"mdtxtdiv" + cdx},
                                       cdx, membic),
-                     jt.linkify(membic.text)]); },
+                     jt.linkify(collapseText(membic.text))]); },
             expanded: function (cdx, membic) {
                 if(!mayEdit(membic)) {
                     return formElements.text.closed(cdx, membic); }
