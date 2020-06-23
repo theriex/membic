@@ -250,7 +250,9 @@ app.membic = (function () {
     //Lines starting with an all caps tag (e.g. "SECTION: ") are collapsed
     //individually.  For display, newlines are converted to "<br>" tags, but
     //the text passed in to here has \n delimiters.
-    function collapseText (text) {
+    function collapseText (text, expanded) {
+        if(expanded) {
+            return text; }
         var lines = text.split("\n");
         lines = lines.map(function (line) {
             if(line.match(/[A-Z0-9\s]{3,}:\s/)) {
@@ -1254,14 +1256,14 @@ app.membic = (function () {
             changed: function () { return false; },
             write: function () { return; } },
         text: {
-            closed: function (cdx, membic) {
+            closed: function (cdx, membic, expanded) {
                 return jt.tac2html(
                     ["div", togIfEdit({cla:"mdtxtdiv", id:"mdtxtdiv" + cdx},
                                       cdx, membic),
-                     jt.linkify(collapseText(membic.text))]); },
+                     jt.linkify(collapseText(membic.text, expanded))]); },
             expanded: function (cdx, membic) {
                 if(!mayEdit(membic)) {
-                    return formElements.text.closed(cdx, membic); }
+                    return formElements.text.closed(cdx, membic, true); }
                 var placetext = "Why was this memorable?";
                 return jt.tac2html(
                     ["div", editableWithPlaceholder(cdx, "mdtxtdiv",
