@@ -28,7 +28,7 @@ app.statemgr = (function () {
             nl = ["a", {href:"#connect", title:"Connect",
                         onclick:jt.fs("app.statemgr.setState('activetps','" +
                                       "411')")},
-                  ["img", {src:app.dr("img/navconnect.png")}]]; }
+                  ["img", {src:app.dr("img/membiclogo.png")}]]; }
         tndiv.innerHTML = jt.tac2html(["div", {cla:"navicodiv"}, nl]);
     }
 
