@@ -498,6 +498,34 @@ app.membic = (function () {
     }
 
 
+    //Some functionality overlap with useract.py prep_simple_html but for
+    //different purposes.  Here we are converting back to text in order to
+    //handle common pasting issues.
+    function fixCommonTextAnnoyances (txt) {
+        //Firefox 77.0 separates multi-line input into divs with no attrs
+        //<br></div> -> </div> to avoid creating double line breaks
+        txt = txt.replace(/<br\/?>\s*<\/div>/g, "</div>");
+        //<div>whatever</div> -> whatever\n
+        txt = txt.replace(/<\/div>(.*?)<\/div>/g, "$1\n");
+        //# Convert any remaining <br> into \n
+        txt = txt.replace(/<br\/?>/g, "\n");
+        //txt should now be normalized with all newlines as \n
+        var wc = {ft:"", collapsing:false, lines:txt.split("\n")};
+        wc.lines.forEach(function (line, idx) {
+            if(!wc.collapsing && line && (idx + 2 < wc.lines.length) &&
+               wc.lines[idx + 1] && wc.lines[idx + 2]) {
+                wc.collapsing = true; }  //2+ lines with hard breaks
+            if(!line || (line && (idx + 1 < wc.lines.length) &&
+                         !wc.lines[idx + 1])) {
+                wc.collapsing = false; } //paragraph resets collapse
+            if(wc.collapsing) {
+                wc.ft += line + " "; }
+            else {
+                wc.ft += line + "\n"; } });
+        return wc.ft;
+    }
+
+
     //If anything has been edited, return true.
     function membicEdited (cdx, membic) {
         var changed = [];
@@ -1274,6 +1302,7 @@ app.membic = (function () {
                 var dt = jt.byId("mdtxtdiv" + cdx).innerHTML.trim();
                 return jt.toru(mt !== dt, dt); },
             write: function (chgval, updobj) {
+                chgval = fixCommonTextAnnoyances(chgval);
                 updobj.text = chgval; } },
         details: {
             closed: function (cdx, membic) {
