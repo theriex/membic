@@ -1306,7 +1306,7 @@ app.membic = (function () {
                 updobj.text = chgval; } },
         details: {
             closed: function (cdx, membic) {
-                return detmgr.detailsHTML(cdx, membic, false); },
+                return ""; },  //clutter. not always full/accurate 24jun20
             expanded: function (cdx, membic) {
                 return detmgr.detailsHTML(cdx, membic, mayEdit(membic)); },
             changed: function (cdx, membic) {
