@@ -479,34 +479,27 @@ def mailpwr():
     return respJSON("[]")
 
 
+# To manually rebuild an MUser or Theme
+# DELETE FROM Overflow WHERE dbkind="<type>" AND dbkeyid=<id>
+# UPDATE <type> SET preb=NULL WHERE dsId=<id>
 def prebsweep():
     try:
         administrator_auth()
         max_per_sweep = 20
-        where = "WHERE preb IS NULL LIMIT " + str(max_per_sweep)
         msgs = []
-        musers = dbacc.query_entity("MUser", where)
-        for muser in musers:  # do users first so themes are more recent
-            if len(msgs) >= max_per_sweep:
-                break
-            logging.info("prebsweep MUser " + muser["dsId"] + " " +
-                         muser["modified"])
-            context = {"entity":"MUser", "inst":muser, "pbms":[], "creb":""}
-            rebuild_prebuilt(context)
-            muser["preb"] = json.dumps(context["pbms"])
-            dbacc.write_entity(muser, vck=muser["modified"])
-            msgs.append("Rebuilt MUser.preb " + str(muser["dsId"]) + " " +
-                        muser["email"])
-        themes = dbacc.query_entity("Theme", where)
-        for theme in themes:
-            if len(msgs) >= max_per_sweep:
-                break
-            context = {"entity":"Theme", "inst":theme, "pbms":[], "creb":""}
-            rebuild_prebuilt(context)
-            theme["preb"] = json.dumps(context["pbms"])
-            dbacc.write_entity(theme, vck=theme["modified"])
-            msgs.append("Rebuilt Theme.preb " + str(theme["dsId"]) + " " +
-                        theme["name"])
+        # sweep users first so themes are more recent
+        for dbType, logfield in [("MUser", "email"), ("Theme", "name")]:
+            where = "WHERE preb IS NULL LIMIT " + str(max_per_sweep)
+            objs = dbacc.query_entity(dbType, where)
+            for obj in objs:
+                if len(msgs) >= max_per_sweep:
+                    break
+                context = {"entity":dbType, "inst":obj, "pbms":[], "creb":""}
+                rebuild_prebuilt(context)
+                obj["preb"] = json.dumps(context["pbms"])
+                obj = dbacc.write_entity(obj, vck=obj["modified"])
+                msgs.append("Rebuilt " + dbType + ".preb " + str(obj["dsId"]) +
+                            " " + obj[logfield])
         if len(msgs) >= max_per_sweep:
             msgs.append("SweepPrebuilt pass completed, run again")
         else:

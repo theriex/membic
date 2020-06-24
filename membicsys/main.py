@@ -120,6 +120,11 @@ def prebsweep():
     ## Fill any empty/null preb values.
     return util.secure(util.prebsweep)
 
+@app.route('/api/chgtkw')
+def chgtkw():
+    ## Change a theme keyword and update all membics using it.
+    return util.secure(useract.chgtkw)
+
 @app.route('/api/membicrefresh')
 def rebmembic():
     ## Rebuild the given membicid as if it was being updated

@@ -591,6 +591,8 @@ function writeUpdateFunction (edef) {
     pyc += "    dblogmsg(\"UPD\", \"" + edef.entity + "\", fields)\n";
     if(edef.cache.minutes && !edef.cache.manualadd) {
         pyc += "    entcache.cache_put(fields)\n" }
+    else {  //make sure there isn't an old copy hanging around
+        pyc += "    entcache.cache_remove(fields)\n" }
     pyc += "    return fields\n";
     return pyc;
 }
@@ -639,23 +641,24 @@ function entityWriteFunction () {
 
 function entityDeleteFunction () {
     var pyc = "";
-    pyc += "def delete_entity(entity, dsId):\n"
-    pyc += "    cnx = get_mysql_connector()\n"
-    pyc += "    if not cnx:\n"
-    pyc += "        raise ValueError(\"Database connection failed.\")\n"
-    pyc += "    try:\n"
-    pyc += "        cursor = cnx.cursor()\n"
-    pyc += "        try:\n"
-    pyc += "            stmt = \"DELETE FROM \" + entity + \" WHERE dsId=\" + str(dsId)\n"
-    pyc += "            cursor.execute(stmt)\n"
-    pyc += "            cnx.commit()\n"
-    pyc += "            dblogmsg(\"DEL\", entity + \" \" + str(dsId), None)\n"
-    pyc += "        except mysql.connector.Error as e:\n"
-    pyc += "            raise ValueError(str(e) or \"No mysql error text\")  # see note 1\n"
-    pyc += "        finally:\n"
-    pyc += "            cursor.close()\n"
-    pyc += "    finally:\n"
-    pyc += "        cnx.close()\n"
+    pyc += "def delete_entity(entity, dsId):\n";
+    pyc += "    cnx = get_mysql_connector()\n";
+    pyc += "    if not cnx:\n";
+    pyc += "        raise ValueError(\"Database connection failed.\")\n";
+    pyc += "    try:\n";
+    pyc += "        cursor = cnx.cursor()\n";
+    pyc += "        try:\n";
+    pyc += "            stmt = \"DELETE FROM \" + entity + \" WHERE dsId=\" + str(dsId)\n";
+    pyc += "            cursor.execute(stmt)\n";
+    pyc += "            cnx.commit()\n";
+    pyc += "            dblogmsg(\"DEL\", entity + \" \" + str(dsId), None)\n";
+    pyc += "            # if cache cleanup is needed that is up to caller\n";
+    pyc += "        except mysql.connector.Error as e:\n";
+    pyc += "            raise ValueError(str(e) or \"No mysql error text\")  # see note 1\n";
+    pyc += "        finally:\n";
+    pyc += "            cursor.close()\n";
+    pyc += "    finally:\n";
+    pyc += "        cnx.close()\n";
     return pyc;
 }
 

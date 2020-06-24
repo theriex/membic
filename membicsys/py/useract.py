@@ -528,6 +528,91 @@ def update_membic_and_preb(muser, newmbc, oldmbc=None):
     return util.safe_JSON(prof)
 
 
+def walk_membics(context):
+    if not context.get("chunk"):
+        context["chunk"] = 100
+    if not context.get("creb"):
+        context["creb"] = "1970-01-01T00:00:00Z;1"
+    where = (context["where"] + " AND created > \"" + context["creb"] + "\"" +
+             " ORDER BY created ASC LIMIT " + str(context["chunk"]))
+    membics = dbacc.query_entity("Membic", where)
+    for membic in membics:
+        context["func"](membic, context)
+    if len(membics) >= context["chunk"]:  # probably more, get next chunk
+        context["creb"] = membics[-1]["created"]
+        walk_membics(context)
+    return context
+
+
+def replace_keyword(oldkw, newkw, kwrdcsv):
+    spacesep = re.search(r",\s+", kwrdcsv)
+    if spacesep:
+        kwrdcsv = re.sub(r",\s+", ",", kwrdcsv)
+    kwrds = kwrdcsv.split(",")
+    kwrds = [newkw if kw == oldkw else kw for kw in kwrds]
+    sep = ","
+    if spacesep:
+        sep = ", "
+    return sep.join(kwrds)
+
+
+# Makes sense to update each of the membics while iterating through here.
+# In most cases it is going to be significantly less noise and work to
+# rebuild the preb values completely afterwards rather than updating the
+# prebs after each membic update.
+def update_membic_keywords(membic, context):
+    mkws = re.sub(r",\s+", ",", (membic.get("keywords") or ""))
+    if not util.val_in_csv(context["oldkw"], mkws):
+        return  # old keyword not in theme membic so nothing to do
+    srcmbc = dbacc.cfbk("Membic", "dsId", membic["srcrev"], required=True)
+    srcmbc["keywords"] = replace_keyword(context["oldkw"], context["newkw"],
+                                         srcmbc["keywords"])
+    srcmbc = dbacc.write_entity(srcmbc, vck=srcmbc["modified"])
+    uid = str(membic["penid"])
+    if not context["updusers"].get(uid):
+        context["updusers"][uid] = 0  # note MUser for preb rebuild
+    context["updusers"][uid] += 1     # update membics count for reporting
+    svcdata = json.loads(srcmbc["svcdata"])
+    for pn in svcdata["postctms"]:
+        tmbc = dbacc.cfbk("Membic", "dsId", int(pn["revid"]), required=True)
+        tmbc["keywords"] = replace_keyword(context["oldkw"], context["newkw"],
+                                           tmbc["keywords"])
+        tmbc = dbacc.write_entity(tmbc, vck=tmbc["modified"])
+        if not context["updthemes"].get(pn["ctmid"]):
+            context["updthemes"][pn["ctmid"]] = 0  # note Theme for preb rebuild
+        context["updthemes"][pn["ctmid"]] += 1     # update reporting count
+
+
+# It is possible to delete all the Overflow instances for the given type in
+# a single SQL statement. Using the dbacc interface to keep the persistence
+# localized.  Usually not too many Overflows.
+def nuke_and_rebuild_preb(dsType, dsId):
+    dbo = dbacc.cfbk(dsType, "dsId", dsId, required=True)
+    where = "WHERE dbkind=\"" + dsType + "\" AND dbkeyid=" + str(dsId)
+    for over in dbacc.query_entity("Overflow", where):
+        dbacc.delete_entity("Overflow", over["dsId"])
+    context = {"entity":dsType, "inst":dbo, "pbms":[], "creb":""}
+    util.rebuild_prebuilt(context)
+    dbo["preb"] = json.dumps(context["pbms"])
+    dbo = dbacc.write_entity(dbo, vck=dbo["modified"])
+    return dbo
+
+
+def change_membic_keywords(tid, oldkw, newkw):
+    msgs = ["walk_membics start"]
+    context = walk_membics({"where": "WHERE ctmid=" + str(tid),
+                            "func": update_membic_keywords,
+                            "oldkw": oldkw, "newkw": newkw,
+                            "updthemes": {}, "updusers": {}})
+    msgs.append("walk_membics complete, rebuilding changed containers")
+    for dbt, cfld in [("MUser", "updusers"), ("Theme", "updthemes")]:
+        for dsId, count in context[cfld].items():
+            dbo = nuke_and_rebuild_preb(dbt, int(dsId))
+            msgs.append("Rebuilt preb for " + dbt + " " + str(dsId) + " (" +
+                        dbo["name"] + ") " + str(count) + " membics updated")
+    return "<br/>\n".join(msgs)
+
+
 ##################################################
 #
 # API entrypoints
@@ -758,3 +843,37 @@ def audblock():
     except ValueError as e:
         return util.srverr(str(e))
     return util.respJSON("[" + res + "]")
+
+
+# Administrator utility to change a theme keyword, update all membics to
+# reflect the change, and rebuild preb for the theme and affected users.
+# This is a heavyweight operation and can potentially collide with ongoing
+# updates from the app.  The affected users need to not be editing.  While
+# the preb is being rebuilt, an overflow might be missing and could result
+# in a call from the app looking for a missing dsId.  Should clear up on
+# a full browser reload.
+def chgtkw():
+    try:
+        util.administrator_auth()
+        msgs = []
+        tid = dbacc.reqarg("tid", "dbid", required=True)
+        theme = dbacc.cfbk("Theme", "dsId", int(tid), required=True)
+        oldkw = dbacc.reqarg("oldkw", "string", required=True)
+        newkw = dbacc.reqarg("newkw", "string", required=True)
+        tln = "Theme " + str(tid) + " (" + theme["name"] + ")"
+        msgs.append("chgtkw \"" + oldkw + "\" -> \"" + newkw + "\" " + tln)
+        logging.info(msgs[0])
+        updkwrds = replace_keyword(oldkw, newkw, theme["keywords"])
+        msgs.append("old keywords: " + theme["keywords"])
+        msgs.append("new keywords: " + updkwrds)
+        if updkwrds != theme["keywords"]:
+            theme["keywords"] = updkwrds
+            dbacc.write_entity(theme, theme["modified"])
+            msgs.append(tln + " updated")
+        else:
+            msgs.append(tln + " keywords unchanged")
+        msgs.append(change_membic_keywords(int(tid), oldkw, newkw))
+        msgs.append("chgtkw completed")
+    except ValueError as e:
+        return util.serve_value_error(e)
+    return "<br/>\n".join(msgs)

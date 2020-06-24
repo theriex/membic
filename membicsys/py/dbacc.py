@@ -951,6 +951,7 @@ def update_existing_MUser(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_MUser(fields)
     dblogmsg("UPD", "MUser", fields)
+    entcache.cache_remove(fields)
     return fields
 
 
@@ -1006,6 +1007,7 @@ def update_existing_Theme(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_Theme(fields)
     dblogmsg("UPD", "Theme", fields)
+    entcache.cache_remove(fields)
     return fields
 
 
@@ -1056,6 +1058,7 @@ def update_existing_AdminLog(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_AdminLog(fields)
     dblogmsg("UPD", "AdminLog", fields)
+    entcache.cache_remove(fields)
     return fields
 
 
@@ -1117,6 +1120,7 @@ def update_existing_Membic(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_Membic(fields)
     dblogmsg("UPD", "Membic", fields)
+    entcache.cache_remove(fields)
     return fields
 
 
@@ -1161,6 +1165,7 @@ def update_existing_Overflow(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_Overflow(fields)
     dblogmsg("UPD", "Overflow", fields)
+    entcache.cache_remove(fields)
     return fields
 
 
@@ -1206,6 +1211,7 @@ def update_existing_MailNotice(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_MailNotice(fields)
     dblogmsg("UPD", "MailNotice", fields)
+    entcache.cache_remove(fields)
     return fields
 
 
@@ -1254,6 +1260,7 @@ def update_existing_Audience(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_Audience(fields)
     dblogmsg("UPD", "Audience", fields)
+    entcache.cache_remove(fields)
     return fields
 
 
@@ -1306,6 +1313,7 @@ def update_existing_ActivitySummary(cnx, cursor, fields, vck):
     cnx.commit()
     fields = db2app_ActivitySummary(fields)
     dblogmsg("UPD", "ActivitySummary", fields)
+    entcache.cache_remove(fields)
     return fields
 
 
@@ -1429,6 +1437,7 @@ def delete_entity(entity, dsId):
             cursor.execute(stmt)
             cnx.commit()
             dblogmsg("DEL", entity + " " + str(dsId), None)
+            # if cache cleanup is needed that is up to caller
         except mysql.connector.Error as e:
             raise ValueError(str(e) or "No mysql error text")  # see note 1
         finally:
