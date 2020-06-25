@@ -192,69 +192,71 @@ function entityKeyFields () {
 
 function entityCache () {
     var pyc = "";
-    pyc += "def make_key(dsType, field, value):\n"
-    pyc += "    # The value will always be a string or there is a problem elsewhere.\n"
-    pyc += "    return dsType + \"_\" + field + \"_\" + value\n"
-    pyc += "\n"
-    pyc += "\n"
-    pyc += "def entkey_vals(inst):\n"
-    pyc += "    # dsId key holds the cached instance.  Need img data so pickle.\n"
-    pyc += "    instkey = make_key(inst[\"dsType\"], \"dsId\", inst[\"dsId\"])\n"
-    pyc += "    keyvals = [{\"key\": instkey, \"val\": pickle.dumps(inst)}]\n"
-    pyc += "    # alternate entity keys point to the dsId key\n"
-    pyc += "    for field in entkeys[inst[\"dsType\"]]:\n"
-    pyc += "        keyvals.append({\"key\": make_key(inst[\"dsType\"], field, inst[field]),\n"
-    pyc += "                        \"val\": instkey})\n"
-    pyc += "    return keyvals\n"
-    pyc += "\n"
-    pyc += "\n"
-    pyc += "# Avoids repeated calls to the db for the same instance, especially within\n"
-    pyc += "# the same call to the webserver.  Used sparingly to avoid chewing memory.\n"
-    pyc += "# Time to live can range from zero to whenever in actual runtime use.\n"
-    pyc += "class EntityCache():\n"
+    pyc += "def make_key(dsType, field, value):\n";
+    pyc += "    # The value param will always be a string because after retrieving an\n";
+    pyc += "    # instance via query, the resulting fields are converted via db2app.\n";
+    pyc += "    return dsType + \"_\" + field + \"_\" + value\n";
+    pyc += "\n";
+    pyc += "\n";
+    pyc += "def entkey_vals(inst):\n";
+    pyc += "    # dsId key holds the cached instance.  Need img data so pickle.\n";
+    pyc += "    instkey = make_key(inst[\"dsType\"], \"dsId\", inst[\"dsId\"])\n";
+    pyc += "    keyvals = [{\"key\": instkey, \"val\": pickle.dumps(inst)}]\n";
+    pyc += "    # alternate entity keys point to the dsId key\n";
+    pyc += "    for field in entkeys[inst[\"dsType\"]]:\n";
+    pyc += "        keyvals.append({\"key\": make_key(inst[\"dsType\"], field, inst[field]),\n";
+    pyc += "                        \"val\": instkey})\n";
+    pyc += "    return keyvals\n";
+    pyc += "\n";
+    pyc += "\n";
+    pyc += "# Avoids repeated calls to the db for the same instance, especially within\n";
+    pyc += "# the same call to the webserver.  Used sparingly to avoid chewing memory.\n";
+    pyc += "# Time to live can range from zero to whenever in actual runtime use.\n";
+    pyc += "class EntityCache():\n";
     pyc += "    \"\"\" Special case runtime cache to avoid pounding the db repeatedly \"\"\"\n";
-    pyc += "    entities = {}\n"
-    pyc += "    def cache_put(self, inst):\n"
-    pyc += "        expir = expiration_for_inst(inst)\n"
-    pyc += "        if expir:  # cacheable\n"
-    pyc += "            self.cache_remove(inst)  # clear any outdated entries\n"
-    pyc += "            kt = inst[\"dsType\"] + \"_\" + inst[\"dsId\"] + \"_cleanup\"\n"
-    pyc += "            cachekeys = [\"TTL_\" + expir]\n"
-    pyc += "            for keyval in entkey_vals(inst):\n"
-    pyc += "                cachekeys.append(keyval[\"key\"])\n"
-    pyc += "                self.entities[keyval[\"key\"]] = keyval[\"val\"]\n"
-    pyc += "            self.entities[kt] = \",\".join(cachekeys)\n"
-    pyc += "            # self.log_cache_entries()\n"
-    pyc += "    def cache_get(self, entity, field, value):\n"
-    pyc += "        instkey = make_key(entity, field, value)\n"
-    pyc += "        if instkey not in self.entities:\n"
-    pyc += "            return None\n"
-    pyc += "        instval = self.entities[instkey]\n"
-    pyc += "        if field != \"dsId\":\n"
-    pyc += "            instval = self.entities[instval]\n"
-    pyc += "        return pickle.loads(instval)\n"
-    pyc += "    def cache_remove(self, inst):\n"
-    pyc += "        if inst:\n"
-    pyc += "            kt = inst[\"dsType\"] + \"_\" + inst[\"dsId\"] + \"_cleanup\"\n"
-    pyc += "            cleankeys = self.entities.pop(kt, None)\n"
-    pyc += "            if cleankeys:\n"
-    pyc += "                for oldkey in cleankeys.split(\",\"):\n"
-    pyc += "                    self.entities.pop(oldkey, None)\n"
-    pyc += "    def cache_clean(self):\n"
-    pyc += "        now = nowISO()\n"
-    pyc += "        for key, value in self.entities.items():\n"
-    pyc += "            if key.endswith(\"_cleanup\"):\n"
-    pyc += "                ttl = value.split(\",\")[0][4:]\n"
-    pyc += "                if ttl < now:\n"
-    pyc += "                    kcs = key.split(\"_\")\n"
-    pyc += "                    inst = {\"dsType\": kcs[0], \"dsId\": kcs[1]}\n"
-    pyc += "                    self.cache_remove(inst)\n"
-    pyc += "    def log_cache_entries(self):\n"
-    pyc += "        txt = \"EntityCache entities:\\n\"\n"
-    pyc += "        for key, _ in self.entities.items():\n"
-    pyc += "            txt += \"    \" + key + \": \" + str(self.entities[key])[0:74] + \"\\n\"\n"
-    pyc += "        logging.info(txt)\n"
-    pyc += "entcache = EntityCache()\n"
+    pyc += "    entities = {}\n";
+    pyc += "    def cache_put(self, inst):\n";
+    pyc += "        expir = expiration_for_inst(inst)\n";
+    pyc += "        if expir:  # cacheable\n";
+    pyc += "            self.cache_remove(inst)  # clear any outdated entries\n";
+    pyc += "            kt = inst[\"dsType\"] + \"_\" + inst[\"dsId\"] + \"_cleanup\"\n";
+    pyc += "            cachekeys = [\"TTL_\" + expir]\n";
+    pyc += "            for keyval in entkey_vals(inst):\n";
+    pyc += "                cachekeys.append(keyval[\"key\"])\n";
+    pyc += "                self.entities[keyval[\"key\"]] = keyval[\"val\"]\n";
+    pyc += "            self.entities[kt] = \",\".join(cachekeys)\n";
+    pyc += "            # self.log_cache_entries()\n";
+    pyc += "    def cache_get(self, entity, field, value):\n";
+    pyc += "        instkey = make_key(entity, field, value)\n";
+    pyc += "        if instkey not in self.entities:\n";
+    pyc += "            return None\n";
+    pyc += "        instval = self.entities[instkey]\n";
+    pyc += "        if field != \"dsId\":\n";
+    pyc += "            instval = self.entities[instval]\n";
+    pyc += "        return pickle.loads(instval)\n";
+    pyc += "    def cache_remove(self, inst):\n";
+    pyc += "        if inst:\n";
+    pyc += "            kt = inst[\"dsType\"] + \"_\" + inst[\"dsId\"] + \"_cleanup\"\n";
+    pyc += "            cleankeys = self.entities.pop(kt, None)\n";
+    pyc += "            if cleankeys:\n";
+    pyc += "                for oldkey in cleankeys.split(\",\"):\n";
+    pyc += "                    self.entities.pop(oldkey, None)\n";
+    pyc += "    def cache_clean(self):\n";
+    pyc += "        now = nowISO()\n";
+    pyc += "        for key, value in self.entities.items():\n";
+    pyc += "            if key.endswith(\"_cleanup\"):\n";
+    pyc += "                ttl = value.split(\",\")[0][4:]\n";
+    pyc += "                if ttl < now:\n";
+    pyc += "                    kcs = key.split(\"_\")\n";
+    pyc += "                    inst = {\"dsType\": kcs[0], \"dsId\": kcs[1]}\n";
+    pyc += "                    self.cache_remove(inst)\n";
+    pyc += "    def log_cache_entries(self):\n";
+    pyc += "        txt = \"EntityCache entities:\\n\"\n";
+    pyc += "        for key, _ in self.entities.items():\n";
+    pyc += "            txt += \"    \" + key + \": \" + str(self.entities[key])[0:74] + \"\\n\"\n";
+    pyc += "        logging.info(txt)\n";
+    pyc += "        return txt\n";
+    pyc += "entcache = EntityCache()\n";
     return pyc;
 }
 

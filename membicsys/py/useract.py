@@ -472,6 +472,7 @@ def write_theme_membics(themeplan, newmbc):
 def update_preb(obj, membic, verb):
     pm = util.make_preb_membic(membic)
     pbms = json.loads(obj.get("preb") or "[]")
+    logging.info("update_preb len(pbms): " + str(len(pbms)))
     pbm = None
     idx = 0
     while idx < len(pbms):
@@ -479,25 +480,25 @@ def update_preb(obj, membic, verb):
         if pbm["dsType"] == "Overflow":  # Continue searching older stuff
             obj = dbacc.cfbk("Overflow", "dsId", pbm["dsId"])
             return update_preb(obj, membic, verb)
-        if pbm["dsId"] == pm["dsId"] or pm["created"] > pbm["created"]:
+        if (pbm["dsId"] == pm["dsId"]) or (pm["created"] > pbm["created"]):
             break  # at insertion point
         idx += 1
     dlp = ("update_preb " + obj["dsType"] + str(obj["dsId"]) + " " + verb +
            " idx: " + str(idx) + ", ")
     if pbm and pbm["dsId"] == pm["dsId"]:  # found existing instance
         if verb == "delete":
-            logging.debug(dlp + "existing popped")
+            logging.info(dlp + "existing popped")
             pbms.pop(idx)  # modify pbms removing indexed element
         else:  # "edit". Should not have found anything if "add" but treat same
-            logging.debug(dlp + "existing updated")
+            logging.info(dlp + "existing updated")
             pbms[idx] = pm
     else:  # no existing instance found
         if verb in ["add", "edit"]:
             if idx > 0:
-                logging.debug(dlp + "new inserted")
+                logging.info(dlp + "new inserted")
                 pbms.insert(idx, pm)
             else:
-                logging.debug(dlp + "new prepended (via util)")
+                logging.info(dlp + "new prepended (via util)")
                 util.add_membic_to_preb({"entity": obj["dsType"],
                                          "inst": obj,
                                          "pbms": pbms}, membic)

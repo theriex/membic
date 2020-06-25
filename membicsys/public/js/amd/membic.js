@@ -10,7 +10,7 @@ app.membic = (function () {
     var expandedMembics = {};  //currently expanded membics (by src membic id)
     var formElements = null;  //forward declare to avoid circular func refs
     var rto = null;  //input reaction timeout
-    var apto = null;  //automated processing timeout
+    var apso = {apto:null, started:{}};   //automated processing status
 
     // Membic Type Definition guidelines:
     // 1. Too many fields makes entry tedious.  The goal is adequate
@@ -386,9 +386,19 @@ app.membic = (function () {
                              ms:2000,
                              func:function () {
                                  mergeURLReadInfoIntoSavedMembic(membic); }}); }
-        //not currently saving, find target membic in profile
+        //not currently saving, find target membic in profile.  You would
+        //think the rurl is unique, but it is possible to have multiple
+        //membics with the same rurl and the updates may never end if the
+        //first one is selected.
         var tm = app.login.myProfile()
-            .preb.find((cand) => cand.rurl === membic.rurl);
+            .preb.find((cand) => ((cand.rurl === membic.rurl) &&
+                                  ((!cand.dsId) ||
+                                   (cand.dsId === membic.dsId))));
+        if(!tm) {
+            jt.log("mergeURLReadInfoIntoSavedMembic did not find a matching " +
+                   "membic to update for Membic " + membic.dsId + " rurl: " +
+                   membic.rurl);
+            return; }
         tm.url = membic.url || membic.rurl;
         tm.details = membic.details || {};
         tm.revtype = membic.revtype || "article";
@@ -1305,7 +1315,7 @@ app.membic = (function () {
                 chgval = fixCommonTextAnnoyances(chgval);
                 updobj.text = chgval; } },
         details: {
-            closed: function (cdx, membic) {
+            closed: function () {
                 return ""; },  //clutter. not always full/accurate 24jun20
             expanded: function (cdx, membic) {
                 return detmgr.detailsHTML(cdx, membic, mayEdit(membic)); },
@@ -1371,17 +1381,21 @@ app.membic = (function () {
     //the scheduling timeout to avoid multiple simultaneous reads.
     function scheduleFollowupProcessing (cdx, membic) {
         if(cdx === 0) { //start of display pass through membics
-            if(apto) {  //clear any previously scheduled automation
-                clearTimeout(apto); }
-            apto = null; }
+            if(apso.apto) {  //clear any previously scheduled automation
+                clearTimeout(apso.apto); }
+            apso.apto = null; }
         //May only edit membic from your own profile display
-        if(!apto && membicDetailsUnread(membic)) {
+        if(!apso.apto && membicDetailsUnread(membic)) {
             //Hold off on any scheduling until after user info verified
             var authobj = app.login.authenticated();
-            if(authobj.verifyUserInfoComplete) {
+            //Avoid infinite scheduling. Verify call not started already.
+            //Duplicate calls shouldn't happen, but if there is a timing issue
+            //or a bug, looping needs to be impossible.
+            if(authobj.verifyUserInfoComplete && !apso.started[membic.dsId]) {
+                apso.started[membic.dsId] = new Date().toISOString();
                 var des = "Followup read Membic " + membic.dsId;
                 jt.log(des);
-                apto = app.fork({descr:des, ms:800, func:function () {
+                apso.apto = app.fork({descr:des, ms:800, func:function () {
                     startReader(membic); }}); } }
     }
 

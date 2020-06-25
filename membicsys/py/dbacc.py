@@ -229,7 +229,8 @@ def expiration_for_inst(inst):
 
 
 def make_key(dsType, field, value):
-    # The value will always be a string or there is a problem elsewhere.
+    # The value param will always be a string because after retrieving an
+    # instance via query, the resulting fields are converted via db2app.
     return dsType + "_" + field + "_" + value
 
 
@@ -290,6 +291,7 @@ class EntityCache():
         for key, _ in self.entities.items():
             txt += "    " + key + ": " + str(self.entities[key])[0:74] + "\n"
         logging.info(txt)
+        return txt
 entcache = EntityCache()
 
 
