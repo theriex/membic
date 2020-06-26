@@ -204,13 +204,20 @@ app.membic = (function () {
     }
 
 
+    function myMembic (membic) {
+        var prof = app.login.myProfile();
+        if(prof && prof.dsId === membic.penid) {
+            return true; }
+        return false;
+    }
+
+
     //A theme post membic does not have all the same information as a source
     //membic.  It's essentially a copy for bookkeeping purposes.  Editing a
     //source membic from the theme seems like it could be convenient, but
     //in practice tends to be confusing both in UI and code.
     function mayEdit (membic) {
-        var prof = app.login.myProfile();
-        if(prof && prof.dsId === membic.penid && !membic.ctmid) {
+        if(myMembic(membic) && !membic.ctmid) {
             return true; }
         return false;
     }
@@ -1209,20 +1216,22 @@ app.membic = (function () {
                     linkattrs.onclick = jt.fs("window.open('" + app.docroot +
                                               "/profile/" + membic.penid +
                                               "')"); }
+                var linkname = membic.penname;
+                if(myMembic(membic) && membic.ctmid) {
+                    linkname = "Me (edit)"; }
                 return jt.tac2html(
                     [["span", {cla:"mascrespan"}, cretxt],
                      ["span", {cla:"masbyline"},
                       ["a", linkattrs,
                        [["img", {src:app.login.profimgsrc(membic.penid)}],
-                        ["span", {cla:"penlight"}, membic.penname]]]]]); },
+                        ["span", {cla:"penlight"}, linkname]]]]]); },
             changed: function () { return false; },
             write: function () { return; },
             blcfs: function (membic) {
                 //If clicking your own membic byline, you probably want to
                 //edit.  Otherwise you are just checking the profile out.
                 var fs = "'MUser'" + ",'" + membic.penid + "'";
-                var prof = app.login.myProfile();
-                if(prof && membic.penid === prof.dsId) {
+                if(myMembic(membic)) {
                     fs += ",{go:'" + membic.srcrev + "'}"; }
                 fs = "app.statemgr.setState(" + fs + ")";
                 return jt.fs(fs); } },
