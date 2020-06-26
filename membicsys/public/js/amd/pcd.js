@@ -324,8 +324,13 @@ app.pcd = (function () {
             case "settings": return app.fork(
                 {descr:"pxob settings", ms:100, func:app.pcd.settings});
             default: if(extraobj.go) {
-                jt.log("pcd.processExtraObject ignored " +
-                       JSON.stringify(extraobj)); } } }
+                if(parseInt(extraobj.go, 10) && //true even if huge number
+                   ctx.actobj && ctx.actobj.itlist &&
+                   ctx.actobj.itlist.find((m) => m.dsId === extraobj.go)) {
+                    ctx.jumpto = extraobj.go; }
+                else {
+                    jt.log("pcd.processExtraObject ignored " +
+                           JSON.stringify(extraobj)); } } } }
     }
 
 
@@ -438,6 +443,32 @@ app.pcd = (function () {
     }
 
     
+    //Automatic scrolling is highly annoying from UX POV, except when you
+    //were just working on something and don't want to lose your context
+    //completely due to a redisplay.  To avoid unnecessary jumpiness, all
+    //automatic scrolling is triggered by an explicit jumpto which is
+    //consumed immediately and not repeated.
+    var scrollmgr = {
+        noteItemRendered: function (item) {
+            if(item.dsId === ctx.jumpto) {
+                app.fork({descr:"pcdjumpto" + ctx.fist.cdx, ms:200,
+                          func:scrollmgr.processJumpTo}); } },
+        processJumpTo: function () {
+            //A display item has been created for the dsId specified in the
+            //context jumpto, and the display iteration has had a chance to
+            //render another item or two after that.  The resulting scroll
+            //may or may not position the item at the top of the display,
+            //but at least not at the bottom if there are items after it.
+            var idx = ctx.actobj.itlist.findIndex((m) => m.dsId === ctx.jumpto);
+            jt.byId("pcditemdiv" + idx).scrollIntoView();
+            ctx.jumpto = "";
+            if(app.startParams.mdisp === "expanded") {
+                app.membic.toggleMembic(idx, "expanded",
+                                        ctx.actobj.itlist[idx]);
+                app.startParams.mdisp = ""; } }
+    };
+
+
     //For a profile, display the themes they've posted to so people can
     //easily jump from the person to a theme they are interested in
     //following.  Makes the profile more interesting, especially for those
@@ -491,9 +522,10 @@ app.pcd = (function () {
                     break; }
                 elem = document.createElement("div");
                 elem.className = "pcditemdiv";
-                elem.id = "pcditemdiv" + (ctx.fist.idx - 1);
+                elem.id = "pcditemdiv" + ctx.fist.cdx;
                 odiv.appendChild(elem);  //make available first, then fill
                 elem.innerHTML = ctx.actobj.itdispf(item, ctx.fist);
+                scrollmgr.noteItemRendered(item);
                 updateAssocLinksDisplay(item);
                 if(ctx.fist.idx < ctx.actobj.itlist.length) {  //more to display
                     forkResumeFilterContent();

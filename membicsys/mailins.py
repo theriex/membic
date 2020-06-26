@@ -26,6 +26,7 @@ import py.useract as useract
 import py.util as util
 import json
 import sys
+import requests         # Fetch things over http in a reasonable way
 
 MAILINADDR = "me" + "@" + mconf.domain
 MAILINPASS = mconf.email["me"]
@@ -34,10 +35,17 @@ SUPPADDR = "support" + "@" + mconf.domain
 FWDADDR = "forwarding" + "@" + mconf.domain
 FWDPASS = mconf.email["forwarding"]
 
+# The main app is in a separte process space, so call the api to clear the
+# updated profile from the cache.
+def clear_server_cache(dt, di):
+    resp = requests.get(SITEROOT + "/api/uncache?dt=" + dt + "&di=" + di)
+    logging.info("clear_server_cache: " + resp.text)
+
+
 # The processing here needs to use the same core processing as membicsave.
 # Important to set the membic "rurl" field (not the "url" field), so it is
 # clear the link page meta info has not been read yet.  The title is set to
-# the url in the interim.
+# the url for the interim before the details are verified.
 def make_mail_in_membic(mimp):
     muser = mimp["muser"]
     membic = {"dsType":"Membic", "ctmid":"", "penid":muser["dsId"],
@@ -59,7 +67,9 @@ def make_mail_in_membic(mimp):
     membic["svcdata"] = json.dumps({"postctms": postctms})
     membic["cankey"] = useract.cankey_for_membic(membic)
     spf = useract.update_membic_and_preb(muser, membic)
-    mimp["prebmembic"] = json.loads(json.loads(spf)["preb"])[0]
+    prof = json.loads(spf)
+    clear_server_cache(prof["dsType"], prof["dsId"])
+    mimp["prebmembic"] = json.loads(prof["preb"])[0]
 
 
 def ellipsis(text, maxlen=60):
@@ -96,6 +106,7 @@ def confirm_receipt(mimp):
     subj = "Re: Mail-In Membic for " + ellipsis(httpfree(mimp["url"]))
     body = "Your mail-in membic was received.  Go to your profile "
     body += util.my_login_url(mimp["muser"], SITEROOT)
+    body += "&go=" + mimp["prebmembic"]["dsId"] + "&mdisp=expanded"
     body += " to confirm details.\n"
     body += "\n"
     body += "This message is an automated response. If you have any questions or concerns, forward this message with your comments to " + SUPPADDR + "\n"

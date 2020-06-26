@@ -670,3 +670,14 @@ def jsonget():
         logging.info("jsonget failed: " + str(e))
         return serve_value_error(e)
     return respJSON(ench)
+
+
+def uncache():
+    try:
+        dt = dbacc.reqarg("dt", "string", required=True)
+        di = dbacc.reqarg("di", "dbid", required=True)
+        obj = dbacc.cfbk(dt, "dsId", di, required=True)
+        dbacc.entcache.cache_remove(obj)
+    except ValueError as e:
+        return serve_value_error(e)
+    return "uncached " + dt + str(di)

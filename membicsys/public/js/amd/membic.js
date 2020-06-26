@@ -328,7 +328,8 @@ app.membic = (function () {
                     clearCachedThemesForMembic(updmbc);
                     pots.forEach(function (pot) {  //update all given data
                         app.refmgr.put(pot); });
-                    app.pcd.fetchAndDisplay(pots[0].dsType, pots[0].dsId);
+                    app.pcd.fetchAndDisplay(pots[0].dsType, pots[0].dsId,
+                                           {go:updmbc.dsId});
                     if(contf) {
                         contf(updmbc); } },
                 function (code, errtxt) {
@@ -1203,8 +1204,7 @@ app.membic = (function () {
                 var cretxt = jt.colloquialDate(membic.created, "compress");
                 var linkattrs = {href:"#" + membic.penid,
                                  title:"Visit " + membic.penname,
-                                 onclick:jt.fs("app.statemgr.setState('MUser'" +
-                                               ",'" + membic.penid + "')")};
+                                 onclick:formElements.byline.blcfs(membic)};
                 if(app.solopage()) {
                     linkattrs.onclick = jt.fs("window.open('" + app.docroot +
                                               "/profile/" + membic.penid +
@@ -1216,7 +1216,16 @@ app.membic = (function () {
                        [["img", {src:app.login.profimgsrc(membic.penid)}],
                         ["span", {cla:"penlight"}, membic.penname]]]]]); },
             changed: function () { return false; },
-            write: function () { return; } },
+            write: function () { return; },
+            blcfs: function (membic) {
+                //If clicking your own membic byline, you probably want to
+                //edit.  Otherwise you are just checking the profile out.
+                var fs = "'MUser'" + ",'" + membic.penid + "'";
+                var prof = app.login.myProfile();
+                if(prof && membic.penid === prof.dsId) {
+                    fs += ",{go:'" + membic.srcrev + "'}"; }
+                fs = "app.statemgr.setState(" + fs + ")";
+                return jt.fs(fs); } },
         stars: {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {

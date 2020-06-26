@@ -115,6 +115,11 @@ def startpage(path):
 
 
 ########## Admin interfaces
+@app.route('/api/uncache')
+def uncache():
+    ## Unsecured, called from mailins
+    return util.uncache()
+
 @app.route('/api/prebsweep')
 def prebsweep():
     ## Fill any empty/null preb values.
