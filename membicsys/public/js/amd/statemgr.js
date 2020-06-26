@@ -15,21 +15,28 @@ app.statemgr = (function () {
         var tndiv = jt.byId("topnavdiv");
         if(!tndiv) {
             return; }
-        var authobj = app.login.authenticated();
-        if(!authobj) {
-            return; }
         state = state || history.state;
-        var nl = ["a", {href:"#profile", title:"My Profile",
-                        onclick:jt.fs("app.statemgr.setState('MUser','" +
-                                      authobj.authId + "')")},
-                  ["img", {src:app.dr("img/navprofile.png")}]];
         var prof = app.login.myProfile();
-        if(state.dsType === "MUser" && prof && prof.dsId === state.dsId) {
-            nl = ["a", {href:"#connect", title:"Connect",
+        if(prof && state.dsType !== "MUser" && state.dsId !== prof.dsId) {
+            //provide link back to own profile page
+            tndiv.innerHTML = jt.tac2html(
+                ["div", {cla:"navicodiv"},
+                 ["a", {href:"#profile", title:"My Profile",
+                        onclick:jt.fs("app.statemgr.setState('MUser','" +
+                                      prof.dsId + "')")},
+                  ["img", {src:app.dr("img/navprofile.png")}]]]); }
+        else if((state.dsType !== "activetps") &&
+                (!prof ||
+                 (state.dsType === "MUser" && state.dsId === prof.dsId))) {
+            //provide link back to connect page
+            tndiv.innerHTML = jt.tac2html(
+                ["div", {cla:"navicodiv"},
+                 ["a", {href:"#connect", title:"Connect",
                         onclick:jt.fs("app.statemgr.setState('activetps','" +
                                       "411')")},
-                  ["img", {src:app.dr("img/membiclogo.png")}]]; }
-        tndiv.innerHTML = jt.tac2html(["div", {cla:"navicodiv"}, nl]);
+                  ["img", {src:app.dr("img/membiclogo.png")}]]]); }
+        else {  //e.g. on connect page but not logged in
+            tndiv.innerHTML = ""; }
     }
 
 

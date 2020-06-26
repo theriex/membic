@@ -46,6 +46,7 @@ indexHTML = """
   <div id="topmessagelinediv"></div>
   <!-- login has to be an actual form to enable remembered passwords -->
   <div id="topactiondiv">
+    <div id="topnavdiv"></div>
     <form id="loginform" method="post" action="redirlogin">
       <div id="loginparaminputs"></div>
       <div id="loginvisualelementsdiv">
