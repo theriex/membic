@@ -1141,7 +1141,10 @@ return {
         app.pcd.updateSearchLabelText();
         processExtraObject(actobj.extraobj);
         ownerEnablePicUpload();
-        app.pcd.filterContent("init");
+        var filtermode = "init";
+        if(actobj.jumpto) {  //just saved an edit. or similar context
+            filtermode = "change"; }
+        app.pcd.filterContent(filtermode);
     },
 
 
