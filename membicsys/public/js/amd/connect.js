@@ -202,11 +202,20 @@ app.connect = (function () {
 
 
     function membicDescripHTML () {
-        var displinks = [];
+        var lds = [{t:"about", d:"about.html"},
+                   {t:"privacy", d:"privacy.html"},
+                   {t:"terms", d:"terms.html"}];
         return jt.tac2html(
             ["A better way to share memorable links.",
              ["div", {id:"membicdescrlinksdiv"},
-              displinks]]);
+              lds.map(function (ld) {
+                  var url = "docs/" + ld.d;
+                  return [["a", {href:url,
+                                 onclick:jt.fs("app.layout.displayDoc('" +
+                                               url + "',true)")},
+                           ["span", {cla:"doclinkaspan"},
+                            ld.t]],
+                          "&nbsp;"]; })]]);
     }
 
 

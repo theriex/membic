@@ -22,8 +22,6 @@ var jt = {};   //Global access to general utility methods
     //app.embedded is set in start.py
     app.winw = 0;  //adjusted in app.layout
     app.winh = 0;
-    app.suppemail = "membicsystem" + "@" + "gmail" + "." + "com";
-    app.profdev = "epinova.com";
     app.onescapefunc = null;  //app global escape key handler
     app.escapefuncstack = [];  //for levels of escaping
     app.forks = {};  //tasks started through setTimeout

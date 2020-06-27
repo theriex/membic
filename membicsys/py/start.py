@@ -15,6 +15,7 @@ import logging
 import py.util as util
 import py.dbacc as dbacc
 import py.feed as feed
+import py.mconf as mconf
 
 # This cache bust value is updated via membic/build/cachev.js which keeps
 # all the cache bust values updated and in sync across the sourcebase.  Do
@@ -103,6 +104,7 @@ indexHTML = """
   app.refer = "$REFER";
   app.embedded = $EMBED;
   app.vanityStartId = "$VANID";
+  app.suppemail = "$SUPPEMAIL";
   app.init();
 </script>
 
@@ -384,6 +386,8 @@ def write_start_page(obj, refer, reldocroot=""):
     html = html.replace("$REFER", refer)
     html = html.replace("$EMBED", embed_spec_objson(obj))
     html = html.replace("$VANID", obidstr_or_empty(obj))
+    html = html.replace("$SUPPEMAIL", (mconf.email["support"] + "@" +
+                                       mconf.domain))
     html = html.replace("$INTERIMCONT", noscripthtml + content)
     html = html.replace("$FEEDLINKS", feedlinks_for_object(obj))
     html = html.replace("$PREFETCHOBJSON", pfoj)
