@@ -267,7 +267,7 @@ app.pcd = (function () {
             ["a", {href:"#search", id:"srchlink", title:"Search items",
                    onclick:jt.fs("app.pcd.filterContent('change')")},
              ["img", {src:app.dr("img/search.png"), cla:"webjump"}]]];
-        var srchinattrs = {type:"text", id:"pcdsrchin", size:26,
+        var srchinattrs = {type:"search", id:"pcdsrchin", size:26,
                            placeholder:"Search text",
                            onchange:jt.fs("app.pcd.filterContent('change')"),
                            value:""};  //value set by UI interaction only

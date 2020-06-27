@@ -130,7 +130,7 @@ var jt = {};   //Global access to general utility methods
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
-        jt.loadAppModules(app, modules, app.docroot, app.init2, "?v=200626");
+        jt.loadAppModules(app, modules, app.docroot, app.init2, "?v=200627");
     };
 
 

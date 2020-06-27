@@ -201,6 +201,15 @@ app.connect = (function () {
     }
 
 
+    function membicDescripHTML () {
+        var displinks = [];
+        return jt.tac2html(
+            ["A better way to share memorable links.",
+             ["div", {id:"membicdescrlinksdiv"},
+              displinks]]);
+    }
+
+
     function displayMainContent () {
         jt.log("connect.displayMainContent starting");
         app.pcd.setPageDescription(
@@ -208,7 +217,7 @@ app.connect = (function () {
              disptype:"app",
              exturl:"/",
              name:"Membic",
-             descr:"A better way to share memorable links."});
+             descr: membicDescripHTML()});
         var sf = "";
         var authobj = app.login.authenticated();
         if(authobj) {
