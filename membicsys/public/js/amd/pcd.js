@@ -278,6 +278,7 @@ app.pcd = (function () {
                 if(key) {
                     if(/\S+\s\S+/.test(key)) {  //keyword has a space in it
                         key = "&quot;" + key + "&quot;"; }
+                    key = " " + key;  //prefix to indicate keyword
                     dlos.push(["option", {value:key}]); } }); }
         if(dlos.length) {
             srchinattrs.list = "srchinoptsdl"; }
@@ -334,77 +335,103 @@ app.pcd = (function () {
     }
 
 
-    //make a single searchable text field for the entire membic.
-    function verifySearchFilterText (membic) {
-        if(membic.srchFiltTxt) {
-            return; }  //already set up
-        var txt = "";
-        var fields = ["url", "rurl", "revtype", "cankey", "text", "keywords"];
-        fields.forEach(function (field) {
-            txt += " " + (membic[field] || ""); });
-        fields = ["name", "title", "artist", "author", "publisher", "album", 
-                  "starring", "address", "year"];
-        fields.forEach(function (field) {
-            txt += " " + (membic.details[field] || ""); });
-        membic.srchFiltTxt = txt.toLowerCase();
-    }
-
-
-    //A search can consist of simple strings and/or quoted strings, possibly
-    //preceded by a "+" indicating that the string should be treated as an
-    //additional filter.  Save parsed search strings for quick access when
-    //applying across lots of membics.
-    function getParsedSearch (qstr) {
-        ctx.parsedSearches = ctx.parsedSearches || {};
-        var ps = ctx.parsedSearches[qstr];
-        if(ps) {
-            return ps; }
-        ps = {toks:[], pfts:[]};
-        ps.toks = qstr.toLowerCase().match(/\+?"[^"]*"*|\S+/g);
-        ps.pfts = ps.toks.filter((tok) => tok.indexOf("+") === 0);
-        ps.toks = ps.toks.filter((tok) => tok && tok.indexOf("+") !== 0);
-        var opstrip = function (tok) {
-            if(tok.indexOf("+") === 0) {
-                tok = tok.slice(1); }
-            if(tok.indexOf("\"") === 0) {
-                tok = tok.slice(1, -1); }
-            return tok; };
-        ps.toks = ps.toks.map((tok) => opstrip(tok));
-        ps.pfts = ps.pfts.map((pft) => opstrip(pft));
-        jt.log("new parsedSearch for: " + qstr + " -> toks: " + 
-               JSON.stringify(ps.toks) + ", pfts: " + JSON.stringify(ps.pfts));
-        ctx.parsedSearches[qstr] = ps;
-        return ps;
-    }
-
-
-    //Queued membics (membic.dispafter > fist.ts) are not provided from
-    //the RSS feed, but they display normally from within the app.
-    function membicSearchMatch (membic, fist) {
-        var contextobj = fist.actobj.contextobj;
-        if(membic.dsType === "Overflow") {  //ran out of items, fault in more
-            var ctxts = fist.ts;
-            app.refmgr.getFull("Overflow", membic.dsId, function (ovrf) {
-                //overflows are cached to avoid refetch if container modified
-                if(ovrf) {  //fetch error already logged if not found
-                    var membics = contextobj.preb.slice(0, -1);
-                    contextobj.preb = membics.concat(ovrf.preb);
-                    fist.actobj.contextobj = contextobj;
-                    fist.actobj.itlist = contextobj.preb;
-                    app.pcd.updateSearchLabelText();
-                    app.pcd.resumeFilterContent(ctxts); } });
-            return false; }  //don't display overflow elements
-        if(membic.srcrev === "-604") {
-            return false; }  //marked as deleted
-        if(fist.qstr) {
-            var ps = getParsedSearch(fist.qstr);
-            verifySearchFilterText(membic);  //sets srchFiltTxt as needed
-            if(ps.toks.some((tok) => membic.srchFiltTxt.indexOf(tok) >= 0) &&
-               ps.pfts.every((pft) => membic.srchFiltTxt.indexOf(pft) >= 0)) {
+    var srchmgr = {
+        scopes: {"url":["url", "rurl"],
+                 "keywords":["keywords"],
+                 "details":["name", "title", "artist", "author", "publisher",
+                            "album", "starring", "address", "year"]},
+        //Queued membics (membic.dispafter > fist.ts) are not provided from
+        //the RSS feed, but they display normally from within the app.
+        match: function (membic, fist) {
+            var contextobj = fist.actobj.contextobj;
+            if(membic.dsType === "Overflow") {  //out of items, fault in more
+                var ctxts = fist.ts;
+                app.refmgr.getFull("Overflow", membic.dsId, function (ovrf) {
+                    //overflows are cached to avoid refetch
+                    if(ovrf) {  //fetch error already logged if not found
+                        var membics = contextobj.preb.slice(0, -1);
+                        contextobj.preb = membics.concat(ovrf.preb);
+                        fist.actobj.contextobj = contextobj;
+                        fist.actobj.itlist = contextobj.preb;
+                        app.pcd.updateSearchLabelText();
+                        app.pcd.resumeFilterContent(ctxts); } });
+                return false; }  //don't display overflow elements
+            if(membic.srcrev === "-604") {
+                return false; }  //marked as deleted
+            if(fist.qstr) {
+                return srchmgr.specmatch(membic, fist.qstr); }
+            return true; }, //if not any other condition, assume it's a match
+        //Core match processing when qstr specified
+        specmatch: function (membic, qstr) {
+            var ps = srchmgr.parsedSearch(qstr);
+            var fields;
+            if(ps.scope) {
+                fields = srchmgr.scopes[ps.scope]; }
+            else {
+                srchmgr.verifySearchFilterText(membic);
+                fields = ["srchFiltTxt"]; }
+            return fields.some((fld) => srchmgr.fldmatch(fld, membic, ps)); },
+        tinf: function (fld, membic, ps, tok) {
+            var obj = membic;
+            if(ps.scope === "details") {
+                obj = membic.details; }
+            if(!obj || !obj[fld]) {
+                return false; }
+            var val = obj[fld];
+            if(ps.scope) {  //searching anything except all text
+                val = val.toLowerCase(); }
+            return (val.indexOf(tok) >= 0); },
+        fldmatch: function (fld, membic, ps) {
+            if(ps.toks.some((tok) => srchmgr.tinf(fld, membic, ps, tok)) &&
+               ps.pfts.every((pft) => srchmgr.tinf(fld, membic, ps, pft))) {
                 return true; }
-            return false; }
-        return true;  //if not any other condition, assume it's a match
-    }
+            return false; },
+        //A search can consist of simple strings and/or quoted strings,
+        //possibly preceded by a "+" indicating that the string should be
+        //treated as an additional filter.  Save parsed search strings for
+        //quick access when applying across lots of membics.
+        parsedSearch: function (qstr) {
+            ctx.parsedSearches = ctx.parsedSearches || {};
+            var ps = ctx.parsedSearches[qstr];
+            if(ps) {
+                return ps; }
+            ps = {scope:"", toks:[], pfts:[]};
+            var pqs = srchmgr.parseScope(qstr, ps);
+            ps.toks = pqs.toLowerCase().match(/\+?"[^"]*"*|\S+/g);
+            ps.pfts = ps.toks.filter((tok) => tok.indexOf("+") === 0);
+            ps.toks = ps.toks.filter((tok) => tok && tok.indexOf("+") !== 0);
+            var opstrip = function (tok) {
+                if(tok.indexOf("+") === 0) {
+                    tok = tok.slice(1); }
+                if(tok.indexOf("\"") === 0) {
+                    tok = tok.slice(1, -1); }
+                return tok; };
+            ps.toks = ps.toks.map((tok) => opstrip(tok));
+            ps.pfts = ps.pfts.map((pft) => opstrip(pft));
+            jt.log("new parsedSearch for: " + qstr + " -> scope: " +
+                   (ps.scope || "membic") + ", toks: " +
+                   JSON.stringify(ps.toks) +
+                   ", pfts: " + JSON.stringify(ps.pfts));
+            ctx.parsedSearches[qstr] = ps;
+            return ps; },
+        parseScope: function (qstr, ps) {
+            qstr = qstr.replace(/in\s+(\S*)\:/g, function (ignore, p1) {
+                if(srchmgr.scopes[p1]) {
+                    ps.scope = p1; }
+                return ""; });  //leave qstr with just the search terms left
+            return qstr; },
+        //make a single searchable text field for the entire membic.
+        verifySearchFilterText: function (membic) {
+            if(membic.srchFiltTxt) {
+                return; }  //already set up
+            var txt = "";
+            var flds = ["url", "rurl", "revtype", "cankey", "text", "keywords"];
+            flds.forEach(function (field) {
+                txt += " " + (membic[field] || ""); });
+            srchmgr.scopes.details.forEach(function (field) {
+                txt += " " + (membic.details[field] || ""); });
+            membic.srchFiltTxt = txt.toLowerCase(); }
+    };
 
 
     function membicDisplayHTML (membic, fist) {
@@ -435,7 +462,7 @@ app.pcd = (function () {
                                     exturl:fullurl,
                                     rssurl:rssURLForObj(obj)});
         app.pcd.setPageActions({itlist:obj.preb,
-                                itmatchf:membicSearchMatch,
+                                itmatchf:srchmgr.match,
                                 itdispf:membicDisplayHTML,
                                 contextobj:obj, extraobj:extra,
                                 setfstr:sf,
@@ -1019,12 +1046,16 @@ return {
                             types:{disp:false, sel:[]}};
                 jt.byId("pcdsrchin").value = ""; }
             else if(mode === "change") {  //refiltering in response to change
-                ctx.fist.qstr = jt.byId("pcdsrchin").value;
+                var sin = jt.byId("pcdsrchin");
+                ctx.fist.qstr = sin.value;
+                if(ctx.fist.qstr.startsWith(" ")) { //from keywords
+                    sin.value = "in keywords:" + ctx.fist.qstr;
+                    ctx.fist.qstr = "in keywords: " + ctx.fist.qstr; }
                 ctx.fist.idx = 0; //refilter all items from the beginning
                 ctx.fist.ts = new Date().toISOString();
                 ctx.fist.pgs = 1; //single page of results to start
                 ctx.fist.dc = 0; } } //reset the display count
-        appendNextMatchingItemToContent();
+        appendNextMatchingItemToContent();  //kick off membic filtering
     },
     getDisplayContext: function () { return ctx; },
     getActobjContext: function () { return ctx.actobj.contextobj; },
