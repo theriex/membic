@@ -205,7 +205,7 @@ app.connect = (function () {
         return jt.tac2html(
             ["A better way to share memorable links.",
              ["p", {cla:"membicdetailsp"},
-              ["Use Membic to create resource lists people can explore and follow. Explore these profiles and themes, or ",
+              ["Create resource lists people can reference and follow. Explore these profiles and themes or ",
                ["a", {href:"docs/about.html",
                      onclick:jt.fs("app.layout.displayDoc('docs/about.html'" +
                                    ",true)")},
