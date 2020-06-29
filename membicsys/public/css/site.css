@@ -177,7 +177,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 #cancelxdiv { float:right; }
 #picuploadformbuttonsdiv { text-align:center; padding:5px 0px 20px 0px; }
 #picuploadstatusdiv { font-size:medium; }
-#pcddescrdiv { height:110px; overflow:auto; }
+#pcddescrdiv { height:110px; overflow:auto; }  /* values changed in js */
 #pcdassoclinksdiv { font-size:small; }
 #pcdouterdiv { position:relative; }
 #pcduppercontentdiv { }
@@ -185,6 +185,8 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 #pcdnamespan { margin-right:5px; }
 #pcdsettingslink { }
 #pcdshoutdiv { padding:0px; font-size:small; overflow:auto; }
+#pcdshoutexpdiv { position:absolute; right:2px; top:85px; border-radius:10px;
+  background-image: url('../img/whitewash.png'); }
 #pcdhashdiv { font-size:small; font-family:monospace; padding-top:10px; }
 #pcdctrldiv { clear:both; }
 #pcdactdiv { padding:0px 0px 3px 0px; }

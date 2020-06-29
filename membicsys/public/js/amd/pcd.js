@@ -492,7 +492,27 @@ app.pcd = (function () {
             if(app.startParams.mdisp === "expanded") {
                 app.membic.toggleMembic(idx, "expanded",
                                         ctx.actobj.itlist[idx]);
-                app.startParams.mdisp = ""; } }
+                app.startParams.mdisp = ""; } },
+        //Not part of the explicit scrolling, but alters the size of the top
+        //part of the page so putting it here to keep interactions localized.
+        toggleDescExp: function (state) {
+            var descrdiv = jt.byId("pcddescrdiv");
+            if(state === "check") {
+                if(descrdiv.scrollHeight > descrdiv.clientHeight) {
+                    state = "closed"; }
+                else {  //no overflow, clear content if there was any
+                    jt.out("pcdshoutexpdiv", "");
+                    return; } }
+            var states = {closed:{sym:"&#x261F;", nst:"open", h:110},
+                          open:{sym:"&#x261D;", nst:"closed",
+                                h:descrdiv.scrollHeight}};
+            descrdiv.style.height = String(states[state].h) + "px";
+            jt.out("pcdshoutexpdiv", jt.tac2html(
+                ["a", {href:"#toggleDescriptionExpansion",
+                       onclick:jt.fs("app.pcd.managerDispatch('scrollmgr'," +
+                                     "'toggleDescExp','" + states[state].nst +
+                                     "')")},
+                 states[state].sym])); }
     };
 
 
@@ -1139,13 +1159,15 @@ return {
                 [["div", {id:"pcdnamediv"},
                   ["span", oedmgr.htmlattrs("name", {cla:"penfont"}),
                    oedmgr.htmlvalue("name", descobj)]],
-                 ["div", {id:"pcddescrdiv"},
+                 ["div", {id:"pcdshoutdiv"},
                   [["span", oedmgr.htmlattrs("dscr", {cla:"descrspan",
                                              style:"font-size:" + fsz + ";"}),
                     oedmgr.htmlvalue("dscr", descobj)],
                    ["div", {id:"pcdassoclinksdiv"}]]]]]]],  //filled on display
+             ["div", {id:"pcdshoutexpdiv"}],
              ["div", {id:"pcduppersavediv"}],
              ["div", {id:"pcdpicuploaddiv"}]]));
+        scrollmgr.toggleDescExp("check");
     },
 
 
@@ -1188,7 +1210,8 @@ return {
 
     managerDispatch: function (mgrname, fname, ...args) {
         switch(mgrname) {
-        case "oedmgr": return oedmgr[fname].apply(app.mymodule, args);
+        case "oedmgr": return oedmgr[fname].apply(app.pcd, args);
+        case "scrollmgr": return scrollmgr[fname].apply(app.pcd, args);
         default: jt.log("pcd.managerDispatch no manager: " + mgrname); }
     }
 
