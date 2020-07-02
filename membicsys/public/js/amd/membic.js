@@ -394,10 +394,9 @@ app.membic = (function () {
                              ms:2000,
                              func:function () {
                                  mergeURLReadInfoIntoSavedMembic(membic); }}); }
-        //not currently saving, find target membic in profile.  You would
-        //think the rurl is unique, but it is possible to have multiple
-        //membics with the same rurl and the updates may never end if the
-        //first one is selected.
+        //Not currently saving, find target membic in profile and merge.
+        //The rurl must match or the merge should not be done.  There can be
+        //multiple membics with the same rurl, so the dsId must also match.
         var tm = app.login.myProfile()
             .preb.find((cand) => ((cand.rurl === membic.rurl) &&
                                   ((!cand.dsId) ||
@@ -407,8 +406,14 @@ app.membic = (function () {
                    "membic to update for Membic " + membic.dsId + " rurl: " +
                    membic.rurl);
             return; }
+        if((membic.svcdata.urlreader.merge !== "overwrite") &&
+           (!membicDetailsUnread(tm))) {
+            jt.log("mergeURLReadInfoIntoSavedMembic not merging Membic " +
+                   membic.dsId + " since details were already read.");
+            return app.membic.toggleMembic(-1, "unchanged", tm); }
         tm.url = membic.url || membic.rurl;
         tm.details = membic.details || {};
+        tm.imguri = membic.imguri || tm.imguri || "";
         tm.revtype = membic.revtype || "article";
         tm.rating = membic.rating || ratmgr.rati.dfltv;
         tm.svcdata = tm.svcdata || {};
@@ -444,7 +449,14 @@ app.membic = (function () {
     //A membic starts from the rurl field being filled out, then the url
     //reader fills out the url field with a canonical value.  The rurl is
     //not used for display, it is only for reference and reader processing.
-    function startReader (membic) {
+    //If the membic was not previously saved, it is preferable to have the
+    //reader fill in the info directly into the working membic object so it
+    //is immediately available in the display.  If the membic already
+    //exists, then the reader should not disturb the current data being
+    //worked with until after it has completed and the data is being merged.
+    function startReader (membic, overwrite) {
+        if(membic.dsId) {
+            membic = JSON.parse(JSON.stringify(membic)); }
         var readername = readerModuleForURL(membic.rurl);
         membic.svcdata = membic.svcdata || {};
         membic.svcdata.urlreader = membic.svcdata.urlreader || {};
@@ -452,6 +464,9 @@ app.membic = (function () {
         reader.name = readername;
         reader.status = "reading";
         reader.result = "partial";
+        reader.merge = "unreadonly";  //reset to default each time
+        if(overwrite) {
+            reader.merge = "overwrite"; }
         reader.log = reader.log || [];  //could be a log from a previous read
         reader.log.push({start:new Date().toISOString()});
         app.fork({descr:"app." + readername + ": " + membic.rurl, ms:100,
@@ -1288,11 +1303,11 @@ app.membic = (function () {
                 return jt.tac2html(["button", bas, name]); },
             mrkdel: function (cdx) { markMembicDeleted(cdx); },
             save: function (cdx) { updateMembic(cdx); },
-            read: function (cdx) {
+            read: function (cdx, overwrite) {
                 jt.out("dlgbsbdiv" + cdx, "Reading...");
                 var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
                 membic.rurl = membic.rurl;
-                startReader(membic); } },
+                startReader(membic, overwrite); } },
         picture: {
             closed: function (ignore /*cdx*/, membic) {
                 var link = linkForMembic(membic);
@@ -1435,9 +1450,11 @@ return {
         var expid = membicExpId(membic);
         if(exp === "closed") {
             expandedMembics[expid] = ""; }
-        else if(exp) {
+        if(exp === "unchanged") {  //essentially a display refresh
+            expandedMembics[expid] = expandedMembics[expid] || ""; }
+        else if(exp) {  //opened.  use exp value as open value
             expandedMembics[expid] = exp; }
-        else {
+        else {  //invert whatever state it was in.
             expandedMembics[expid] = !expandedMembics[expid]; }
         var disp = formElementsVerb(expid);
         Object.keys(formElements).forEach(function (key) {
@@ -1554,7 +1571,9 @@ return {
         jt.log("membic.readerFinish " + JSON.stringify(ur));
         if(addmem && !savind && //still working off addmem and not saved yet
            addmem.rurl === membic.rurl) {  //and not way out of sync
+            jt.log("membic.readerFinish result merged into addmem");
             return; }  //url read data will be recorded on save.
+        jt.log("membic.readerFinish merging into previously saved membic");
         mergeURLReadInfoIntoSavedMembic(membic);
     },
 

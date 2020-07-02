@@ -28,6 +28,7 @@ import smtplib
 import ssl
 import os
 import subprocess
+import datetime
 
 
 def respond(contentstr, mimetype="text/html"):
@@ -630,22 +631,39 @@ def newacct():
     return respJSON("[" + oj + "]")
 
 
+def log_urlcontents(url, mech, start, resp):
+    end = datetime.datetime.utcnow()
+    with open(mconf.logsdir + "urlcontents_" + dbacc.nowISO(), 'w') as f:
+        f.write(mech + " " + url + "\n")
+        f.write("Elapsed time: " + str(end - start) + "\n")
+        f.write("Response content:\n")
+        f.write(resp)
+
+
 def urlcontents():
     ench = ""
     try:
         authenticate()  # must be signed in to fetch url info
         url = dbacc.reqarg("url", "string", required=True)
         fetchmech = dbacc.reqarg("fetchmech", "string")
-        if fetchmech == "curl":
+        start = datetime.datetime.utcnow()
+        if fetchmech.startswith("urlcontents"):
+            logging.info("urlcontents file " + fetchmech)
+            with open(mconf.logsdir + fetchmech, 'r') as f:
+                content = f.read()
+            ench = "{\"content\":\"" + urllib.parse.quote(content) + "\"}"
+        elif fetchmech == "curl":
             logging.info("urlcontents (curl) " + url)
             result = subprocess.run(["curl", url], stdout=subprocess.PIPE)
             resp = result.stdout.decode('utf-8')
+            log_urlcontents(url, "curl", start, resp)
             ench = "{\"content\":\"" + urllib.parse.quote(resp) + "\"}"
         else:
             logging.info("urlcontents " + url)
             resp = requests.get(url)
             if resp.status_code != 200:
                 srverr(resp.text, resp.status_code)
+            log_urlcontents(url, "requests", start, resp.text)
             ench = "{\"content\":\"" + urllib.parse.quote(resp.text) + "\"}"
     except ValueError as e:
         logging.info("urlcontents failed: " + str(e))

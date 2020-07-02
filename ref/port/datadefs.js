@@ -181,6 +181,7 @@ module.exports = (function () {
         //     - urlreader: {name: primary reader module name (e.g. "readurl")
         //                   status: reading|finished,
         //                   result: success|partial|failure,
+        //                   merge: unreadonly|overwrite,
         //                   log: [calldet, calldet2...]}
         //           calldet:{start, end, msg}
         //       A specific API reader may failover to calling general

@@ -269,6 +269,17 @@ app.readurl = (function () {
     }
 
 
+    //Some sites like to provide an error page as a successful return, which
+    //makes it hard to figure out what is going on.  Noting those here.
+    //Keep these as specific as possible to avoid colliding with anything
+    //that might actually be a reasonable title.
+    function titleIsActuallyError (val) {
+        var ets = ["Sucuri WebSite Firewall - Access Denied"];
+        val = val.toLowerCase();  //target substring might vary
+        return ets.some((t) => val.indexOf(t.toLowerCase()) >= 0);
+    }
+
+
     //Set both the title and the name in the membic details.  If the revtype
     //is changed later, having the other value filled in makes things easier.
     function setTitle (membic, html, url) {
@@ -286,6 +297,15 @@ app.readurl = (function () {
             val = findTagContents(html, "title", url);
             if(!val) {
                 val = findTagContents(html, "TITLE", url); } }
+        if(titleIsActuallyError(val)) {
+            jt.log("readurl ignoring error title: " + val);
+            //reset the title to the url, which is the default used to
+            //indicate no title has been read yet.  If the read is being
+            //done to overwrite a bad value, this needs to be reset to
+            //indicate the title was not actually read.
+            membic.details.name = url;
+            membic.details.title = url;
+            val = ""; }
         if(val) {
             val = fixSpamdexing(val);
             //decodeURIComponent not needed, but catch common extra encodings..
@@ -441,6 +461,8 @@ return {
         jt.log("app.readurl fetching " + url);
         var apiurl = app.login.authURL("/api/urlcontents") +
             "&url=" + jt.enc(url) + jt.ts("&cb=", "second");
+        //sample short circuiting to reparse from log file:
+        //fetchmech = jt.enc("urlcontents_2020-07-01T21:20:49Z");
         if(fetchmech) {
             apiurl += "&fetchmech=" + fetchmech; }
         jt.call("GET", apiurl, null,
