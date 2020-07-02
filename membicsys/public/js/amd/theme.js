@@ -488,6 +488,7 @@ return {
         var tu = {dsType:"Theme", dsId:theme.dsId};
         app.pcd.readCommonSettingsFields(tu, theme);  //hashtag, colors
         tu.keywords = jt.byId("kwrdsin").value.trim() || "UNSET_VALUE";
+        tu.cliset.sortby = jt.byId("themesortsel").selectedOptions[0].value;
         app.theme.update(tu,
             function (theme) { //updated theme already cached
                 jt.out("settingsinfdiv", "Updated " + theme.name + ".");
@@ -497,6 +498,25 @@ return {
                 jt.byId("settingsupdbutton").disabled = false;
                 jt.out("settingsinfdiv", "Update failed code " + code + " " +
                         errtxt); });
+    },
+
+
+    prebsort: function (obj, preb) {
+        if((obj.dsType !== "Theme") || obj.cliset.sortby !== "rating") {
+            return preb; }  //standard recency ordering
+        //When sorting by rating, loading overflows sorted by time doesn't
+        //make sense.  You might suddenly get a new top rated membic that
+        //previously went into an overflow.  Doesn't work.  Recent only.
+        preb = preb || [];
+        if(preb.length) {
+            if(preb[preb.length - 1].dsType === "Overflow") {
+                preb = preb.slice(0, -1); }  //Remove Overflow
+            else { //make a shallow copy to destructively sort
+                preb = preb.slice(0); }
+            //Not bothering with secondary ordering in the sort since the
+            //initial ordering is most recent first. Should be good enough.
+            preb.sort(function (a, b) { return b.rating - a.rating; }); }
+        return preb;
     },
 
 

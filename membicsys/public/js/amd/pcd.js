@@ -461,7 +461,7 @@ app.pcd = (function () {
                                     descr:obj.description || obj.aboutme || "",
                                     exturl:fullurl,
                                     rssurl:rssURLForObj(obj)});
-        app.pcd.setPageActions({itlist:obj.preb,
+        app.pcd.setPageActions({itlist:app.theme.prebsort(obj, obj.preb),
                                 itmatchf:srchmgr.match,
                                 itdispf:membicDisplayHTML,
                                 contextobj:obj, extraobj:extra,
@@ -680,12 +680,14 @@ app.pcd = (function () {
     }
 
 
-    //Themes have custom keywords, profiles don't.  Putting keywords on
-    //profileseventually restricts the content of what a user might choose
-    //to post, and the only way out is to create another account.  Better to
-    //encourage creating a theme.  No need to display the keywords entry
-    //unless making changes, since the keywords can be easily seen by
-    //clicking the search input.
+    //Themes have custom keywords, profiles don't.  Putting keywords in
+    //profiles eventually restricts the kinds of content a user might choose
+    //to post, because they are discouraged from posting something outside
+    //of the keywords they have set up and invested in.  Then they want to
+    //set up a new account or a separate account profile somehow.  That's
+    //what themes are for.
+    //No need to display the keywords entry unless making changes, since the
+    //keywords can be easily seen by clicking the search input.
     function keywordsSetting (embobj, canmod) {
         if((embobj.dsType !== "Theme") || !canmod) {
             return ""; }
@@ -695,6 +697,23 @@ app.pcd = (function () {
               ["input", {type:"text", cla:"lifin", id:"kwrdsin",
                          value:embobj.keywords || "",
                          placeholder:"Comma separated values"}]]]);
+    }
+
+
+    function sortOrderSetting (embobj, canmod) {
+        if((embobj.dsType !== "Theme") || !canmod) {
+            return ""; }
+        var sortby = embobj.cliset.sortby;
+        var opts = [{val:"recency", lab:"Creation Time"},
+                    {val:"rating", lab:"Star Rating"}];
+        opts = opts.map(function (opt) {
+            return ["option", {value:opt.val,
+                               selected:jt.toru(opt.val === sortby)},
+                    opt.lab]; });
+        return jt.tac2html(
+            ["div", {cla:"cbdiv"},
+             [["label", {fo:"themesortsel", cla:"liflab"}, "Sorting"],
+              ["select", {id:"themesortsel", cla:"lifin"}, opts]]]);
     }
 
 
@@ -731,6 +750,7 @@ app.pcd = (function () {
             [hashtagSetting(embobj, canmod),
              webfeedSetting(embobj),
              keywordsSetting(embobj, canmod),
+             sortOrderSetting(embobj, canmod),
              embedSetting(embobj, canmod)]);
     }
 

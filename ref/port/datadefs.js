@@ -61,6 +61,7 @@ module.exports = (function () {
         // cliset: {flags:{archived:ISO},  //no new membics for theme if set
         //          mailins:"enabled",     //"disabled" if Mail-Ins not allowed
         //          audchgem:"enabled",    //"disabled" if no audience chg email
+        //          sortby:"recency",      //"rating" if top rated first
         //          embcolors:{link:"#84521a", hover:"#a05705"},
         //          //No longer supported:
         //          maxPostsPerDay:1,  //prev max of 2
