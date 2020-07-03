@@ -1450,7 +1450,7 @@ return {
         var expid = membicExpId(membic);
         if(exp === "closed") {
             expandedMembics[expid] = ""; }
-        if(exp === "unchanged") {  //essentially a display refresh
+        else if(exp === "unchanged") {  //essentially a display refresh
             expandedMembics[expid] = expandedMembics[expid] || ""; }
         else if(exp) {  //opened.  use exp value as open value
             expandedMembics[expid] = exp; }
