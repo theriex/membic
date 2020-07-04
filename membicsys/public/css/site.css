@@ -147,7 +147,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .rssico { height:11px; width:11px; vertical-align:middle; padding:0px 5px;}
 
 /* >> connect layout and docs text */
-.membicdetailsp { font-size:medium; margin:8px 0px; }
+.membicdetailsp { font-size:medium; margin:6px 0px 2px; }
 .footerlinksdiv { font-size:small; text-align:center; }
 .doclinkaspan { margin:0px 16px 0px 0px; }
 
