@@ -483,11 +483,23 @@ return {
     },
 
 
+    kwrdstrim: function (kws, verb) {
+        verb = verb || "collapse";
+        kws = kws.replace(/\r?\n/g, ",");   //treat newlines as commas
+        kws = kws.replace(/,\s*/g, ",");    //remove whitespace from CSV
+        kws = kws.replace(/,,+/g, ",");     //get rid of dupe commas
+        if(verb === "expand") {
+            kws = kws.replace(/,/g, "\n"); }
+        return kws;
+    },
+
+
     settingsUpdate: function () {
         var theme = app.pcd.getActobjContext();
         var tu = {dsType:"Theme", dsId:theme.dsId};
         app.pcd.readCommonSettingsFields(tu, theme);  //hashtag, colors
         tu.keywords = jt.byId("kwrdsin").value.trim() || "UNSET_VALUE";
+        tu.keywords = app.theme.kwrdstrim(tu.keywords);
         tu.cliset.sortby = jt.byId("themesortsel").selectedOptions[0].value;
         app.theme.update(tu,
             function (theme) { //updated theme already cached

@@ -694,9 +694,9 @@ app.pcd = (function () {
         return jt.tac2html(
             ["div", {cla:"cbdiv"},
              [["label", {fo:"kwrdsin", cla:"liflab"}, "Keywords"],
-              ["input", {type:"text", cla:"lifin", id:"kwrdsin",
-                         value:embobj.keywords || "",
-                         placeholder:"Comma separated values"}]]]);
+              ["textarea", {cla:"lifin", id:"kwrdsin", rows:6,
+                            placeholder:"Comma separated values"},
+               app.theme.kwrdstrim(embobj.keywords || "", "expand")]]]);
     }
 
 
