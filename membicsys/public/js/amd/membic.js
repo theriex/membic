@@ -272,7 +272,7 @@ app.membic = (function () {
 
 
     function editableWithPlaceholder (cdx, idbase, placetxt) {
-        return {cla:idbase, id:idbase + cdx, contenteditable:"true",
+        return {cla:idbase, id:idbase + cdx, contentEditable:"true",
                 "data-placetext":placetxt,
                 //need to check for input so form can react to change text
                 oninput:jt.fs("app.membic.formInput(" + cdx + ")"),
@@ -500,19 +500,31 @@ app.membic = (function () {
     }
 
 
-    //The membic image used to be driven by membic.svcdata.picdisp value:
-    //  - "upldpic": Use the uploaded image for the membic.  No longer
-    //    supported but kept for backward compatibility with older data.
-    //  - "sitepic": Use the site pic (if imguri available)
-    //  - "nopic": Don't display a pic even if there is one.  No longer
-    //    supported since it just looks like the reader failed.
+    //Return the image src to be used in the membic display.  By default the
+    //image provided by the site, or blank.  If an image has been uploaded,
+    //then use that as specified.
     function membicImgSrc (membic) {
         var imgsrc = app.dr("img/blank.png");
         if(membic.svcdata && membic.svcdata.picdisp === "upldpic") {
-            imgsrc = "/api/obimg?dt=Membic&di=" + membic.dsId; }
+            var cb = jt.enc(membic.svcdata.picchgt || membic.modified);
+            imgsrc = "/api/obimg?dt=Membic&di=" + membic.dsId + "&cb=" + cb; }
         else if(membic.imguri) {
             imgsrc = "/api/imagerelay?membicid=" + membic.dsId; }
         return imgsrc;
+    }
+
+
+    function mdfs (mgrfname, ...args) {
+        mgrfname = mgrfname.split(".");
+        var fs = "app.membic.managerDispatch('" + mgrfname[0] + "','" +
+            mgrfname[1] + "'";
+        if(args && args.length) {
+            fs += args.reduce(function (acc, arg) {
+                if(typeof arg === "string") {
+                    arg = "'" + arg + "'"; }
+                return acc + arg; }, ","); }
+        fs += ")";
+        return jt.fs(fs);
     }
 
 
@@ -607,7 +619,7 @@ app.membic = (function () {
         Object.keys(formElements).forEach(function (key) {
             var chgval = formElements[key].changed(cdx, membic);
             if(chgval) {
-                formElements[key].write(chgval, updm); } });
+                formElements[key].write(chgval, updm, membic); } });
         if(updm.details) {  //updating details, keep existing detail fields
             var detflds = ["title", "name", "artist", "author", "publisher",
                            "album", "starring", "address", "year"];
@@ -664,6 +676,20 @@ app.membic = (function () {
                 jt.out("dlgbsmsgdiv" + cdx, "Delete failed " + code + ": " +
                        txt);
                 jt.out("dlgbsbdiv" + cdx, bhtml); });
+    }
+
+
+    //Return a copy the existing svcdata field values from the source membic.
+    //Helpful for not clobbering one field when updating another.
+    function copySvcData (membic) {
+        var sdfs = ["picdisp", "postctms", "urlreader"];
+        var cpsd = {};
+        if(membic.svcdata) {
+            sdfs.forEach(function (sdf) {
+                var sdv = membic.svcdata[sdf];
+                if(sdv) {
+                    cpsd[sdf] = JSON.parse(JSON.stringify(sdv)); } }); }
+        return cpsd;
     }
 
 
@@ -839,7 +865,7 @@ app.membic = (function () {
     function togIfEdit(attrs, cdx, membic, oninputfstr) {
         if(expandedMembics[membicExpId(membic)]) {  //currently expanded
             if(oninputfstr && mayEdit(membic)) {
-                attrs.contenteditable = "true";
+                attrs.contentEditable = "true";
                 attrs.oninput = oninputfstr; } }
         else { //currently collapsed
             attrs.style = "cursor:crosshair;";
@@ -1171,6 +1197,125 @@ app.membic = (function () {
     };
 
 
+    //Reader details and image management access
+    var rdrmgr = {
+        toggle: function (cdx) {
+            if(jt.byId("mdrdrdetcontdiv" + cdx).innerHTML) {
+                return jt.out("mdrdrdetcontdiv" + cdx, ""); }
+            var rsd = rdrmgr.readerSummaryDetails(cdx);
+            jt.out("mdrdrdetcontdiv" + cdx, jt.tac2html(
+                [["div", {cla:"toprightxdiv"},
+                  ["a", {href:"#close", onclick:mdfs("rdrmgr.toggle", cdx)},
+                   "X"]],
+                 ["div",
+                  [["b", rsd.name], " ",
+                   ["em", "status"], ": ", rsd.status, ", ",
+                   ["em", "result"], ": ", rsd.result]],
+                 ["div", rsd.timing],
+                 ["div", rsd.filled],
+                 ["div", {cla:"formbuttonsdiv", id:"mdrdetbuttonsdiv" + cdx},
+                  rdrmgr.buttons(cdx, rsd)]])); },
+        readerSummaryDetails: function (cdx) {
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var rsd = {name:"Unknown", status:"None", result:"-",
+                       timing:"", filled:""};
+            if(membic.svcdata && membic.svcdata.urlreader) {
+                var rdr = membic.svcdata.urlreader;
+                rsd.name = rdr.name;
+                rsd.status = rdr.status;
+                rsd.result = rdr.result;
+                if(rdr.log && rdr.log.length) {
+                    var log = rdr.log[rdr.log.length - 1];
+                    var etms = jt.isoString2Time(log.end).getTime();
+                    var stms = jt.isoString2Time(log.start).getTime();
+                    var elap = Math.round((etms - stms) / 10);  //100th sec
+                    rsd.timing = log.start + " ~ " + (elap / 100) + " seconds.";
+                    rsd.filled = log.msg; } }
+            return rsd; },
+        buttons: function (cdx, rsd) {
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var subj = "Missing info for Membic " + membic.dsId;
+            var body = "Hi,\n\nNoticed missing info for Membic " + membic.dsId +
+                "\nReader: " + rsd.name + " status: " + rsd.status + 
+                ", result: " + rsd.result + "\n" +
+                "Timing: " + (rsd.timing || "No timing info") + "\n" +
+                "Message: " + (rsd.filled || "No details filled out") + "\n\n" +
+                "Could you look into this?\n\n" +
+                "thanks,\n\n";
+            var link = "mailto:support@membic.org?subject=" +
+                jt.dquotenc(subj) + "&body=" + jt.dquotenc(body) + "%0A%0A";
+            var imgselb = ["button", {type:"button", cla:"membicformbutton",
+                                      onclick:mdfs("rdrmgr.uploadForm", cdx)},
+                           "Upload&nbsp;Image"];
+            if(membic.svcdata.picdisp === "upldpic") {
+                imgselb = ["button", {type:"button", cla:"membicformbutton",
+                                      onclick:mdfs("rdrmgr.useSitePic", cdx)},
+                           "Use&nbsp;Site&nbsp;Image"]; }
+            return jt.tac2html(
+                [["a", {cla:"linkbutton", href:link},
+                  "Report&nbsp;Missing&nbsp;Info"],
+                 " &nbsp; ",
+                 imgselb]); },
+        uploadForm: function (cdx) {
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var auth = app.login.authenticated();
+            var monfstr = mdfs("rdrmgr.monitorUpload", cdx);
+            monfstr = monfstr.replace("return false;", "");
+            jt.out("mdrdetbuttonsdiv" + cdx, jt.tac2html(
+                [["form", {id:"mpuform", action:"/api/uploadimg",
+                           method:"post", target:"mpuif" + cdx,
+                           enctype:"multipart/form-data"},
+                  [["input", {type:"hidden", name:"an", value:auth.email}],
+                   ["input", {type:"hidden", name:"at", value:auth.token}],
+                   ["input", {type:"hidden", name:"dsType", value:"Membic"}],
+                   ["input", {type:"hidden", name:"dsId", value:membic.dsId}],
+                   ["label", {fo:"picfilein"}, "Upload image"],
+                   ["input", {type:"file", id:"picfilein", name:"picfilein",
+                              accept:"image/*",
+                              onchange:mdfs("rdrmgr.enableUploadButton", cdx)}],
+                   ["div", {id:"mbcpicupldstatdiv" + cdx}],
+                   ["div", {id:"mbcpicupldbuttonsdiv" + cdx},
+                    ["button", {type:"submit", id:"mbcpicupldbutton" + cdx,
+                                onclick:monfstr}, "Upload"]]]],
+                 ["iframe", {id:"mpuif" + cdx, name:"mpuif" + cdx,
+                             src:"/api/uploadimg", style:"display:none"}]]));
+            jt.byId("mbcpicupldbutton" + cdx).disabled = true; },
+        enableUploadButton: function (cdx) {
+            jt.byId("mbcpicupldbutton" + cdx).disabled = false; },
+        monitorUpload: function (cdx) {
+            var iframe = jt.byId("mpuif" + cdx);
+            if(!iframe) {
+                return jt.log("rdrmgr.monitorUpload exiting since no iframe"); }
+            jt.byId("mbcpicupldbutton" + cdx).disabled = true;
+            var statdiv = jt.byId("mbcpicupldstatdiv" + cdx);
+            if(!statdiv.innerHTML) {
+                statdiv.innerHTML = "Uploading"; }
+            else {  //add a monitoring dot
+                statdiv.innerHTML = statdiv.innerHTML + "."; }
+            var txt = iframe.contentDocument || iframe.contentWindow.document;
+            if(!txt || !txt.body || txt.body.innerHTML.indexOf("Ready") >= 0) {
+                return app.fork({descr:"monitor membic img upload", ms:1000,
+                                 func:function () {
+                                     rdrmgr.monitorUpload(cdx); }}); }
+            //upload complete, update image or report error
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            txt = txt.body.innerHTML;
+            if(txt.indexOf("Done: ") >= 0) { //successful upload
+                membic.svcdata.picdisp = "upldpic";
+                membic.svcdata.picchgt = rdrmgr.readDoneTimestamp(txt); }
+            else {  //report error
+                jt.err(txt); }
+            app.membic.toggleMembic(cdx, "unchanged", membic); },
+        readDoneTimestamp: function (txt) {
+            return txt.match(/Done:\s([^<\s]+)/)[1]; },
+        useSitePic: function (cdx) {
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            membic.svcdata.picdisp = "sitepic";
+            membic.svcdata.picchgt = new Date().toISOString();
+            app.membic.toggleMembic(cdx, "unchanged", membic); }
+    };
+
+
     formElements = {
         title: {
             closed: function (ignore /*cdx*/, membic) {
@@ -1308,6 +1453,13 @@ app.membic = (function () {
                 var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
                 membic.rurl = membic.rurl;
                 startReader(membic, overwrite); } },
+        imgrdr: {  //closed unless currently using. modal.
+            closed: function (cdx) {
+                return jt.tac2html(["div", {id:"mdrdrdetcontdiv" + cdx}]); },
+            expanded: function (cdx) {
+                return formElements.imgrdr.closed(cdx); },
+            changed: function () { return false; },
+            write: function () { return; } },
         picture: {
             closed: function (ignore /*cdx*/, membic) {
                 var link = linkForMembic(membic);
@@ -1319,13 +1471,21 @@ app.membic = (function () {
                 return jt.tac2html(["div", {cla:"mdpicdiv"},
                                     html]); },
             expanded: function (cdx, membic) {
-                if(mayEdit(membic)) { //no link, too many clickables
+                if(mayEdit(membic)) { //access reader details and actions
                     return jt.tac2html(
                         ["div", {cla:"mdpicdiv"},
-                         ["img", {cla:"mdimg", src:membicImgSrc(membic)}]]); }
+                         ["a", {href:"#readinfo", cla:"mdrdrdetlink",
+                                title:"Show reader details",
+                                onclick:mdfs("rdrmgr.toggle", cdx)},
+                          ["img", {cla:"mdimg", src:membicImgSrc(membic)}]]]); }
                 return formElements.picture.closed(cdx, membic); },
-            changed: function () { return false; },
-            write: function () { return; } },
+            changed: function (ignore /*cdx*/, membic) {
+                if(membic.svcdata.picchgt > membic.modified) {
+                    return membic.svcdata.picdisp; }
+                return false; },
+            write: function (chgval, updobj, membic) {
+                updobj.svcdata = updobj.svcdata || copySvcData(membic);
+                updobj.svcdata.picdisp = chgval; } },
         text: {
             closed: function (cdx, membic, expanded) {
                 return jt.tac2html(
@@ -1341,11 +1501,13 @@ app.membic = (function () {
                                                     placetext),
                      (exposeTags(membic.text) || placetext)]); },
             changed: function (cdx, membic) {
-                var mt = membic.text.trim();
-                var dt = jt.byId("mdtxtdiv" + cdx).innerHTML.trim();
+                var mt = fixCommonTextAnnoyances(membic.text.trim());
+                var dd = jt.byId("mdtxtdiv" + cdx);
+                if(dd.contentEditable !== "true") {  //expansion not done yet
+                    return false; }
+                var dt = fixCommonTextAnnoyances(dd.innerHTML.trim());
                 return jt.toru(mt !== dt, dt); },
             write: function (chgval, updobj) {
-                chgval = fixCommonTextAnnoyances(chgval);
                 updobj.text = chgval; } },
         details: {
             closed: function () {
@@ -1371,8 +1533,8 @@ app.membic = (function () {
             changed: function (cdx, membic) {
                 var tps = tpmgr.selectedPostThemes(cdx, membic);
                 return jt.toru(tpmgr.themePostsChanged(membic, tps), tps); },
-            write: function (chgval, updobj) {
-                updobj.svcdata = updobj.svcdata || {};
+            write: function (chgval, updobj, membic) {
+                updobj.svcdata = updobj.svcdata || copySvcData(membic);
                 updobj.svcdata.postctms = chgval; } },
         keywords: {
             closed: function (cdx, membic) {
@@ -1596,6 +1758,8 @@ return {
                  formElementHTML("stars", cdx, membic)]],
                ["div", {cla:"mddlgbsdiv"},
                 formElementHTML("dlgbs", cdx, membic)],
+               ["div", {cla:"mdrdrdetdiv"},
+                formElementHTML("imgrdr", cdx, membic)],
                ["div", {cla:"mdbodydiv"},
                 [formElementHTML("picture", cdx, membic),
                  formElementHTML("text", cdx, membic),
@@ -1631,6 +1795,14 @@ return {
                 event.target.innerText === event.target.dataset.placetext) {
             event.target.innerHTML = ""; }
     },
+
+
+    managerDispatch: function (mgrname, fname, ...args) {
+        switch(mgrname) {
+        case "rdrmgr": return rdrmgr[fname].apply(app.membic, args);
+        default: jt.log("membic.managerDispatch unknown manager: " + mgrname); }
+    },
+
 
     ratingEventDispatch: function (event) { ratmgr.handleEvent(event); },
     typesel: function (c, t, e) { typemgr.typesel(c, t, e); },

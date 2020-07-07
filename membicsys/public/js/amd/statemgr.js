@@ -17,7 +17,7 @@ app.statemgr = (function () {
             return; }
         state = state || history.state;
         var prof = app.login.myProfile();
-        if(prof && state.dsType !== "MUser" && state.dsId !== prof.dsId) {
+        if(prof && (state.dsType !== "MUser" || state.dsId !== prof.dsId)) {
             //provide link back to own profile page
             tndiv.innerHTML = jt.tac2html(
                 ["div", {cla:"navicodiv"},

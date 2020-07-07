@@ -732,6 +732,12 @@ def uploadimg():
             updobj = muser
             # account does not need to be active to upload a profile pic
             picfld = "profpic"
+        elif dsType == "Membic":
+            verify_active_account(muser)
+            updobj = dbacc.cfbk("Membic", "dsId", dsId, required=True)
+            if updobj["penid"] != muser["dsId"]:
+                raise ValueError("Can only upload image to your own membic")
+            picfld = "revpic"
         else:  # treat as Theme
             verify_active_account(muser)
             updobj = dbacc.cfbk("Theme", "dsId", dsId, required=True)
