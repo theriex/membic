@@ -531,7 +531,8 @@ app.pcd = (function () {
                     var aldiv = jt.byId("pcdassoclinksdiv");
                     if(aldiv.innerText) {
                         aldiv.innerHTML += " | "; }
-                    aldiv.innerHTML += app.membic.pnhtml(0, 0, pn); } }); }
+                    aldiv.innerHTML += app.membic.managerDispatch(
+                        "tpmgr", "postNoteHTML", 0, 0, pn); } }); }
     }
 
 

@@ -156,54 +156,6 @@ app.membic = (function () {
     }
 
 
-    function responseButtonHTML (cdx, membic) {
-        var subj = "Re: " + jt.ellipsis(membicReferenceText(membic), 75);
-        var body = emquoteMembicFields(membic);
-        var mlink = "mailto:forwarding@membic.org?subject=" +
-            jt.dquotenc(subj) + "&body=" + "%0A%0A" + jt.dquotenc(body) + "%0A";
-        var linkattrs = {cla:"linkbutton", href:mlink};
-        var prof = app.login.myProfile();
-        var ctxobj = app.pcd.getDisplayContext().actobj.contextobj;
-        var assoc = app.theme.profassoc(ctxobj.dsType, ctxobj.dsId);
-        if(!prof) {
-            linkattrs = {cla:"linkbutton linkbutdis", href:"#signInToRespond",
-                         onclick:jt.fs("app.membic.resperr(" + cdx +
-                                       ",'signin')")}; }
-        else if(!assoc.lev) {  //undefined or not following
-            linkattrs = {cla:"linkbutton linkbutdis", href:"#followToRespond",
-                         onclick:jt.fs("app.membic.resperr(" + cdx +
-                                       ",'follow')")}; }
-        return jt.tac2html(["a", linkattrs, "Send&nbsp;Comment"]);
-    }
-
-
-    function resperr (cdx, errt, ack) {
-        var actobj = app.pcd.getDisplayContext().actobj;
-        switch(errt) {
-        case "signin":
-            jt.out("mcmtdiv" + cdx, "Sign In to comment");
-            if(app.solopage()) {
-                jt.out("mcmtdiv" + cdx, jt.tac2html(
-                    ["a", {href:app.docroot,
-                           onclick:jt.fs("window.open('" + app.docroot + "')")},
-                     "Sign In to comment"])); }
-            break;
-        case "follow":
-            if(!ack) {
-                jt.out("mcmtdiv" + cdx, jt.tac2html(
-                    ["a", {href:"#Follow",
-                           onclick:jt.fs("app.membic.resperr(" + cdx +
-                                         ",'follow',true)")},
-                     "To comment, follow " + actobj.contextobj.name])); }
-            else {  //clicked to follow
-                jt.out("mcmtdiv" + cdx, "");
-                app.pcd.settings(); }
-            break;
-        default:
-            jt.out("membic.resperr unknown errt: " + errt); }
-    }
-
-
     function myMembic (membic) {
         var prof = app.login.myProfile();
         if(prof && prof.dsId === membic.penid) {
@@ -220,29 +172,6 @@ app.membic = (function () {
         if(myMembic(membic) && !membic.ctmid) {
             return true; }
         return false;
-    }
-
-
-    //Thought about adding membic share button to make your own membic off
-    //of an existing one, but that adds complexity, would likely be of very
-    //limited use, and detract from the external nature of sharing.  To make
-    //a membic off an existing membic you can always use the mail share and
-    //mail it in.
-    function membicShareHTML (cdx, membic) {
-        var subj = membic.text;
-        var body = linkForMembic(membic) || "No URL available";
-        var mlink = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
-            jt.dquotenc(body) + "%0A%0A";
-        var tac = app.layout.shareButtonsTAC(
-            {url:body,
-             title:subj,
-             mref:mlink,
-             socmed:["tw", "fb", "em"]});
-        if(!mayEdit(membic)) {  //respond option if not yours
-            tac.push(["span", {cla:"sharerespsepspan"}, "&nbsp;|&nbsp;"]);
-            tac.push(responseButtonHTML(cdx, membic));
-            tac.push(["div", {id:"mcmtdiv" + cdx}]); }
-        return jt.tac2html(tac);
     }
 
 
@@ -514,24 +443,28 @@ app.membic = (function () {
     }
 
 
-    function mdfs (mgrfname, ...args) {
-        mgrfname = mgrfname.split(".");
-        var fs = "app.membic.managerDispatch('" + mgrfname[0] + "','" +
-            mgrfname[1] + "'";
+    function paramstr (args) {
+        var ps = "";
         if(args && args.length) {
-            fs += args.reduce(function (acc, arg) {
-                if(typeof arg === "string") {
+            ps = args.reduce(function (acc, arg) {
+                if((typeof arg === "string") && (arg !== "event")) {
                     arg = "'" + arg + "'"; }
-                return acc + arg; }, ","); }
-        fs += ")";
-        return jt.fs(fs);
+                return acc + "," + arg; }, ""); }
+        return ps;
     }
 
 
-    function dispatchFStr (cdx, formfuncstr) {
-        formfuncstr = formfuncstr.split(".");
-        return jt.fs("app.membic.formDispatch('" + formfuncstr[0] + "','" +
-                     formfuncstr[1] + "'," + cdx + ")");
+    function mdfs (mgrfname, ...args) {
+        mgrfname = mgrfname.split(".");
+        return jt.fs("app.membic.managerDispatch('" + mgrfname[0] + "','" +
+                     mgrfname[1] + "'" + paramstr(args) + ")");
+    }
+
+
+    function fdfs (formfname, ...args) {
+        formfname = formfname.split(".");
+        return jt.fs("app.membic.formDispatch('" + formfname[0] + "','" +
+                     formfname[1] + "'" + paramstr(args) + ")");
     }
 
 
@@ -704,6 +637,74 @@ app.membic = (function () {
     }
 
 
+    var sharemgr = {
+        //Thought about adding membic share button to create your own membic
+        //from an existing one, but that adds complexity, would likely be of
+        //very limited use, and detract from the external nature of sharing.
+        //To make a membic off an existing membic you can always use the
+        //mail share and mail it in.
+        membicShareHTML: function  (cdx, membic) {
+            var subj = membic.text;
+            var body = linkForMembic(membic) || "No URL available";
+            var mlink = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
+                jt.dquotenc(body) + "%0A%0A";
+            var tac = app.layout.shareButtonsTAC(
+                {url:body,
+                 title:subj,
+                 mref:mlink,
+                 socmed:["tw", "fb", "em"]});
+            if(!mayEdit(membic)) {  //respond option if not yours
+                tac.push(["span", {cla:"sharerespsepspan"}, "&nbsp;|&nbsp;"]);
+                tac.push(sharemgr.responseButtonHTML(cdx, membic));
+                tac.push(["div", {id:"mcmtdiv" + cdx}]); }
+            return jt.tac2html(tac); },
+        responseButtonHTML: function (cdx, membic) {
+            var subj = "Re: " + jt.ellipsis(membicReferenceText(membic), 75);
+            var body = emquoteMembicFields(membic);
+            var mlink = "mailto:forwarding@membic.org?subject=" +
+                jt.dquotenc(subj) + "&body=" + "%0A%0A" + jt.dquotenc(body) +
+                "%0A";
+            var linkattrs = {cla:"linkbutton", href:mlink};
+            var prof = app.login.myProfile();
+            var ctxobj = app.pcd.getDisplayContext().actobj.contextobj;
+            var assoc = app.theme.profassoc(ctxobj.dsType, ctxobj.dsId);
+            if(!prof) {
+                linkattrs = {cla:"linkbutton linkbutdis",
+                             href:"#signInToRespond",
+                             onclick:mdfs("sharemgr.resperr", cdx, "signin")}; }
+            else if(!assoc.lev) {  //undefined or not following
+                linkattrs = {cla:"linkbutton linkbutdis",
+                             href:"#followToRespond",
+                             onclick:mdfs("sharemgr.resperr", cdx, "follow")}; }
+            return jt.tac2html(["a", linkattrs, "Send&nbsp;Comment"]); },
+        resperr: function (cdx, errt, ack) {
+            var actobj = app.pcd.getDisplayContext().actobj;
+            switch(errt) {
+            case "signin":
+                jt.out("mcmtdiv" + cdx, "Sign In to comment");
+                if(app.solopage()) {
+                    jt.out("mcmtdiv" + cdx, jt.tac2html(
+                        ["a", {href:app.docroot,
+                               onclick:jt.fs("window.open('" + app.docroot +
+                                             "')")},
+                         "Sign In to comment"])); }
+                break;
+            case "follow":
+                if(!ack) {
+                    jt.out("mcmtdiv" + cdx, jt.tac2html(
+                        ["a", {href:"#Follow",
+                               onclick:mdfs("sharemgr.resperr", cdx, "follow",
+                                            true)},
+                         "To comment, follow " + actobj.contextobj.name])); }
+                else {  //clicked to follow
+                    jt.out("mcmtdiv" + cdx, "");
+                    app.pcd.settings(); }
+                break;
+            default:
+                jt.out("sharemgr.resperr unknown errt: " + errt); } }
+    };
+
+
     var tpmgr = {
         //If the theme is not cached, then there is no modified value to use
         //as an appropriate cache bust parameter.  Since a plain img src
@@ -721,20 +722,18 @@ app.membic = (function () {
                 return ""; }
             return jt.tac2html(
                 ["button", {type:"button", title:"Remove membic from theme",
-                            onclick:jt.fs("app.membic.themepost(" + cdx +
-                                          ",'remove','" + pn.ctmid + "')")},
+                            onclick:mdfs("tpmgr.themepost", cdx, "remove",
+                                         pn.ctmid)},
                  "x"]); },
         addPostContentHTML: function (cdx, select) {
             if(!select) {
                 return jt.tac2html(
                     ["button", {type:"button", title:"Add Theme Post",
-                                onclick:jt.fs("app.membic.themepost(" + cdx +
-                                              ",'add')")},
+                                onclick:mdfs("tpmgr.themepost", cdx, "add")},
                      "+"]); }
             return jt.tac2html(
                 ["select", {cla:"themepostsel", id:"themepostsel" + cdx,
-                            onchange:jt.fs("app.membic.themepost(" + cdx + 
-                                           ",'select')")},
+                            onchange:mdfs("tpmgr.themepost", cdx, "select")},
                  tpmgr.themePostOptionsHTML(cdx)]); },
         availableThemeIds: function (uts, skiptidcsv) {
             return Object.keys(uts).filter(function (tid) {
@@ -787,23 +786,22 @@ app.membic = (function () {
                 var pt = app.login.myProfile().themes[tid];
                 pn = {ctmid:tid, name:pt.name, revid:0}; }
             return pn; },
-        redrawUpdatedThemes: function (cdx, pns) {
+        redrawUpdatedThemes: function (cdx, pns, membic, selkws) {
             jt.out("postnotescontdiv" + cdx,
                    tpmgr.themePostsHTML(cdx, true, pns));
-            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-            kwmgr.redrawKeywords(cdx, membic,
-                                 kwmgr.selectedKeywords(cdx, membic)); },
+            kwmgr.redrawKeywords(cdx, membic, selkws); },
         themepost: function (cdx, command, ctmid) {
             var pne = jt.byId("postnoteslabel" + cdx);
             pne.innerHTML = "Post to: ";  //clarify actions take effect on save
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var selkws = kwmgr.selectedKeywords(cdx, membic);  //opts may change
             var pns = tpmgr.selectedPostThemes(cdx, membic);
             switch(command) {
             case "remove":  //remove the ctmid and redraw posts
                 pns = pns.filter((pn) => pn.ctmid !== ctmid);
                 if(pne) {
                     pne.dataset.tidcsv = pne.dataset.tidcsv.csvremove(ctmid); }
-                tpmgr.redrawUpdatedThemes(cdx, pns);
+                tpmgr.redrawUpdatedThemes(cdx, pns, membic, selkws);
                 break;
             case "add":  //replace '+' with a list of options
                 jt.out("addthemepostdiv" + cdx,
@@ -813,7 +811,7 @@ app.membic = (function () {
                 ctmid = jt.byId("themepostsel" + cdx);
                 ctmid = ctmid.options[ctmid.selectedIndex].value;
                 pns.push(tpmgr.postNoteForThemeId(cdx, membic, ctmid));
-                tpmgr.redrawUpdatedThemes(cdx, pns);
+                tpmgr.redrawUpdatedThemes(cdx, pns, membic, selkws);
                 break; }
             app.membic.formInput(cdx); },  //note any changes
         themePostsHTML: function (cdx, editable, pns) {
@@ -964,14 +962,12 @@ app.membic = (function () {
         openClickHTML: function (cdx, mt) {
             return jt.tac2html(
                 ["a", {href:"#changetype", title:"Change Membic Type",
-                       onclick:jt.fs("app.membic.typesel(" + cdx + ",'" +
-                                     mt.type + "',true)")},
+                       onclick:mdfs("typemgr.typesel", cdx, mt.type, true)},
                  typemgr.imgHTMLForType(cdx, mt)]); },
         selectClickHTML: function (cdx, mt, idsuf) {
             return jt.tac2html(
                 ["a", {href:"#" + mt.type, title:"Select " + mt.type,
-                       onclick:jt.fs("app.membic.typesel(" + cdx + ",'" +
-                                     mt.type + "',false)")},
+                       onclick:mdfs("typemgr.typesel", cdx, mt.type, false)},
                  typemgr.imgHTMLForType(cdx, mt, idsuf)]); },
         typesHTML: function (cdx, mt, expanded) {
             if(!expanded) {
@@ -1043,7 +1039,7 @@ app.membic = (function () {
                   ratmgr.ctrlOverlayHTML(cdx, membic)]]); },
         ctrlOverlayHTML: function (cdx, membic) {
             if(mayEdit(membic)) {
-                var ehs = "app.membic.ratingEventDispatch(event)";
+                var ehs = mdfs("ratmgr.handleEvent", "event");
                 return jt.tac2html(
                     ["div", {cla:"ratctrldiv", id:"ratctrldiv" + cdx,
                              style:"position:absolute;top:0px;left:0px;" +
@@ -1151,7 +1147,7 @@ app.membic = (function () {
                   ["input", {type:"text", id:"newkwin" + cdx,
                              placeholder:"New Keyword"}],
                   ["button", {type:"button", title:"Add Keyword",
-                              onclick:dispatchFStr(cdx, "keywords.addnew")},
+                              onclick:mdfs("kwmgr.addNew", cdx)},
                    "+"]]]));
             return jt.tac2html(
                 ["div", {cla:"mdkwsdiv"},
@@ -1186,7 +1182,7 @@ app.membic = (function () {
         redrawKeywords: function (cdx, membic, currkws) {
             jt.out("mdkwscontentdiv" + cdx,
                    kwmgr.keywordsHTML(cdx, membic, true, currkws)); },
-        addNewKeywordOption: function (cdx) {
+        addNew: function (cdx) {
             var nkin = jt.byId("newkwin" + cdx);
             if(nkin && nkin.value) {
                 var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
@@ -1349,7 +1345,7 @@ app.membic = (function () {
         share: {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {
-                return membicShareHTML(cdx, membic); },
+                return sharemgr.membicShareHTML(cdx, membic); },
             changed: function () { return false; },
             write: function () { return; } },
         revtype: {
@@ -1413,7 +1409,7 @@ app.membic = (function () {
                 if(mayEdit(membic)) {
                     return formElements.dlgbs.actionAreaWrap(cdx,
                         [["a", {href:"#delete", title:"Delete Membic",
-                                onclick:dispatchFStr(cdx, "dlgbs.mrkdel")},
+                                onclick:fdfs("dlgbs.mrkdel", cdx)},
                           ["img", {cla:"masactbimg",
                                    src:app.dr("img/trash.png")}]],
                          formElements.dlgbs.actionButtons(cdx, membic)]); }
@@ -1432,11 +1428,10 @@ app.membic = (function () {
                 if(edited) {
                     ret.push(mkb("Cancel",
                         jt.fs("app.membic.toggleMembic(" + cdx + ")")));
-                    ret.push(mkb("Save", dispatchFStr(cdx, "dlgbs.save"))); }
+                    ret.push(mkb("Save", fdfs("dlgbs.save", cdx))); }
                 else {
                     if(membicDetailsMissing(membic)) {
-                        ret.push(mkb("Refetch",
-                                     dispatchFStr(cdx, "dlgbs.read"))); }
+                        ret.push(mkb("Refetch", fdfs("dlgbs.read", cdx))); }
                     ret.push(mkb("Done Editing",
                         jt.fs("app.membic.toggleMembic(" + cdx + ")"))); }
                 return jt.tac2html(ret); },
@@ -1546,9 +1541,7 @@ app.membic = (function () {
                 return jt.toru(!kwmgr.equivKwrds(membic.keywords, kws),
                                kws || "unset_value"); },
             write: function (chgval, updobj) {
-                updobj.keywords = chgval; },
-            addnew: function (cdx) {
-                kwmgr.addNewKeywordOption(cdx); } }
+                updobj.keywords = chgval; } }
     };
 
 
@@ -1800,16 +1793,13 @@ return {
     managerDispatch: function (mgrname, fname, ...args) {
         switch(mgrname) {
         case "rdrmgr": return rdrmgr[fname].apply(app.membic, args);
+        case "tpmgr": return tpmgr[fname].apply(app.membic, args);
+        case "typemgr": return typemgr[fname].apply(app.membic, args);
+        case "ratmgr": return ratmgr[fname].apply(app.membic, args);
+        case "sharemgr": return sharemgr[fname].apply(app.membic, args);
         default: jt.log("membic.managerDispatch unknown manager: " + mgrname); }
-    },
+    }
 
-
-    ratingEventDispatch: function (event) { ratmgr.handleEvent(event); },
-    typesel: function (c, t, e) { typemgr.typesel(c, t, e); },
-    themepost: function (c, m, i) { tpmgr.themepost(c, m, i); },
-    resperr: function (cdx, errt, ack) { resperr(cdx, errt, ack); },
-    pnhtml: function (c, e, p) { return tpmgr.postNoteHTML(c, e, p); }
 
 }; //end of returned functions
 }());
-
