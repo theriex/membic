@@ -130,7 +130,7 @@ def chgtkw():
     ## Change a theme keyword and update all membics using it.
     return util.secure(useract.chgtkw)
 
-@app.route('/api/membicrefresh')
+@app.route('/api/rebmembic')
 def rebmembic():
     ## Rebuild the given membicid as if it was being updated
     return util.secure(useract.rebmembic)

@@ -781,16 +781,25 @@ def membicsave():
 
 # Like membicsave, except called by an administrator passing the membicid.
 # Typically used after making a change to a membic in the database.
+# ?an=adminemail&at=token&membicid=1234[&verb=urlreset]
 def rebmembic():
     try:
         util.administrator_auth()
         mid = dbacc.reqarg("membicid", "dbid", required=True)
         membic = dbacc.cfbk("Membic", "dsId", int(mid), required=True)
         muser = dbacc.cfbk("MUser", "dsId", membic["penid"], required=True)
+        verb = dbacc.reqarg("verb", "string")
+        if verb == "urlreset":   # undo everything done by url reader(s)
+            membic["url"] = ""   # set from rurl by reader
+            svcdata = json.loads(membic.get("svcdata") or "{}")
+            svcdata["urlreader"] = ""
+            membic["svcdata"] = json.dumps(svcdata)
+            membic["imguri"] = ""
+            membic["details"] = json.dumps({"title": membic["rurl"]})
         update_membic_and_preb(muser, membic, membic)
     except ValueError as e:
         return util.serve_value_error(e)
-    return "redmembic updated Membic " + str(mid)
+    return "rebmembic updated Membic " + str(mid)
 
 
 # Return the followers for the given theme or profile as specified in the
