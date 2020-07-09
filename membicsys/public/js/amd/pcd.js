@@ -145,6 +145,23 @@ app.pcd = (function () {
     }
 
 
+    function emqDescrip () {
+        var descr = ctx.descobj.descr;  //might contain allowed html tags
+        if(!descr) {
+            return ""; }
+        descr = descr.split("\n")  //preserve existing line breaks
+            .map(function (line) {
+                line = line.replace(/<.*?>/g, "");
+                if(line.length <= 76) {
+                    line = "> " + line; }
+                else {
+                    line = "> " + line.replace(/(.{1,76})\s/g, "$1\n> "); }
+                return line; })
+            .join("\n");           //recombine
+        return "Here's the description from the site:\n\n" + descr;
+    }
+
+
     //Even though the receiver will clearly have the sender's email address,
     //app links for sharing should avoid having the email address in them.
     //Also possible the sender is using a different address to login with
@@ -168,10 +185,7 @@ app.pcd = (function () {
         if(ctx.descobj.disptype !== "theme") {
             descrname = "The profile page for " + descrname; }
         var subj = "Invitation to " + ctx.descobj.name;
-        var body = "This is an invitation to follow \"" + ctx.descobj.name + "\" on membic.org. I think you might find upcoming links worth your time to check out.\n\n" +
-            descrname + " is a highly curated, low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). I would be interested in your thoughts and reactions. Use this link to connect: " + url + "\n";
-        if(sig) {
-            body += "\nLooking forward to hearing from you.\n" + sig + "\n"; }
+        var body = "I'm inviting you to follow \"" + ctx.descobj.name + "\" at " + url + " so you can email me back directly about upcoming membics.\n\n\"" + ctx.descobj.name + "\" is a highly curated, low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). " + emqDescrip() + "\n\nMy guess is you would be interested in links getting posted next, and I would be interested in your reactions. Use this link to connect: " + url + "\n\nThoughts welcome.\n" + sig + "\n";
         var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
             jt.dquotenc(body) + "%0A%0A";
         return link;
