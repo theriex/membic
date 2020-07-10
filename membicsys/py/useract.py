@@ -720,14 +720,14 @@ def associate():
 def uploadimg():
     picfile = flask.request.files.get("picfilein")
     if not picfile:
-        logging.debug("uploadimg Ready")
+        logging.info("uploadimg Ready")
         return util.respond("Ready", mimetype="text/plain")
     try:
         muser, _ = util.authenticate()
         dsType = dbacc.reqarg("dsType", "string", required=True)
         dsId = dbacc.reqarg("dsId", "dbid", required=True)
-        logging.debug(muser["email"] + " uploadimg image for " + dsType +
-                      " " + str(dsId))
+        logging.info(muser["email"] + " uploadimg image for " + dsType +
+                     " " + str(dsId))
         if dsType == "MUser" and str(dsId) == muser["dsId"]:
             updobj = muser
             # account does not need to be active to upload a profile pic
@@ -755,7 +755,9 @@ def uploadimg():
         if dsType == "MUser":
             dbacc.entcache.cache_put(muser)  # update cached reference
     except ValueError as e:
+        logging.info("uploadimg error: " + str(e))
         return util.srverr(str(e))
+    logging.info("uploadimg Done")
     return util.respond("Done: " + updobj["modified"], mimetype="text/plain")
 
 

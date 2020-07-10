@@ -1254,9 +1254,9 @@ app.membic = (function () {
                  imgselb]); },
         uploadForm: function (cdx) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            rdrmgr.switchToPrevUploadPic(cdx, membic);
             var auth = app.login.authenticated();
-            var monfstr = mdfs("rdrmgr.monitorUpload", cdx);
-            monfstr = monfstr.replace("return false;", "");
+            var monfstr = mdfs("rdrmgr.monitorUpload", cdx, true);
             jt.out("mdrdetbuttonsdiv" + cdx, jt.tac2html(
                 [["form", {id:"mpuform", action:"/api/uploadimg",
                            method:"post", target:"mpuif" + cdx,
@@ -1271,18 +1271,30 @@ app.membic = (function () {
                               onchange:mdfs("rdrmgr.enableUploadButton", cdx)}],
                    ["div", {id:"mbcpicupldstatdiv" + cdx}],
                    ["div", {id:"mbcpicupldbuttonsdiv" + cdx},
-                    ["button", {type:"submit", id:"mbcpicupldbutton" + cdx,
-                                onclick:monfstr}, "Upload"]]]],
+                    [["button", {type:"button", cla:"membicformbutton",
+                                 onclick:mdfs("rdrmgr.useSitePic", cdx)},
+                      "Cancel"], " &nbsp; ",
+                     ["button", {type:"submit", id:"mbcpicupldbutton" + cdx,
+                                 onclick:monfstr}, "Upload"]]]]],
                  ["iframe", {id:"mpuif" + cdx, name:"mpuif" + cdx,
                              src:"/api/uploadimg", style:"display:none"}]]));
             jt.byId("mbcpicupldbutton" + cdx).disabled = true; },
+        switchToPrevUploadPic: function (cdx, membic) {
+            if(membic.revpic && membic.svcdata.picdisp === "sitepic") {
+                membic.svcdata.picdisp = "upldpic";
+                membic.svcdata.picchgt = new Date().toISOString();
+                jt.out("mfpicture" + cdx,
+                       formElements.picture.expanded(cdx, membic));
+                app.membic.formInput(cdx); } },
         enableUploadButton: function (cdx) {
             jt.byId("mbcpicupldbutton" + cdx).disabled = false; },
-        monitorUpload: function (cdx) {
+        monitorUpload: function (cdx, submit) {
             var iframe = jt.byId("mpuif" + cdx);
             if(!iframe) {
                 return jt.log("rdrmgr.monitorUpload exiting since no iframe"); }
             jt.byId("mbcpicupldbutton" + cdx).disabled = true;
+            if(submit) {
+                jt.byId("mpuform").submit(); }
             var statdiv = jt.byId("mbcpicupldstatdiv" + cdx);
             if(!statdiv.innerHTML) {
                 statdiv.innerHTML = "Uploading"; }
