@@ -15,7 +15,7 @@ import re
 import json
 import urllib.parse     # to be able to use urllib.parse.quote
 import io               # Image.open/save requires file-like access
-from PIL import Image   # Only need Image from Pillow
+from PIL import Image, ImageOps   # from Pillow
 import base64
 import datetime
 
@@ -746,6 +746,7 @@ def uploadimg():
             picfld = "picture"
         # nginx local dev: picfile is a FileStorage object.
         img = Image.open(picfile)
+        img = ImageOps.exif_transpose(img)  # correct vertical orientation
         sizemaxdims = 400, 400   # max allowed width/height for thumbnail resize
         img.thumbnail(sizemaxdims)   # modify, preserving aspect ratio
         bbuf = io.BytesIO()          # file-like object for save
