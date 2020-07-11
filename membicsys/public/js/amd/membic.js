@@ -873,75 +873,123 @@ app.membic = (function () {
 
 
     var detmgr = {
-        //Return a new object with the fields used for the details area of
-        //membic display and editing form.  The name/title fields are handled
-        //separately so they are not included here.
-        initNewDetailsObject: function () {
-            return {artist:"", author:"", publisher:"", album:"",
-                    starring:"", address:"", year:""}; },
-        //Custom detail fields are allowed, but lower case letters only.
-        //Removing the value from a detail attribute effectively removes it from
-        //the display when saved.  Slightly clunky, but not expecting heavy use
-        //and want to minimize the number of controls on screen.
-        detailsHTML: function (cdx, membic, edit) {
-            var detobj = detmgr.initNewDetailsObject();
-            membic.details = membic.details || {};
-            Object.keys(membic.details).forEach(function (key) {
-                if(key !== "title" && key !== "name") {
-                    detobj[key] = membic.details[key]; } });
-            var chgfstr = jt.fs("app.membic.formInput(" + cdx + ")");
-            var dlos = [];  //datalist options for adding other detail fields
-            var html = [];
-            Object.keys(detobj).forEach(function (key) {
-                if(detobj[key]) { html.push(jt.tac2html(
-                    ["tr",
-                     [["td", {cla:"detailattrtd"}, key],
-                      ["td", togIfEdit({cla:"detailvaltd",
-                                        id:"detail" + key + "valtd" + cdx},
-                                       cdx, membic, jt.toru(edit, chgfstr)),
-                       detobj[key]]]])); } });
+        //The predefined detail attributes in order of display.
+        detailattrs: ["author", "publisher", "artist", "album", "starring",
+                      "address", "year"],
+        membic2dets: function (membic, edit) {
+            var dets = {mode:"display", edfld:"", flds:{}};
             if(edit) {
-                Object.keys(detobj).forEach(function (key) {
-                    if(!detobj[key]) {
-                        dlos.push(["option", {value:key}]); } });
-                var dlh = "";
-                if(dlos.length) {
-                    dlh = jt.tac2html(
-                        ["datalist", {id:"detnewattroptsdl" + cdx}, dlos]); }
-                html.push(jt.tac2html(
-                    ["tr",
-                     [["td", {cla:"detailattrtd"},
-                       [["input", {type:"text", cla:"detnewattrin",
-                                   id:"detnewattrin" + cdx,
-                                   placeholder:"attribute", value:"",
-                                   list:"detnewattroptsdl" + cdx,
-                                   onchange:chgfstr}],
-                        dlh]],
-                      ["td", {cla:"detailvaltd"},
-                       ["input", {type:"text", cla:"detnewvalin",
-                                  id:"detnewvalin" + cdx,
-                                  placeholder:"value", value:"",
-                                  onchange:chgfstr}]]]])); }
-            return jt.tac2html(["div", {cla:"mddetdiv"},
-                                ["table", {cla: "collapse"}, html]]); },
-        //Construct a details object from the interface display.  The resulting
-        //object can be used for comparison or update.  The user may enter a
-        //custom detail attribute, and they can change or remove the value for
-        //any existing attribute, but they cannot change the name of an existing
-        //attribute, so it is sufficient to walk the displayed attributes to
-        //construct the details object.
+                dets.mode = "add"; }
+            detmgr.detailattrs.forEach(function (key) { dets.flds[key] = ""; });
+            Object.keys(membic.details || {}).forEach(function (key) {
+                if(key !== "title" && key !== "name") {
+                    dets.flds[key] = membic.details[key]; } });
+            return dets; },
+        html2dets: function (cdx) {
+            var dets = {mode:"display", edfld:"", flds:{}};
+            var table = jt.byId("detailstable" + cdx);
+            Array.from(table.rows).forEach(function (row) {
+                var cells = Array.from(row.cells);
+                var av = {att:"", val:""};
+                switch(row.dataset.mode) { //only one active edit row
+                case "add":
+                    av.att = jt.byId("detnewattrin" + cdx).value || "";
+                    //valid js ident required. only want simple word attrs.
+                    av.att = av.att.replace(/\W/g, "").toLowerCase();
+                    av.val = jt.byId("detnewvalin" + cdx).value;
+                    dets.mode = "add";
+                    break;
+                case "edit":
+                    av.att = cells[0].innerText;
+                    av.val = jt.byId("detnewvalin" + cdx).value;
+                    dets.mode = "edit";
+                    dets.edfld = av.att;
+                    break;
+                default: //"display"
+                    av.att = cells[0].innerText;
+                    av.val = cells[1].innerText; }
+                if(av.att && av.val) {  //no value means removed
+                    dets.flds[av.att] = av.val; } });
+            return dets; },
+        dets2html: function (dets, cdx) {
+            var html = [];
+            Object.keys(dets.flds).forEach(function (fldname) {
+                var val = dets.flds[fldname];
+                if(val) {
+                    html.push(detmgr.row(fldname, val, dets, cdx)); } });
+            if(dets.mode === "add") {
+                html.push(detmgr.addrow(dets, cdx)); }
+            return jt.tac2html(["table", {cla: "collapse",
+                                          id:"detailstable" + cdx}, html]); },
+        row: function (fld, val, dets, cdx) {
+            var vh = val; var mode="display";
+            if(dets.mode === "edit" && dets.edfld === fld) {
+                mode = "edit";
+                vh = ["input", {type:"text", cla:"detnewvalin",
+                                id:"detnewvalin" + cdx,
+                                placeholder:"value", value:vh,
+                                onchange:mdfs("detmgr.changevalue", cdx)}]; }
+            else {  //standard value display, click to edit.
+                vh = ["a", {href:"edit", onclick:mdfs("detmgr.clickval",
+                                                      fld, cdx)}, vh]; }
+            return jt.tac2html(
+                ["tr", {"data-mode":mode},
+                 [["td", {cla:"detailattrtd"}, fld],
+                  ["td", {cla:"detailvaltd",
+                          id:"detail" + fld + "valtd" + cdx}, vh]]]); },
+        clickval: function (fld, cdx) {
+            var dets = detmgr.html2dets(cdx);
+            dets.mode = "edit";
+            dets.edfld = fld;
+            jt.out("mddetdiv" + cdx, detmgr.dets2html(dets, cdx)); },
+        changevalue: function (cdx) {
+            var dets = detmgr.html2dets(cdx);  //read updated attrval
+            dets.mode = "add";
+            dets.edfld = "";
+            jt.out("mddetdiv" + cdx, detmgr.dets2html(dets, cdx));
+            app.membic.formInput(cdx); },
+        addrow: function (dets, cdx) {
+            return jt.tac2html(
+                ["tr", {"data-mode":"add"},
+                 [["td", {cla:"detailattrtd"},
+                   [["input", {type:"text", cla:"detnewattrin",
+                               id:"detnewattrin" + cdx,
+                               placeholder:"attribute", value:"",
+                               list:"detnewattroptsdl" + cdx,
+                               onchange:mdfs("detmgr.chgadd", cdx)}],
+                    ["datalist", {id:"detnewattroptsdl" + cdx},
+                     detmgr.attrOptionsForAdd(dets)]]],
+                  ["td", {cla:"detailvaltd"},
+                   ["input", {type:"text", cla:"detnewvalin",
+                              id:"detnewvalin" + cdx,
+                              placeholder:"value", value:"",
+                              onchange:mdfs("detmgr.chgadd", cdx)}]]]]); },
+        attrOptionsForAdd: function (dets) {
+            var dlos = [];
+            detmgr.detailattrs.forEach(function (fld) {
+                if(!dets.flds[fld]) {  //no assigned value yet
+                    dlos.push(["option", {value:fld}]); } });
+            return dlos; },
+        chgadd: function (cdx) {
+            var ins = {att:jt.byId("detnewattrin" + cdx),
+                       val:jt.byId("detnewvalin" + cdx)};
+            if(ins.att.value && ins.val.value) {   //need to redraw
+                var dets = detmgr.html2dets(cdx);  //read new attrval
+                jt.out("mddetdiv" + cdx,           //update display with new add
+                       detmgr.dets2html(dets, cdx));
+                app.membic.formInput(cdx); }       //note any changes
+            else if(!ins.att.value) {
+                ins.att.focus(); }
+            else if(!ins.val.value) {
+                ins.val.focus(); } },
+        detailsHTML: function (cdx, membic, edit) {
+            return jt.tac2html(["div", {cla:"mddetdiv", id:"mddetdiv" + cdx},
+                                detmgr.dets2html(
+                                    detmgr.membic2dets(membic, edit),
+                                    cdx)]); },
         detailsValues: function (cdx) {
-            var valobj = {};
-            Object.keys(detmgr.initNewDetailsObject()).forEach(function (key) {
-                var td = jt.byId("detail" + key + "valtd" + cdx);
-                if(td) {
-                    valobj[key] = td.innerText.trim(); } });
-            var input = jt.byId("detnewattrin" + cdx);
-            if(input && input.value.trim()) {  //adding a detail attribute
-                var valin = jt.byId("detnewvalin" + cdx);
-                if(valin && valin.value.trim()) {
-                    valobj[input.value.trim()] = valin.value.trim(); } }
-            return valobj; }
+            var dets = detmgr.html2dets(cdx);
+            return dets.flds; }
     };
 
 
@@ -1809,6 +1857,7 @@ return {
         case "typemgr": return typemgr[fname].apply(app.membic, args);
         case "ratmgr": return ratmgr[fname].apply(app.membic, args);
         case "sharemgr": return sharemgr[fname].apply(app.membic, args);
+        case "detmgr": return detmgr[fname].apply(app.membic, args);
         default: jt.log("membic.managerDispatch unknown manager: " + mgrname); }
     }
 
