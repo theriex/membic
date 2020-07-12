@@ -279,7 +279,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .mfrevtype { float:left; }
 .revtseldiv a { padding:0px 5px 0px 0px; }
 .mfbyline { display:inline; }
-.mfstars { float:right; }
+.mfstars { float:right; margin:0px 10px 0px 0px; }
 .mddlgbsdiv { clear:both; text-align:center; }
 .mddlgbsdiv button { margin:0px 12px 0px 5px; }
 .detailattrtd { font-style:italic; padding-right:2px; }
