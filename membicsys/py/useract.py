@@ -420,7 +420,10 @@ def theme_membic_from_source_membic(theme, srcmbc):
     membics = dbacc.query_entity("Membic", where)
     if len(membics) > 0:
         tmbc = membics[0]
-    tmbc["svcdata"] = ""   # srcrev not updated yet. Not used for theme display
+    svcdata = srcmbc.get("svcdata", {})  # may already be deserialized
+    if isinstance(svcdata, str):
+        svcdata = json.loads(svcdata)
+    tmbc["svcdata"] = json.dumps({"picdisp": svcdata.get("picdisp", "sitepic")})
     tmbc["icdata"] = None  # all image caching is off the source membic
     tmbc["importid"] = 0   # only the source membic is imported
     tmbc["icwhen"] = ""
