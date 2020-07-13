@@ -202,7 +202,7 @@ def json_for_theme_prof(obj, obtype):
 def fetch_recent_themes_and_profiles():
     jtxt = ""
     vios = util.get_connection_service("termsvio")["data"]
-    where = "ORDER BY modified DESC LIMIT 50"
+    where = "ORDER BY lastwrite DESC LIMIT 200"
     themes = dbacc.query_entity("Theme", where)
     for theme in themes:
         if not pub_featurable("Theme", theme, vios):
@@ -211,7 +211,6 @@ def fetch_recent_themes_and_profiles():
             jtxt += ","
         jtxt += json_for_theme_prof(theme, "theme")
     profcount = 0
-    where = "ORDER BY lastwrite DESC LIMIT 200"
     musers = dbacc.query_entity("MUser", where)
     for muser in musers:
         if not pub_featurable("MUser", muser, vios):

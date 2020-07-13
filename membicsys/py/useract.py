@@ -503,6 +503,9 @@ def update_preb(obj, membic, verb):
                                          "inst": obj,
                                          "pbms": pbms}, membic)
     obj["preb"] = json.dumps(pbms)
+    if obj["dsType"] in ["MUser", "Theme"]:
+        if((verb == "add") or (not obj.get("lastwrite"))):
+            obj["lastwrite"] = pm["created"]
     return dbacc.write_entity(obj, vck=obj["modified"])
 
 

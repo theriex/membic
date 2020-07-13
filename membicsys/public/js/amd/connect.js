@@ -129,8 +129,12 @@ app.connect = (function () {
         decos.sort(function (a, b) {
             if(a.sprio !== b.sprio) {
                 return b.sprio - a.sprio; }
-            if(a.lastwrite < b.lastwrite) { return 1; }
-            if(a.lastwrite > b.lastwrite) { return -1; }
+            a.lastwd = a.lastwrite.slice(0, 10);  //compare by day
+            b.lastwd = b.lastwrite.slice(0, 10);
+            if(a.lastwd < b.lastwd) { return 1; }
+            if(a.lastwd > b.lastwd) { return -1; }
+            if(a.obtype === "theme" && b.obtype === "profile") { return -1; }
+            if(a.obtype === "profile" && b.obtype === "theme") { return 1; }
             return 0; });
         return decos;
     }
