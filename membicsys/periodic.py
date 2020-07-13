@@ -162,14 +162,25 @@ def verify_audiences(nd, updates="save"):
 
 
 def membic_poster_and_themes(membic):
+    # who posted and to which themes
     names = [membic["penname"]]
-    svcdata = membic.get("svcdata")
-    if svcdata:
-        svcdata = json.loads(svcdata)
-        postctms = svcdata.get("postctms") or []
-        for pn in postctms:
-            names.append(pn["name"])
-    return ", ".join(names)
+    if membic["ctmid"]:
+        theme = dbacc.cfbk("Theme", "dsId", membic["ctmid"])
+        names.append(theme["name"])
+    else:
+        svcdata = membic.get("svcdata")
+        if svcdata:
+            svcdata = json.loads(svcdata)
+            postctms = svcdata.get("postctms") or []
+            for pn in postctms:
+                names.append(pn["name"])
+    postline = ", ".join(names)
+    # link to view the membic
+    link = "/profile/" + membic["penid"]
+    if membic["ctmid"]:
+        link = "/theme/" + membic["ctmid"]
+    link = "https://" + mconf.domain + link + "?go=" + str(membic["dsId"])
+    return postline + "\n" + link
 
 
 # The [dsId] line is required by forwarding, and should be placed to
@@ -181,7 +192,6 @@ def membic_notice_summary(membic):
     dets = json.loads(membic["details"] or "{}")
     body += (dets.get("title") or dets.get("name") or "") + "\n"
     body += (membic.get("url") or membic.get("rurl") or "") + "\n"
-    body += "[dsId] " + str(membic["dsId"]) + "\n"
     body += membic["text"] + "\n"
     body += membic_poster_and_themes(membic) + "\n\n"
     return body
