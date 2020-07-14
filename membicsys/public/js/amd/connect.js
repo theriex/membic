@@ -126,11 +126,12 @@ app.connect = (function () {
             verifyPersonalProfileSummaryItem(user, allobjs);
             Object.keys(allobjs).forEach(function (key) {  //convert to array
                 decos.push(allobjs[key]); }); }
+        decos.forEach(function (deco) {
+            deco.lastwd = deco.lastwrite || deco.modified;
+            deco.lastwd = deco.lastwd.slice(0, 10); });
         decos.sort(function (a, b) {
             if(a.sprio !== b.sprio) {
                 return b.sprio - a.sprio; }
-            a.lastwd = a.lastwrite.slice(0, 10);  //compare by day
-            b.lastwd = b.lastwrite.slice(0, 10);
             if(a.lastwd < b.lastwd) { return 1; }
             if(a.lastwd > b.lastwd) { return -1; }
             if(a.obtype === "theme" && b.obtype === "profile") { return -1; }
