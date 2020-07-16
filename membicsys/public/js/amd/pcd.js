@@ -12,8 +12,7 @@ app.pcd = (function () {
     var ctx = {};  //context for display processing
     var obacc = {MUser: {disptype:"profile", picfield:"profpic"},
                  Theme: {disptype:"theme", picfield:"picture"}};
-    var dst = {type:"", id:"", tab:"", obj:null,
-               profile: {
+    var dst = {profile: {
                    name:{eid:"pcdnamespan", dfld:"name", srcfld:"name",
                          plo:"Your Name Here", plp:"No Name Provided"},
                    dscr:{eid:"pcddescrspan", dfld:"descr", srcfld:"aboutme",
@@ -50,40 +49,31 @@ app.pcd = (function () {
             jt.byId("pcduppercontentdiv").style.display = "none";
             jt.byId("bodyid").style.paddingLeft = "0px";
             jt.byId("bodyid").style.paddingRight = "0px"; },
-        getOverriddenColor: function (name, defcolor) {
-            var color = defcolor;
-            if(dst.obj.cliset && dst.obj.cliset.embcolors) {
-                color = dst.obj.cliset.embcolors[name] || defcolor; }
-            return color; },
         insertOverrideRule: function (sheet, soc, color) {
             if(color) {
                 soc.sel.csvarray().forEach(function (sel) {
                     var irl = sel + " { " + soc.attr + ": " + color + "; }";
                     jt.log("Inserted color override rule: " + irl);
                     sheet.insertRule(irl, sheet.cssRules.length); }); } },
-        createColorOverrides: function () {
+        createColorOverrides: function (cob) {
             var sheet;
-            if(!app.embedded) {
-                return; }
-            if(!dst || !dst.obj || !dst.obj.cliset ||
-               !dst.obj.cliset.embcolors) {
+            if(!app.embedded || !cob || !cob.cliset || !cob.cliset.embcolors) {
                 return; }
             sheet = window.document.styleSheets[0];
             embedmgr.standardOverrideColors.forEach(function (soc) {
-                embedmgr.insertOverrideRule(sheet, soc,
-                    embedmgr.getOverriddenColor(soc.name, "")); }); },
-        changeSiteTabIcon: function () {
+                var color = cob.cliset.embcolors[soc.name];
+                embedmgr.insertOverrideRule(sheet, soc, color); }); },
+        changeSiteTabIcon: function (cob) {
             var link = document.createElement("link");
             link.type = "image/x-icon";
             link.rel = "shortcut icon";
-            link.href = "/api/obimg?dt=" + app.pcd.fetchType(dst.type) +
-                "&di=" + dst.id;
+            link.href = "/api/obimg?dt=" + cob.dsType + "&di=" + cob.dsId;
             document.getElementsByTagName("head")[0].appendChild(link); },
-        customizeSoloPageDisplay: function () {
+        customizeSoloPageDisplay: function (cob) {
             if(app.embedded) {
                 embedmgr.createStyleOverridesForEmbedding(); }
-            embedmgr.createColorOverrides();
-            embedmgr.changeSiteTabIcon(); },
+            embedmgr.createColorOverrides(cob);
+            embedmgr.changeSiteTabIcon(cob); },
         //If the content is being displayed within another site, then the
         //entire top section has been hidden to avoid blinking the
         //description and other info.  Re-enable just enough to allow for
@@ -1146,7 +1136,7 @@ return {
             ["div", {id:"pcdouterdiv"},       //outer wrapper for content
              ["div", {id:"pcdcontdiv"}]]));   //display items container
         if(app.solopage()) {
-            embedmgr.customizeSoloPageDisplay(); }
+            embedmgr.customizeSoloPageDisplay(actobj.contextobj); }
         writeActionsArea();
         srchmgr.updateSearchLabelText();
         processExtraObject(actobj.extraobj);
@@ -1181,4 +1171,3 @@ return {
 
 };  //end of returned functions
 }());
-
