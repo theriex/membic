@@ -443,28 +443,17 @@ app.membic = (function () {
     }
 
 
-    function paramstr (args) {
-        var ps = "";
-        if(args && args.length) {
-            ps = args.reduce(function (acc, arg) {
-                if((typeof arg === "string") && (arg !== "event")) {
-                    arg = "'" + arg + "'"; }
-                return acc + "," + arg; }, ""); }
-        return ps;
-    }
-
-
     function mdfs (mgrfname, ...args) {
         mgrfname = mgrfname.split(".");
         return jt.fs("app.membic.managerDispatch('" + mgrfname[0] + "','" +
-                     mgrfname[1] + "'" + paramstr(args) + ")");
+                     mgrfname[1] + "'" + app.paramstr(args) + ")");
     }
 
 
     function fdfs (formfname, ...args) {
         formfname = formfname.split(".");
         return jt.fs("app.membic.formDispatch('" + formfname[0] + "','" +
-                     formfname[1] + "'" + paramstr(args) + ")");
+                     formfname[1] + "'" + app.paramstr(args) + ")");
     }
 
 
@@ -698,7 +687,7 @@ app.membic = (function () {
                          "To comment, follow " + actobj.contextobj.name])); }
                 else {  //clicked to follow
                     jt.out("mcmtdiv" + cdx, "");
-                    app.pcd.settings(); }
+                    app.pcd.managerDispatch("stgmgr", "toggleSettings"); }
                 break;
             default:
                 jt.out("sharemgr.resperr unknown errt: " + errt); } }

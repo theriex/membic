@@ -296,7 +296,7 @@ return {
 
     rebuildContext: function () {
         app.membic.addMembic();    //update account activation area
-        app.statemgr.redispatch(); //rebuild pcd display and settings context
+        app.pcd.managerDispatch("stgmgr", "redisplay", app.login.myProfile());
     },
 
 
@@ -353,7 +353,7 @@ return {
         if(pu.altinmail && !jt.isProbablyEmail(pu.altinmail)) {
             return jt.out("settingsinfdiv", "Invalid alternate email"); }
         pu.altinmail = pu.altinmail || "UNSET_VALUE";
-        app.pcd.readCommonSettingsFields(pu, prof);
+        app.pcd.managerDispatch("stgmgr", "readCommonFields", pu, prof);
         jt.out("settingsinfdiv", "Updating...");
         jt.byId("settingsupdbutton").disabled = true;
         app.login.updateProfile(pu,

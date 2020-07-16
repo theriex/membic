@@ -128,7 +128,7 @@ var jt = {};   //Global access to general utility methods
         jt.out("loadstatusdiv", "Loading app modules...");
         app.amdtimer = {};
         app.amdtimer.load = { start: new Date() };
-        jt.loadAppModules(app, modules, app.docroot, app.init2, "?v=200714");
+        jt.loadAppModules(app, modules, app.docroot, app.init2, "?v=200716");
     };
 
 
@@ -150,6 +150,19 @@ var jt = {};   //Global access to general utility methods
         if(a.dsType === b.dsType && a.dsId === b.dsId) {
             return true; }
         return false;
+    };
+
+
+    //Return the argument list as a string of arguments suitable for appending
+    //to onwhatever function text.
+    app.paramstr = function (args) {
+        var ps = "";
+        if(args && args.length) {
+            ps = args.reduce(function (acc, arg) {
+                if((typeof arg === "string") && (arg !== "event")) {
+                    arg = "'" + arg + "'"; }
+                return acc + "," + arg; }, ""); }
+        return ps;
     };
 
 

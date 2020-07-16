@@ -166,8 +166,11 @@ return {
 
 
     notehash: function (obj) {
-        if(obj && obj.dsType && obj.dsId && obj.hashtag) {
-            tagmap[obj.dsType + obj.dsId] = obj.hashtag; }
+        if(obj && obj.dsType && obj.dsId) {
+            if(obj.hashtag) {
+                tagmap[obj.dsType + obj.dsId] = obj.hashtag; }
+            else {  //hashtag may have previously existed, verify not cached
+                delete tagmap[obj.dsType + obj.dsId]; } }
     }
         
 }; //end of returned functions

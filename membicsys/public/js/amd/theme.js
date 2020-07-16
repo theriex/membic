@@ -460,7 +460,7 @@ return {
                   ["div", {cla:"infolinediv", id:"settingsinfdiv"}]],
                  ["div", {id:"settingsbuttonsdiv"},
                   [["button", {type:"button", id:"cancelbutton",
-                               onclick:jt.fs("app.pcd.settings('show')")},
+                               onclick:jt.fs("app.pcd.managerDispatch('stgmgr', 'toggleSettings','show')")},
                     "Cancel"],
                    ["button", {type:"button", id:"createbutton",
                                onclick:jt.fs("app.theme.create('" + divid +
@@ -497,19 +497,21 @@ return {
     settingsUpdate: function () {
         var theme = app.pcd.getActobjContext();
         var tu = {dsType:"Theme", dsId:theme.dsId};
-        app.pcd.readCommonSettingsFields(tu, theme);  //hashtag, colors
+        app.pcd.managerDispatch("stgmgr", "readCommonFields", tu, theme);
         tu.keywords = jt.byId("kwrdsin").value.trim() || "UNSET_VALUE";
         tu.keywords = app.theme.kwrdstrim(tu.keywords);
         tu.cliset.sortby = jt.byId("themesortsel").selectedOptions[0].value;
         app.theme.update(tu,
             function (theme) { //updated theme already cached
                 jt.out("settingsinfdiv", "Updated " + theme.name + ".");
-                app.fork({descr:"Close theme settings display", ms:800,
-                          func:app.statemgr.redispatch}); },
+                app.fork({descr:"Update theme settings display", ms:800,
+                          func:function () {
+                              app.pcd.managerDispatch("stgmgr", "redisplay",
+                                                      theme); }}); },
             function (code, errtxt) {
                 jt.byId("settingsupdbutton").disabled = false;
                 jt.out("settingsinfdiv", "Update failed code " + code + " " +
-                        errtxt); });
+                       errtxt); });
     },
 
 
@@ -627,7 +629,8 @@ return {
                          function (theme) {
                              setctx.tpo = theme;
                              //redraw settings to hide/display webfeed
-                             app.pcd.settings("show"); },
+                             app.pcd.managerDispatch("stgmgr", "settings",
+                                                     "show"); },
                          function (code, errtxt) {  //same handling as relupd
                              jt.out("assocbuttonsdiv", "Update failed " + code +
                                     ": " + errtxt); });
