@@ -296,7 +296,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .mdbodydiv { overflow:auto; padding:0px 3px 3px 3px;
   font-family:"Open Sans", "Verdana", "Arial", "Helvetica", sans-serif; }
 .mdpicdiv { float:left; padding:0px 10px 0px 3px; }
-.mdimg { max-width:125px; max-height:80px; }
+.mdimg { max-width:125px; max-height:80px; min-width:20px; min-height:20px; }
 .toprightxdiv { float:right; background:url('../img/white60percent.png');
   padding:1px 4px; border-radius:10px; font-size:x-small;
   margin:0px -8px 0px 3px; }
