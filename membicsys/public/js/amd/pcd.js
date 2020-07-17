@@ -863,6 +863,7 @@ app.pcd = (function () {
                 if(parseInt(extraobj.go, 10) && //true even if huge number
                    ctx.actobj && ctx.actobj.itlist &&
                    ctx.actobj.itlist.find((m) => m.dsId === extraobj.go)) {
+                    app.startParams.mdisp = "expanded";
                     ctx.jumpto = extraobj.go; }
                 else {
                     jt.log("pcd.processExtraObject ignored " +
