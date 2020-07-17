@@ -19,6 +19,7 @@ import py.dbacc as dbacc
 import datetime
 import json
 import sys
+import copy
 
 
 def nd_as_string(nd):
@@ -45,13 +46,14 @@ def nd_as_string(nd):
     return txt
 
 
-def note_source(sources, dsType, dsId, name, membic):
-    dk = dsType + str(dsId)
+def note_source(sources, tin, membic, smid):
+    dk = tin["type"] + str(tin["id"])
     src = sources.get(dk)
     if not src:
-        src = {"dsType":dsType, "dsId":dsId, "name":name, "membics":{},
-               "audience":{}}
+        src = {"dsType":tin["type"], "dsId":tin["id"], "name":tin["name"],
+               "membics":{}, "audience":{}, "smids":{}}
     src["membics"][membic["dsId"]] = membic
+    src["smids"][membic["dsId"]] = smid
     sources[dk] = src
 
 
@@ -105,23 +107,26 @@ def find_users_to_notify(nd):
                         note_follower(nd["musers"], src, info, muser)
 
 
-# Return a dict with new membics and the users to be emailed.
+# Return a dict with new membics and the users to be emailed.  Fetches
+# only source membics to avoid sending duplicate notices for the same link.
+# If the membic is not posted to a theme until the next day, notices won't
+# be emailed.
 def fetch_notifications_data(sts, ets):
     nd = {"start":sts, "end":ets,
           "membics":{}, "sources":{}, "musers":{}, "srcfs":{}}
-    where = "WHERE created > \"" + sts + "\" AND created <= \"" + ets + "\""
-    where += " AND ctmid = 0 ORDER BY created DESC"
+    where = ("WHERE created > \"" + sts + "\" AND created <= \"" + ets + "\"" +
+             " AND ctmid = 0 AND srcrev >= 0 ORDER BY created DESC")
     for membic in dbacc.query_entity("Membic", where):
         nd["membics"][membic["dsId"]] = membic
-        note_source(nd["sources"], "MUser", membic["penid"], membic["penname"],
-                    membic)
+        tin = {"type":"MUser", "id":membic["penid"], "name":membic["penname"]}
+        note_source(nd["sources"], tin, membic, membic["dsId"])
         svcdata = membic.get("svcdata")
         if svcdata:
             svcdata = json.loads(svcdata)
             postctms = svcdata.get("postctms") or []
             for pn in postctms:
-                note_source(nd["sources"], "Theme", pn["ctmid"], pn["name"],
-                            membic)
+                tin = {"type":"Theme", "id":pn["ctmid"], "name":pn["name"]}
+                note_source(nd["sources"], tin, membic, pn["revid"])
     find_users_to_notify(nd)
     logging.info("fetch_notifications_data nd_as_string\n" + nd_as_string(nd))
     return nd
@@ -175,12 +180,12 @@ def membic_poster_and_themes(membic):
             for pn in postctms:
                 names.append(pn["name"])
     postline = ", ".join(names)
-    # link to view the membic
+    # link to open the membic and send a comment
     link = "/profile/" + membic["penid"]
     if membic["ctmid"]:
         link = "/theme/" + membic["ctmid"]
     link = "https://" + mconf.domain + link + "?go=" + str(membic["dsId"])
-    return postline + "\n" + link
+    return postline + "\nSend Comment: " + link
 
 
 # The [dsId] line is required by forwarding, and should be placed to
@@ -200,24 +205,24 @@ def membic_notice_summary(membic):
 # Daily notices, like all emails containing membic content, have the
 # potential of being forwarded to others.  They should not contain any links
 # with authentication credentials.
+# This was set up to allow direct reply when only one notice, or with
+# multiple notices by selecting the one you want to quote, but that ended up
+# being confusing and error prone.  Better to send from support and treat
+# this similar to the web feed.  That also provides access to support.
 def send_follower_notice(muser, membics, preview=False):
     subj = "Membic activity summary"
     body = "There are new membics in Profiles and Themes you are following:\n\n"
     for _, membic in membics.items():
         body += membic_notice_summary(membic)
-    if len(membics) < 2:
-        body += "To send a comment, just reply to this email."
-    else:
-        body += "To comment on any membic, select it and reply to this email."
-    body += " These notices are from sources you have chosen to follow. To change who you are following, sign in at https://membic.org\n"
+    body += "You are receiving this email because you are following these sources.  To stop following, click the comment link and choose \"Stop Following\" from the settings. If this notice was received in error, reply and let us know.\n"
     if preview:
         logging.info("send_follower_notice upcoming send to " + muser["email"] +
                      "\nsubj: " + subj +
                      "\nbody: " + body)
         return
-    # Mail is sent from forwarding so responses can be handled automatically
+    # Mail is sent from support so people can respond if any issues.
     util.send_mail(muser["email"], subj, body, domain=mconf.domain,
-                   sender="forwarding")
+                   sender="support")
 
 
 def audience_summary_text(src):
@@ -293,6 +298,15 @@ def notice_membics_for_user(muser):
     membics = {}
     for src in muser["sources"]:
         for membicid, membic in src["membics"].items():
+            if src["dsType"] == "Theme":
+                smid = src["smids"].get(membicid)
+                if smid:
+                    membic = copy.deepcopy(membic)
+                    membic["dsId"] = smid
+                    membic["ctmid"] = src["dsId"]
+                    membic["srcrev"] = membicid
+                    membic["revpic"] = ""  # easier debug
+                    membic["icdata"] = ""
             membics[membicid] = membic
     return membics
 
