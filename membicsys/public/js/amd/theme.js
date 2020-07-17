@@ -390,7 +390,10 @@ return {
                         if(app.samePO(setctx.tpo, obj)) {
                             setctx.tpo = obj; } });
                     setctx.ao = profassoc(setctx.tpo.dsType, setctx.tpo.dsId);
-                    app.theme.connopt(); },
+                    app.theme.connopt();
+                    //Changing theme association may change actions and
+                    //display dependent on the updated object.
+                    app.statemgr.redispatch(); },
                 function (code, errtxt) {
                     //show the error occurred. User will have to toggle 
                     //settings to try again, which is what should happen.

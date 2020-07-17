@@ -137,25 +137,6 @@ app.membic = (function () {
     }
 
 
-    //Provide descriptive information for human reference and for use by
-    //mail forwarding which works off the membic dsId.
-    function emquoteMembicFields (membic) {
-        var body = "";
-        var qflds = [
-            {field:"title", val:(membic.details.title || membic.details.name)},
-            {field:"url", val:(membic.url || membic.rurl)},
-            "text", "penname", "dsId"];
-        qflds.forEach(function (fld) {
-            if(typeof fld === "string") {
-                fld = {field:fld, val:membic[fld]}; }
-            fld.val = fld.val || "";
-            fld.val = fld.val.replace(/\r?\n|\r/g, " ");
-            fld.val = jt.ellipsis(fld.val, 300);
-            body += "\n> [" + fld.field + "] " + fld.val; });
-        return body;
-    }
-
-
     function myMembic (membic) {
         var prof = app.login.myProfile();
         if(prof && prof.dsId === membic.penid) {
@@ -647,9 +628,27 @@ app.membic = (function () {
                 tac.push(sharemgr.responseButtonHTML(cdx, membic));
                 tac.push(["div", {id:"mcmtdiv" + cdx}]); }
             return jt.tac2html(tac); },
+        //Provide descriptive information for human reference and for use by
+        //mail forwarding which works off the membic dsId.  Place dsId in
+        //middle to minimize it being accidentally edited.
+        emquoteMembicFields: function (membic) {
+            var body = "";
+            var qflds = [
+                {field:"title",
+                 val:(membic.details.title || membic.details.name)},
+                {field:"url", val:(membic.url || membic.rurl)},
+                "text", "dsId", "penname"];
+            qflds.forEach(function (fld) {
+                if(typeof fld === "string") {
+                    fld = {field:fld, val:membic[fld]}; }
+                fld.val = fld.val || "";
+                fld.val = fld.val.replace(/\r?\n|\r/g, " ");
+                fld.val = jt.ellipsis(fld.val, 300);
+                body += "\n> [" + fld.field + "] " + fld.val; });
+            return body; },
         responseButtonHTML: function (cdx, membic) {
             var subj = "Re: " + jt.ellipsis(membicReferenceText(membic), 75);
-            var body = emquoteMembicFields(membic);
+            var body = sharemgr.emquoteMembicFields(membic);
             var mlink = "mailto:forwarding@membic.org?subject=" +
                 jt.dquotenc(subj) + "&body=" + "%0A%0A" + jt.dquotenc(body) +
                 "%0A";
@@ -687,6 +686,7 @@ app.membic = (function () {
                          "To comment, follow " + actobj.contextobj.name])); }
                 else {  //clicked to follow
                     jt.out("mcmtdiv" + cdx, "");
+                    window.scrollTo(0, 0);
                     app.pcd.managerDispatch("stgmgr", "toggleSettings"); }
                 break;
             default:
