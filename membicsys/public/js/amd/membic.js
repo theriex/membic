@@ -1268,6 +1268,9 @@ app.membic = (function () {
             return rsd; },
         buttons: function (cdx, rsd) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            if(membicEdited(cdx, membic)) {
+                //simplest to keep db info in sync with UI.
+                return "Save changes before uploading image."; }
             var subj = "Missing info for Membic " + membic.dsId;
             var body = "Hi,\n\nNoticed missing info for Membic " + membic.dsId +
                 "\nReader: " + rsd.name + " status: " + rsd.status + 
