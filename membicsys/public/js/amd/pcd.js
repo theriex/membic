@@ -338,7 +338,7 @@ app.pcd = (function () {
                 ["div", {cla:"cbdiv"},
                  [["label", {fo:"kwrdsin", cla:"liflab"}, "Keywords"],
                   ["textarea", {cla:"lifin", id:"kwrdsin", rows:6,
-                                placeholder:"Comma separated values"},
+                                placeholder:"Line separated values"},
                    app.theme.kwrdstrim(embobj.keywords || "", "expand")]]]); },
         sortOrderSetting: function (embobj, canmod) {
             if((embobj.dsType !== "Theme") || !canmod) {
