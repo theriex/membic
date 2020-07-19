@@ -187,6 +187,22 @@ return {
     },
 
 
+    serverUncache: function (dsType, dsId, contf, errf) {
+        app.refmgr.uncache(dsType, dsId);
+        var logpre = "refmgr.serverUncache " + dsType + " " + dsId + " ";
+        var url = app.dr("/api/uncache?dt=" + dsType + "&di=" + dsId +
+                         jt.ts("&cb=", "second"));
+        jt.call("GET", url, null,
+                function () {
+                    jt.log(logpre + "completed.");
+                    if(contf) { contf(); } },
+                function (code, errtxt) {
+                    jt.log(logpre + "failed " + code + ": " + errtxt);
+                    if(errf) { errf(); } },
+                jt.semaphore("refmgr.serverUncache" + dsType + dsId));
+    },
+
+
     deserialize: function (obj) {
         return deserialize(obj);
     },

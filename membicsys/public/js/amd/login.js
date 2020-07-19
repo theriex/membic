@@ -9,7 +9,7 @@ app.login = (function () {
     var authobj = null;  //email, token, authId, status, altinmail, signInTS
 
 
-    function fullProfile() {
+    function fullProfile () {
         var prof = app.login.myProfile();
         prof.email = authobj.email;
         prof.status = authobj.status;
@@ -414,7 +414,10 @@ return {
                 app.failf(function (ignore /*code*/, errtxt) {
                     errmsg(errtxt); }),
                 jt.semaphore("resetPassword"));
-    }
+    },
+
+
+    verifyUserInfo: function () { verifyUserInfo(); }
 
 };  //end of returned functions
 }());

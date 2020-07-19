@@ -474,25 +474,63 @@ app.membic = (function () {
     }
 
 
-    //If anything has been edited, return true.
-    function membicEdited (cdx, membic) {
-        var changed = [];
-        Object.keys(formElements).forEach(function (key) {
-            //If checking before the display has stabilized, things can
-            //crash from references not being found.  Treat as not changed.
-            try {
-                if(formElements[key].changed(cdx, membic)) {
-                    changed.push(key); }
-            } catch (ignore) {} });
-        changed = changed.join(",");
-        jt.log("membicEdited: " + changed);
-        return changed;
-    }
-
-
-    function membicSaveErrorRecovery (ignore /*code*/, errtxt, cdx) {
-        var matches = errtxt.match(/rchived\sTheme\s(\S+)/);
-        if(matches) {
+    var savemgr = {
+        //If anything has been edited, return true.
+        membicEdited: function (cdx, membic) {
+            var changed = [];
+            Object.keys(formElements).forEach(function (key) {
+                //If checking before the display has stabilized, things can
+                //crash from references not being found.  Treat as not changed.
+                try {
+                    if(formElements[key].changed(cdx, membic)) {
+                        changed.push(key); }
+                } catch (ignore) {} });
+            changed = changed.join(",");
+            jt.log("membicEdited: " + changed);
+            return changed; },
+        //Update the changed membic elements and call to save.
+        updateMembic: function (cdx) {
+            jt.out("dlgbsmsgdiv" + cdx, "");
+            var bhtml = jt.byId("dlgbsbdiv" + cdx).innerHTML;
+            jt.out("dlgbsbdiv" + cdx, "Saving...");
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var updm = {dsType:"Membic", dsId:membic.dsId};
+            Object.keys(formElements).forEach(function (key) {
+                var chgval = formElements[key].changed(cdx, membic);
+                if(chgval) {
+                    formElements[key].write(chgval, updm, membic); } });
+            if(updm.details) {  //updating details, keep existing detail fields
+                var detflds = ["title", "name", "artist", "author", "publisher",
+                               "album", "starring", "address", "year"];
+                detflds.forEach(function (df) {
+                    if(!updm.details.hasOwnProperty(df) &&  //not set or cleared
+                       membic.details[df]) {
+                        updm.details[df] = membic.details[df]; } }); }
+            clearCachedThemesForMembic(membic);  //theme post maybe removed
+            jt.log("updateMembic: " + JSON.stringify(updm));
+            //Redisplay closed on successful completion.  If the update changed
+            //the title or text, redisplaying closed is intuitive and smooth.
+            //If the update changed other things, redisplaying closed still
+            //provides a sense of confirmation of updated info on re-expansion.
+            //If an error occurs, leave expanded with message.
+            saveMembic("updateMembic", updm,
+                       function (srcmembic) {
+                           app.membic.toggleMembic(-1, "closed", srcmembic); },
+                       function (code, txt) {
+                           jt.out("dlgbsmsgdiv" + cdx, "Save failed " + code +
+                                  ": " + txt);
+                           jt.out("dlgbsbdiv" + cdx, bhtml);
+                           savemgr.errorRecovery(code, txt, cdx); }); },
+        errorRecovery: function (ignore /*code*/, errtxt, cdx) {
+            var matches = errtxt.match(/rchived\sTheme\s(\S+)/);
+            if(matches) {
+                return savemgr.fixArchivedThemePost(matches, cdx); }
+            matches = errtxt.match(
+                    /MUser\d+\supdate\sreceived\soutdated\sversion\scheck/);
+            if(matches) {
+                return savemgr.fixStaleUserCache(cdx); }
+            jt.log("savemgr.errorRecovery no matching automatic recovery"); },
+        fixArchivedThemePost: function (matches, cdx) {
             //Note theme archived in profile MUser.themes
             var tid = matches[1];
             var authobj = app.login.authenticated();
@@ -508,43 +546,18 @@ app.membic = (function () {
                         tpmgr.themepost(cdx, "remove", tid); },
                     function (code, errtxt) {
                         jt.log("membicSaveErrorRecovery associate " + code +
-                               ": " + errtxt); }); }
-    }
-
-
-    //Update the changed membic elements and call to save.
-    function updateMembic (cdx) {
-        jt.out("dlgbsmsgdiv" + cdx, "");
-        var bhtml = jt.byId("dlgbsbdiv" + cdx).innerHTML;
-        jt.out("dlgbsbdiv" + cdx, "Saving...");
-        var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-        var updm = {dsType:"Membic", dsId:membic.dsId};
-        Object.keys(formElements).forEach(function (key) {
-            var chgval = formElements[key].changed(cdx, membic);
-            if(chgval) {
-                formElements[key].write(chgval, updm, membic); } });
-        if(updm.details) {  //updating details, keep existing detail fields
-            var detflds = ["title", "name", "artist", "author", "publisher",
-                           "album", "starring", "address", "year"];
-            detflds.forEach(function (df) {
-                if(!updm.details.hasOwnProperty(df) &&  //not set or cleared
-                   membic.details[df]) {
-                    updm.details[df] = membic.details[df]; } }); }
-        clearCachedThemesForMembic(membic);  //might have removed a theme post
-        jt.log("updateMembic: " + JSON.stringify(updm));
-        //Redisplay closed on successful completion.  If the update changed
-        //the title or text, redisplaying closed is intuitive and smooth.
-        //If the update changed other things, redisplaying closed still
-        //provides a sense of confirmation of updated info on re-expansion.
-        //If an error occurs, leave expanded with message.
-        saveMembic("updateMembic", updm,
-            function (srcmembic) {
-                app.membic.toggleMembic(-1, "closed", srcmembic); },
-            function (code, txt) {
-                jt.out("dlgbsmsgdiv" + cdx, "Save failed " + code + ": " + txt);
-                jt.out("dlgbsbdiv" + cdx, bhtml);
-                membicSaveErrorRecovery(code, txt, cdx); });
-    }
+                               ": " + errtxt); }); },
+        fixStaleUserCache: function (cdx) {
+            var errmsgdiv = jt.byId("dlgbsmsgdiv" + cdx);
+            errmsgdiv.innerHTML = errmsgdiv.innerHTML + "<br/>" +
+                "Reloading user account to synchronize version info.";
+            var prof = app.login.myProfile();
+            var rdf = function () {
+                var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+                app.startParams.go = membic.dsId;  //return to this membic
+                app.login.verifyUserInfo(); };
+            app.refmgr.serverUncache(prof.dsType, prof.dsId, rdf, rdf); }
+    };
 
 
     //Mark the given membic as deleted, which will automatically trigger
@@ -1268,7 +1281,7 @@ app.membic = (function () {
             return rsd; },
         buttons: function (cdx, rsd) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-            if(membicEdited(cdx, membic)) {
+            if(savemgr.membicEdited(cdx, membic)) {
                 //simplest to keep db info in sync with UI.
                 return "Save changes before uploading image."; }
             var subj = "Missing info for Membic " + membic.dsId;
@@ -1475,7 +1488,7 @@ app.membic = (function () {
                      ["div", {cla:"dlgbsbdiv", id:"dlgbsbdiv" + cdx},
                       html]]); },
             actionButtons: function (cdx, membic) {
-                var edited = membicEdited(cdx, membic);
+                var edited = savemgr.membicEdited(cdx, membic);
                 var mkb = formElements.dlgbs.makeActionButton;
                 var ret = [];
                 if(edited) {
@@ -1495,7 +1508,7 @@ app.membic = (function () {
                     bas.cla = "membicformbuttondisabled"; }
                 return jt.tac2html(["button", bas, name]); },
             mrkdel: function (cdx) { markMembicDeleted(cdx); },
-            save: function (cdx) { updateMembic(cdx); },
+            save: function (cdx) { savemgr.updateMembic(cdx); },
             read: function (cdx, overwrite) {
                 jt.out("dlgbsbdiv" + cdx, "Reading...");
                 var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
