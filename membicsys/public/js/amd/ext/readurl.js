@@ -86,9 +86,14 @@ app.readurl = (function () {
 
     function verifyFullURL (val, url) {
         var urlbase;
+        //Fully specified url:  e.g. "https://membic.org"
         if(val.indexOf("http") >= 0) {
             return val; }
-        if(val.indexOf("/") === 0) {  //hard url off root
+        //Protocol neutral fully specified url: e.g. "//membic.org"
+        if(val.startsWith("//")) {
+            return "https:" + val; }
+        //Hard url off root: e.g. "/docs/about.html"
+        if(val.indexOf("/") === 0) {
             urlbase = url.split("?")[0];
             if(urlbase.lastIndexOf("/") > 9) {
                 urlbase = urlbase.slice(0, urlbase.indexOf("/", 9)); }
