@@ -270,6 +270,11 @@ return {
             return null; }
         return app.refmgr.cached("MUser", authobj.authId);
     },
+    authdata: function (obj) {
+        obj.an = authobj.email;
+        obj.at = authobj.token;
+        return jt.objdata(obj);
+    },
 
 
     uidimgsrc: function (uid) {

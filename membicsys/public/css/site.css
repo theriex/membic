@@ -208,7 +208,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .formline, .memlistdiv { clear:both; font-size:medium; 
   /* no padding or the display gets ugly due to empty formlines */
   width:260px; } /* balance dlgta width */
-.keydefin { width:220px; } /* dlgta - reviewbadge - pad */
+.keydefin { width:220px; } /* dlgta - membicbadge - pad */
 .fieldexpdiv { font-size:small; padding:5px; }
 .kwcsvspan { font-size:x-small; }
 .kwcsvlabel { font-weight:bold; padding-right:4px; }
@@ -366,7 +366,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 #downloadactiontextspan { font-size:large; }
 #downloadactiondiv { min-width:150px; text-align:center; padding:20px; }
 
-/* >> review layout */
+/* >> membic layout */
 #revdlgdiv { }
 #rdurlbuttonspan { font-size:x-small; }
 #rdurlbutton { margin:0px 0px 0px 3px; }
@@ -487,6 +487,17 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .fblockspan button { margin-left:8px; }
 .audlevdiv { text-align:center; padding:0px 1px 10px 1px; }
 
+/* membic share dialog */
+.mshsellab { font-size:medium; }
+.mshactbimg { max-width:20px; max-height:20px; vertical-align:middle;
+  padding:0px 5px; }
+#mailshareplus { margin:0px 3px; }
+#newshnamein { width:90px; }
+#newshemin { width:160px; }
+#mshsubjin { width:250px; }
+#mshstatmsgdiv { font-size:small; }
+.mshselcbdiv { position:relative; }
+.mshtrashdiv { position:absolute; top:0px; right:0px; }
 
 /* >> share buttons */
 /* thanks to https://sharingbuttons.io */
@@ -649,14 +660,14 @@ background-color: #FF6600
 }
 
 .resp-sharing-button--email {
-  background-color: #777777;
-  border-color: #777777;
+  background-color: #fab36a;
+  border-color: #fab36a;
 }
 
 .resp-sharing-button--email:hover,
 .resp-sharing-button--email:active {
-  background-color: #5e5e5e;
-  border-color: #5e5e5e;
+  background-color: #ffd2a4;
+  border-color: #ffd2a4;
 }
 
 .resp-sharing-button--rss { 

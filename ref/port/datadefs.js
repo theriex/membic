@@ -51,40 +51,37 @@ module.exports = (function () {
         {f:"aboutme", d:"text", c:"optional description, website link etc."},
         {f:"hashtag", d:"unique string", c:"personal theme direct access"},
         {f:"profpic", d:"image", c:"used for theme, and coop posts"},
-        {f:"cliset", d:"json", c:"dict of client settings, see note 1"},
-        {f:"themes", d:"json", c:"theme reference info, see note"},
+        {f:"cliset", d:"json", c:"dict of client settings (*1)"},
+        {f:"themes", d:"json", c:"theme reference info (*2)"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
      cache:{minutes:2*60, manualadd:true}, //auth interactions
      logflds:["email", "name"]},
-        ////////// Notes:
-        // cliset: {flags:{archived:ISO},  //no new membics for theme if set
-        //          mailins:"enabled",     //"disabled" if Mail-Ins not allowed
-        //          audchgem:"enabled",    //"disabled" if no audience chg email
-        //          sortby:"recency",      //"rating" if top rated first
-        //          embcolors:{link:"#84521a", hover:"#a05705"},
-        //          //No longer supported:
-        //          maxPostsPerDay:1,  //prev max of 2
-        //          ctkeys: {book:"keyword1, keyword2...",  //custom keywords
-        //                  movie:"keyword4, keyword2...",  //by type
-        //                  ...} }
-        //
-        // themes: {"themeid":info, "themeid2":info2, "Pprofid":info3, ...}
-        //  MUser ids are prefixed with 'P' to avoid id collisions
-        //  info: {lev:N, name:str, hashtag:str, description:str,
-        //         picture:idstr, keywords:CSV, followmech:email|RSS,
-        //         archived:str, notices:[notice1, notice2..]}
-        //    lev: -1 (following), 1 (member), 2 (moderator), 3 (founder).
-        //         Any falsy value for lev means no association.
-        //    notice: {type:"application", lev:int, uid, uname, created:ISO,
-        //             status:"pending"|"rejected", reason}
-        // The themes data is for ease of reference, it is not authoritative
-        // and may be out of date.  See util.verify_theme_muser_info
+        //*1 client settings object
+        //    flags:{archived:ISO},  //no new membics for theme if set
+        //    mailins:"enabled",     //"disabled" if Mail-Ins not allowed
+        //    audchgem:"enabled",    //"disabled" if no audience chg email
+        //    sortby:"recency",      //"rating" if top rated first
+        //    embcolors:{link:"#84521a", hover:"#a05705"},  //colors if embedded
+        //    mshare: {<themeId or "profile">: <emaddrcsv>}
+        //    //maxPostsPerDay:1,   //prev max of 2
+        //    //ctkeys: {book:"keyword1, keyword2..."},  //custom kwds by type
+        //*2 themes references object indexed by themeid.  Profile
+        //   references hava a 'P' prefix to avoid collisions e.g. "P2350".
+        //   The themes references are for access convenience.  They are not
+        //   authoritative and may be out of date.  Each ref object has
+        //    lev: <-1:following, 1:member, 2:moderator, 3:founder>
+        //    name, hashtag, description, picture (idstr), keywords,
+        //    followmech: <"email" or "RSS">
+        //    archived:ISO
+        //    //notices: []  //not currently used, old membership mgmt
+        //    //  type:"application", lev:int, uid, uname, created:ISO,
+        //    //  status:"pending"|"rejected", reason}
 
 
     {entity:"Theme", descr:"A cooperative theme.", fields:[
         {f:"importid", d:"dbid unique", c:"previous id from import data"},
-        {f:"name", d:"req string", c:"Human readable name"},
+        {f:"name", d:"req string", c:"Human readable name (*1)"},
         {f:"name_c", d:"req unique string", c:"canonical name for match"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
         {f:"hashtag", d:"unique string", c:"optional one word name"},
@@ -99,8 +96,7 @@ module.exports = (function () {
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
      cache:{minutes:0},  //client cache for instance and pic is sufficient
      logflds:["name"]},
-        ////////// Notes:
-        // name: bootstrap name is "Theme " + id of first founder
+        //*1 bootstrap theme name is "Theme " + id of first founder
 
 
     {entity:"AdminLog", descr:"Administrative actions log.", fields:[
@@ -240,7 +236,7 @@ module.exports = (function () {
         
     //Content updated by cron job.  General reporting/history use.
     {entity:"ActivitySummary", descr:"Stats by profile/theme", fields:[
-        {f:"refp", d:"req unique string", c:"e.g. MUSer1234 or Theme4567"},
+        {f:"refp", d:"req unique string", c:"e.g. MUser1234 or Theme4567"},
         {f:"tstart", d:"req isod", c:"daily summary start time"},
         {f:"tuntil", d:"req isod", c:"daily summary end time"},
         {f:"reqbyid", d:"req int", c:"count of external requests via id"},

@@ -94,6 +94,10 @@ def audinf(): #params: an, at, dsType, dsId
 def audblock(): #params: an, at, srctype, srcid, uid, blocked
     return useract.audblock()
 
+@app.route('/api/fmkuser', methods=['GET', 'POST'])
+def fmkuser(): #params: an, at, name, email
+    return useract.fmkuser()
+
 @app.route('/api/urlcontents')
 def urlcontents():  # params: an, at, url
     return util.urlcontents()

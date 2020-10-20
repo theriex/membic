@@ -636,7 +636,11 @@ app.membic = (function () {
                  title:subj,
                  mref:mlink,
                  socmed:["tw", "fb", "em"]});
-            if(!mayEdit(membic)) {  //respond option if not yours
+            if(myMembic(membic)) {  //author can do extended email sharing
+                tac.push(app.layout.shareButtonsTAC(
+                    {mplusfstr:mdfs("sharemgr.openMailDialog", cdx),
+                     socmed:["mp"]})[0]); }
+            else {  //someone else's membic, allow responding to it
                 tac.push(["span", {cla:"sharerespsepspan"}, "&nbsp;|&nbsp;"]);
                 tac.push(sharemgr.responseButtonHTML(cdx, membic));
                 tac.push(["div", {id:"mcmtdiv" + cdx}]); }
@@ -703,7 +707,156 @@ app.membic = (function () {
                     app.pcd.managerDispatch("stgmgr", "toggleSettings"); }
                 break;
             default:
-                jt.out("sharemgr.resperr unknown errt: " + errt); } }
+                jt.out("sharemgr.resperr unknown errt: " + errt); } },
+        openMailDialog: function (cdx) {
+            var html = jt.tac2html(
+                ["div", {cla:"mailsharediv"},
+                 [["div", {id:"mshaddrsdiv"},
+                   sharemgr.mailShareHTML(cdx)],
+                  ["div", {id:"mailsharecontentdiv"},
+                   sharemgr.mailContentHTML(cdx)]]]);
+            html = app.layout.dlgwrapHTML("Membic Share Mail", html);
+            app.layout.openDialog({y:40}, html); }, //no autofocus
+        mailShareHTML: function (cdx) {
+            return jt.tac2html(
+                [sharemgr.mailShareAddrs(cdx).map(sharemgr.mshselHTML),
+                 sharemgr.addMailAddrHTML(cdx)]); },
+        mailShareAddrs: function (cdx) {
+            var msh = app.login.myProfile().cliset.mshare || {};
+            var wrk = {addrs:{}, res:[]};
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            sharemgr.accumEmAddrs(wrk, msh[membic.ctmid], membic.ctmid, cdx);
+            sharemgr.accumEmAddrs(wrk, msh.profile, !membic.ctmid, cdx);
+            return wrk.res; },
+        accumEmAddrs: function (wrk, addrcsv, dfltChecked, cdx) {
+            if(!addrcsv) { return; }
+            addrcsv.csvarray().forEach(function (addr) {
+                var pma = sharemgr.parseShareAddr(addr);
+                if(pma) {
+                    pma.dfltChecked = dfltChecked;
+                    pma.cdx = cdx;
+                    if(!wrk.addrs[pma.addr]) {  //not already added
+                        wrk.addrs[pma.addr] = pma;
+                        wrk.res.push(pma); } } }); },
+        parseShareAddr: function (addr) {  //server validates email on send
+            //"uid:name <emaddr>" e.g. "1234:Test User <test@example.com>"
+            var emcs = addr.match(/^(\d+):([^<]*)<(\S+@\S+\.\S+)>/);
+            if(emcs) {  //
+                return sharemgr.normEmail(emcs[1], emcs[2], emcs[3]); }
+            return null; },
+        normEmail: function (uid, emname, emaddr) {
+            var ret = {user:uid, name:emname.trim(), addr:emaddr.toLowerCase()};
+            ret.full = ret.name + " <" + ret.addr + ">";
+            ret.dbv = ret.user + ":" + ret.full;
+            return ret; },
+        mshselHTML: function (pma, idx) {
+            return jt.tac2html(
+                ["div", {cla:"mshselcbdiv", id:"mshselcbdiv" + idx},
+                 [["input", {type:"checkbox", cla:"mshselcb",
+                             id:"mshselcb" + idx, value:jt.enc(pma.full),
+                             checked:jt.toru(pma.dfltChecked)}],
+                  ["label", {fo:"mshselcb" + idx, cla:"mshsellab"},
+                   pma.name + " &lt;" + pma.addr + "&gt;"],
+                  ["div", {cla:"mshtrashdiv"},
+                   ["a", {href:"#deletecontact",
+                          title:"Delete " + pma.name + " contact",
+                          onclick:mdfs("sharemgr.deleteEmail", idx, pma.cdx)},
+                    ["img", {cla:"mshactbimg",
+                             src:app.dr("img/trash.png")}]]]]]); },
+        deleteEmail: function (idx, cdx) {
+            var cb = jt.byId("mshselcb" + idx);
+            var pma = sharemgr.parseShareAddr(jt.dec(cb.value));
+            jt.out("mshselcbdiv" + idx, "Deleting...");
+            //remove from current theme and from profile so it doesn't show
+            //up again in this theme.  Might still be appropriate for a
+            //different theme so leave any other refs alone.
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var prof = app.login.fullProfile();
+            var msh = prof.cliset.mshare || {};
+            if(msh[membic.ctmid]) {
+                msh[membic.ctmid] = sharemgr.remEmail(pma, msh[membic.ctmid]); }
+            msh.profile = sharemgr.remEmail(pma, msh.profile);
+            prof.cliset.mshare = msh;
+            app.login.updateProfile(prof, 
+                function () {
+                    jt.out("mshselcbdiv" + idx, ""); },
+                function () {  //not much to do if fail. Won't send...
+                    jt.out("mshselcbdiv" + idx, ""); }); },
+        remEmail: function (pma, csv) {
+            //emaddrs should be normalized, but can't assume that so filter.
+            csv = csv || "";
+            var addrs = csv.csvarray();
+            addrs = addrs.filter((em) =>
+                sharemgr.parseShareAddr(em).addr !== pma.addr);
+            return addrs.join(","); },
+        addMailAddrHTML: function (cdx) {
+            return jt.tac2html(
+                ["div", {id:"newshemdiv"},
+                 [["a", {href:"#newaddr", title:"Add new mail share",
+                         id:"mailshareplus",
+                         onclick:mdfs("sharemgr.addMailAddr", cdx)}, "+"],
+                  ["input", {type:"text", id:"newshnamein", placeholder:"Name",
+                             onchange:mdfs("sharemgr.addMailAddr", cdx)}],
+                  ["input", {type:"email", id:"newshemin",
+                             placeholder:"friend@example.com",
+                             onchange:mdfs("sharemgr.addMailAddr", cdx)}]]]); },
+        addMailAddr: function (cdx) {
+            var pma = sharemgr.normEmail(0, jt.byId("newshnamein").value || "",
+                                         jt.byId("newshemin").value || "");
+            if(!pma.name) { return jt.byId("newshnamein").focus(); }
+            if(!pma.addr) { return jt.byId("newshemin").focus(); }
+            jt.out("newshemdiv", "Fetching recipient...");
+            jt.call("POST", app.dr("/api/fmkuser"),
+                    app.login.authdata({name:pma.name, email:pma.addr}),
+                    function (res) {
+                        pma = sharemgr.normEmail(
+                            res[0].dsId, res[0].name || pma.name, pma.addr);
+                        jt.out("newshemdiv", "Adding...");
+                        sharemgr.addRecipient(cdx, pma); },
+                    function (code, errtxt) {
+                        jt.out("newshemdiv", code + ": " + errtxt); },
+                    jt.semaphore("membic.addMailAddr")); },
+        addRecipient: function (cdx, pma) {
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var prof = app.login.fullProfile();
+            var msh = prof.cliset.mshare || {};
+            if(membic.ctmid) {
+                msh[membic.ctmid] = msh[membic.ctmid] || "";
+                msh[membic.ctmid] = msh[membic.ctmid].csvappend(pma.dbv); }
+            else {
+                msh.profile = msh.profile || "";
+                msh.profile = msh.profile.csvappend(pma.dbv); }
+            prof.cliset.mshare = msh;
+            app.login.updateProfile(prof, 
+                function () {
+                    jt.out("mshaddrsdiv", sharemgr.mailShareHTML(cdx)); },
+                function () {  //not much to do if fail. Redraw.
+                    jt.out("mshaddrsdiv", sharemgr.mailShareHTML(cdx)); }); },
+        mailContentHTML: function (cdx) {
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var title = membic.details.title || membic.details.name || "";
+            var url = membic.url || membic.rurl;
+            var prof = app.login.fullProfile();
+            return jt.tac2html(
+                [["div", {id:"mshsubjdiv"},
+                  ["&#x261e;",
+                   ["input", {type:"text", id:"mshsubjin",
+                              placeholder:"Subject",
+                              value:jt.ellipsis(membic.text, 65)}]]],
+                 ["div", {id:"mshbodydiv"},
+                  ["textarea", {id:"mshbodyta", rows:20, cols:35},
+                  "Hey $NAME,\n\n" +
+                  "Thought you might find this interesting:\n\n" +
+                  title + "\n" + url + "\n\n" +
+                  membic.text + "\n\n" +
+                  prof.name + "\n" + prof.email + "\n"]],
+                 ["div", {id:"mshstatmsgdiv"}],
+                 ["div", {cla:"formbuttonsdiv"},
+                  ["button", {type:"button", title:"Send Share Email",
+                              onclick:mdfs("sharemgr.sendShareMail")},
+                   "Send"]]]); },
+        sendShareMail: function () {
+            jt.out("mshstatmsgdiv", "Send not implemented yet"); }
     };
 
 

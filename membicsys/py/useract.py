@@ -870,6 +870,32 @@ def audblock():
     return util.respJSON("[" + res + "]")
 
 
+# Find or make user given an email address.  Must be signed in.  Returns
+# public user information.  Used for sharing membics outside of current
+# followers, providing a mechanism for the recipient to block any further
+# contact from the sender as needed.
+def fmkuser():
+    try:
+        muser, _ = util.authenticate()
+        name = dbacc.reqarg("name", "string", required=True)
+        email = dbacc.reqarg("email", "string", required=True)
+        fmu = dbacc.cfbk("MUser", "email", email)
+        if not fmu:  # make a new user. see util.py newacct
+            cliset = {"contactfrom": (muser["dsId"] + ":" + muser["name"] +
+                                      " <" + muser["email"] + ">")}
+            fmu = {"dsType":"MUser", "email":email, "phash":"temporary",
+                   "status":"Pending", "actcode":util.random_alphanumeric(6),
+                   "name":name, "cliset":json.dumps(cliset)}
+            fmu = dbacc.write_entity(fmu)       # set created timestamp
+            pwd = util.random_alphanumeric(12)  # user will need to reset
+            fmu["phash"] = util.make_password_hash(fmu["email"], pwd,
+                                                   fmu["created"])
+            fmu = dbacc.write_entity(fmu, vck=fmu["modified"])
+    except ValueError as e:
+        return util.srverr(str(e))
+    return util.respJSON("[" + util.safe_JSON(fmu) + "]")
+
+
 # Administrator utility to change a theme keyword, update all membics to
 # reflect the change, and rebuild preb for the theme and affected users.
 # This is a heavyweight operation and can potentially collide with ongoing
