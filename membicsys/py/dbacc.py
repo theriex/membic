@@ -69,6 +69,7 @@ entdefs = {
         "hashtag": {"pt": "string", "un": True, "dv": ""},
         "profpic": {"pt": "image", "un": False, "dv": None},
         "cliset": {"pt": "string", "un": False, "dv": ""},
+        "perset": {"pt": "string", "un": False, "dv": ""},
         "themes": {"pt": "string", "un": False, "dv": ""},
         "lastwrite": {"pt": "string", "un": False, "dv": ""},
         "preb": {"pt": "string", "un": False, "dv": ""}
@@ -514,6 +515,7 @@ def app2db_MUser(inst):
     cnv["hashtag"] = app2db_fieldval("MUser", "hashtag", inst)
     cnv["profpic"] = app2db_fieldval("MUser", "profpic", inst)
     cnv["cliset"] = app2db_fieldval("MUser", "cliset", inst)
+    cnv["perset"] = app2db_fieldval("MUser", "perset", inst)
     cnv["themes"] = app2db_fieldval("MUser", "themes", inst)
     cnv["lastwrite"] = app2db_fieldval("MUser", "lastwrite", inst)
     cnv["preb"] = app2db_fieldval("MUser", "preb", inst)
@@ -541,6 +543,7 @@ def db2app_MUser(inst):
     cnv["hashtag"] = db2app_fieldval("MUser", "hashtag", inst)
     cnv["profpic"] = db2app_fieldval("MUser", "profpic", inst)
     cnv["cliset"] = db2app_fieldval("MUser", "cliset", inst)
+    cnv["perset"] = db2app_fieldval("MUser", "perset", inst)
     cnv["themes"] = db2app_fieldval("MUser", "themes", inst)
     cnv["lastwrite"] = db2app_fieldval("MUser", "lastwrite", inst)
     cnv["preb"] = db2app_fieldval("MUser", "preb", inst)
@@ -903,8 +906,8 @@ def dblogmsg(op, entity, res):
 def insert_new_MUser(cnx, cursor, fields):
     fields = app2db_MUser(fields)
     stmt = (
-        "INSERT INTO MUser (created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, themes, lastwrite, preb) "
-        "VALUES (%(created)s, %(modified)s, %(importid)s, %(email)s, %(phash)s, %(status)s, %(mailbounce)s, %(actsends)s, %(actcode)s, %(altinmail)s, %(name)s, %(aboutme)s, %(hashtag)s, %(profpic)s, %(cliset)s, %(themes)s, %(lastwrite)s, %(preb)s)")
+        "INSERT INTO MUser (created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, perset, themes, lastwrite, preb) "
+        "VALUES (%(created)s, %(modified)s, %(importid)s, %(email)s, %(phash)s, %(status)s, %(mailbounce)s, %(actsends)s, %(actcode)s, %(altinmail)s, %(name)s, %(aboutme)s, %(hashtag)s, %(profpic)s, %(cliset)s, %(perset)s, %(themes)s, %(lastwrite)s, %(preb)s)")
     data = {
         'created': fields.get("created"),
         'modified': fields.get("modified"),
@@ -921,6 +924,7 @@ def insert_new_MUser(cnx, cursor, fields):
         'hashtag': fields.get("hashtag", entdefs["MUser"]["hashtag"]["dv"]),
         'profpic': fields.get("profpic", entdefs["MUser"]["profpic"]["dv"]),
         'cliset': fields.get("cliset", entdefs["MUser"]["cliset"]["dv"]),
+        'perset': fields.get("perset", entdefs["MUser"]["perset"]["dv"]),
         'themes': fields.get("themes", entdefs["MUser"]["themes"]["dv"]),
         'lastwrite': fields.get("lastwrite", entdefs["MUser"]["lastwrite"]["dv"]),
         'preb': fields.get("preb", entdefs["MUser"]["preb"]["dv"])}
@@ -1450,12 +1454,12 @@ def delete_entity(entity, dsId):
 
 def query_MUser(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
-    query += "importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, themes, lastwrite, preb"
+    query += "importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, perset, themes, lastwrite, preb"
     query += " FROM MUser " + where
     cursor.execute(query)
     res = []
-    for (dsId, created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, themes, lastwrite, preb) in cursor:
-        inst = {"dsType": "MUser", "dsId": dsId, "created": created, "modified": modified, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "themes": themes, "lastwrite": lastwrite, "preb": preb}
+    for (dsId, created, modified, importid, email, phash, status, mailbounce, actsends, actcode, altinmail, name, aboutme, hashtag, profpic, cliset, perset, themes, lastwrite, preb) in cursor:
+        inst = {"dsType": "MUser", "dsId": dsId, "created": created, "modified": modified, "importid": importid, "email": email, "phash": phash, "status": status, "mailbounce": mailbounce, "actsends": actsends, "actcode": actcode, "altinmail": altinmail, "name": name, "aboutme": aboutme, "hashtag": hashtag, "profpic": profpic, "cliset": cliset, "perset": perset, "themes": themes, "lastwrite": lastwrite, "preb": preb}
         inst = db2app_MUser(inst)
         res.append(inst)
     dblogmsg("QRY", "MUser", res)
@@ -1633,6 +1637,8 @@ def visible_MUser_fields(obj, audience):
                 val = obj["dsId"]
             else:
                 val = ""
+        if fld == "perset" and audience != "private":
+            continue
         filtobj[fld] = val
     return filtobj
 

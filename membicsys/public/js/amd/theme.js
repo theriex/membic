@@ -271,28 +271,33 @@ app.theme = (function () {
         audtype: function (dsType) {
             return dsType.toLowerCase() + "audience";
         },
-        fetchInfo: function (dsType, dsId, uid) {
+        fetchInfo: function (dsType, dsId, contf, fmsgdivid) {
             var authobj = app.login.authenticated();
             var url = app.dr("/api/audinf") + "?an=" + authobj.email + "&at=" +
                 authobj.token + "&dsType=" + dsType + "&dsId=" + dsId +
                 jt.ts("&cb=", "minute");  //use refmgr cache, not browser
-                jt.call("GET", url, null,
-                        function (aios) {
-                            app.refmgr.put(aios[0]);
-                            audmgr.display(aios[0], uid); },
-                        function(code, errtxt) {
-                            jt.out("pcdaudcontdiv", "Audience fetch failed " +
-                                   code + ": " + errtxt); },
-                        jt.semaphore("theme.audmgr.fetchInfo"));
+            jt.call("GET", url, null,
+                    function (aios) {
+                        app.refmgr.put(app.refmgr.deserialize(aios[0]));
+                        contf(aios[0]); },
+                    function(code, errtxt) {
+                        jt.out(fmsgdivid, "Audience fetch failed " +
+                               code + ": " + errtxt); },
+                    jt.semaphore("theme.audmgr.fetchInfo"));
         },
         fetchAndDisplay: function (dsType, dsId, uid) {
             var atn = audmgr.audtype(dsType);
             var co = app.refmgr.cached(atn, dsId);
             if(!co) {
                 jt.out("pcdaudcontdiv", "Fetching audience details...");
-                return app.fork({descr:"fetch " + atn + dsId, ms:50,
-                                 func:function () {
-                                     audmgr.fetchInfo(dsType, dsId, uid); }}); }
+                return app.fork(
+                    {descr:"fetch " + atn + dsId, ms:50,
+                     func:function () {
+                         audmgr.fetchInfo(
+                             dsType, dsId,
+                             function (audinf) {
+                                 audmgr.display(audinf, uid); },
+                             "pcdaudcontdiv"); }}); }
             audmgr.display(co, uid);
         }
     };

@@ -52,7 +52,8 @@ module.exports = (function () {
         {f:"hashtag", d:"unique string", c:"personal theme direct access"},
         {f:"profpic", d:"image", c:"used for theme, and coop posts"},
         {f:"cliset", d:"json", c:"dict of client settings (*1)"},
-        {f:"themes", d:"json", c:"theme reference info (*2)"},
+        {f:"perset", d:"priv json", c:"dict of personal settings (*2)"},
+        {f:"themes", d:"json", c:"theme reference info (*3)"},
         {f:"lastwrite", d:"isod", c:"latest membic/preb rebuild"},
         {f:"preb", d:"json", c:"membics for display w/opt overflow link"}],
      cache:{minutes:2*60, manualadd:true}, //auth interactions
@@ -63,20 +64,22 @@ module.exports = (function () {
         //    audchgem:"enabled",    //"disabled" if no audience chg email
         //    sortby:"recency",      //"rating" if top rated first
         //    embcolors:{link:"#84521a", hover:"#a05705"},  //colors if embedded
-        //    mshare: {<themeId or "profile">: <emaddrcsv>}
         //    //maxPostsPerDay:1,   //prev max of 2
         //    //ctkeys: {book:"keyword1, keyword2..."},  //custom kwds by type
-        //*2 themes references object indexed by themeid.  Profile
+        //*2 personal settings object
+        //    mshare: {<themeId or "profile">: <emaddrcsv>}
+        //*3 themes references object indexed by themeid.  Profile
         //   references hava a 'P' prefix to avoid collisions e.g. "P2350".
         //   The themes references are for access convenience.  They are not
         //   authoritative and may be out of date.  Each ref object has
-        //    lev: <-1:following, 1:member, 2:moderator, 3:founder>
-        //    name, hashtag, description, picture (idstr), keywords,
-        //    followmech: <"email" or "RSS">
-        //    archived:ISO
-        //    //notices: []  //not currently used, old membership mgmt
-        //    //  type:"application", lev:int, uid, uname, created:ISO,
-        //    //  status:"pending"|"rejected", reason}
+        //     name, hashtag, description, picture (idstr), keywords,
+        //     archived:ISO
+        //     lev: <-2:blocking, -1:following, 0:noassoc,
+        //            1:member, 2:moderator, 3:founder>
+        //     followmech: <"email" or "RSS">
+        //     //notices: []  //not currently used, old membership mgmt
+        //     //  type:"application", lev:int, uid, uname, created:ISO,
+        //     //  status:"pending"|"rejected", reason}
 
 
     {entity:"Theme", descr:"A cooperative theme.", fields:[
@@ -120,27 +123,27 @@ module.exports = (function () {
         {f:"revtype", d:"req string", c:"book, movie, music...",
          enumvals:["book", "article", "movie", "video", "music", "yum",
                    "activity", "other"]},
-        {f:"details", d:"json", c:"detail fields depending on type"},
+        {f:"details", d:"json", c:"detail fields depending on type (*1)"},
         {f:"penid", d:"req dbid", c:"who wrote this membic"},
         {f:"ctmid", d:"req dbid", c:"Theme id, or 0 if source membic"},
         {f:"rating", d:"req int", c:"0 for no value, otherwise 1-100"},
-        {f:"srcrev", d:"req dbid", c:"source membic, see note"},
-        {f:"cankey", d:"string", c:"alternative semi-key, see note"},
+        {f:"srcrev", d:"req dbid", c:"source membic or indicator (*2)"},
+        {f:"cankey", d:"string", c:"alternative semi-key (*3)"},
         {f:"text", d:"text", c:"why this link is memorable"},
         {f:"keywords", d:"gencsv", c:"keywords for this membic"},
-        {f:"svcdata", d:"json", c:"pic src, other info, see note"},
+        {f:"svcdata", d:"json", c:"pic src, other info (*4)"},
         {f:"revpic", d:"image", c:"pic, if uploaded"},
         {f:"imguri", d:"url", c:"external pic for membic"},
         {f:"icdata", d:"image", c:"secure relay ext pic cache data"},
         {f:"icwhen", d:"isodate", c:"when icdata last pulled"},
         {f:"dispafter", d:"isodate", c:"visibility queued until"},
         {f:"penname", d:"string", c:"author name for easy UI ref"},
-        {f:"reacdat", d:"json", c:"reaction data, see note"}],
+        {f:"reacdat", d:"json", c:"reaction data (*5)"}],
      cache:{minutes:0},  //only referenced directly for image data
      logflds: ["url", "penname", "penid", "ctmid"],
      queries: [{q:[{f:"ctmid"}, {f:"modified", dir:"desc"}]},
                {q:[{f:"ctmid"}, {f:"penid"}, {f:"modified", dir:"desc"}]}]},
-        // details:
+        //*1 details fields as used by each revtype:
         //   - name: yum, activity, other
         //   - title: book, movie, video, music
         //   - artist: video, music
@@ -150,7 +153,7 @@ module.exports = (function () {
         //   - starring: movie
         //   - address: yum, activity
         //   - year: values like "80's" are ok"
-        // srcrev is heavily utilized in different contexts:
+        //*2 srcrev is heavily utilized in different contexts:
         //   - if this membic is a Theme post (ctmid is filled in), srcrev
         //     holds the id of the original membic.
         //   - if this membic was created directly from another membic,
@@ -159,20 +162,19 @@ module.exports = (function () {
         //       -101: Future review (placeholder for later writeup)
         //       -202: Batch update (no longer supported)
         //       -604: Marked as deleted
-        // cankey (canonical key): 
+        //*3 cankey (canonical key):
         //   alternate index based on collapsed review field info.  Can be
         //   used to group multiple membics for the same thing within a
         //   theme, or for search.  The value is maintained server-side for
         //   consistency.  Multiple membics with the same cankey/penid/ctmid
         //   are allowed but discouraged.  Should always have a value, but
         //   can end up empty if unreadable url.
-        // svcdata:
-        //   MUser and Theme membics:
+        //*4 svcdata fields for both MUser and Theme membics:
         //     - picdisp: sitepic|upldpic  ("nopic" no longer used)
         //       Client setting. For sitepic, the server may cache a lowres
         //       copy of the source image in the icdata field to avoid
         //       degraded client server connections over https.
-        //   MUser membics only:
+        //   MUser svcdata fields:
         //     - postctms: [] zero or more theme postnotes
         //           postnote: {ctmid, name, revid}
         //     - urlreader: {name: primary reader module name (e.g. "readurl")
@@ -184,12 +186,17 @@ module.exports = (function () {
         //       A specific API reader may failover to calling general
         //       reader processing, but that is situation specific and still
         //       logged within the primary reader info listing.
-        //   Theme membics only:
+        //     - mshares: csv of userIds this Membic has been mailed to via
+        //       extended membic share.  The csv is updated server side when
+        //       the emails is sent.  Any signed-in user can share, so the
+        //       csv reflects all recipients, whether the share was done by
+        //       the author or someone else.
+        //   Theme svcdata fields:
         //     - tdat: {disp:active|removed, user:dsId, reason:txt, ts:ISO}
-        //       No tdat is equivalent to tdat.disp active.  If user is src
-        //       membic author, then can switch back to active, provided src
-        //       membic is not marked as deleted.
-        // reacdat:
+        //       An empty tdat is equivalent to tdat.disp:active.  If user
+        //       is src membic author, then can switch from removed back to
+        //       active, provided the src membic is not marked as deleted.
+        // *5 reacdat:
         //   Server maintained reaction data from other users.  For example
         //   a user might mark the membic as helpful or remembered.  Or they
         //   might select from a scalar view of emoticons to rate it.  Or

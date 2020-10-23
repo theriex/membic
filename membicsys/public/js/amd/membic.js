@@ -218,6 +218,22 @@ app.membic = (function () {
     }
 
 
+    function rebuildDisplayContext(membicid, pots, contf) {
+        //The updated MUser is always the first item returned, followed by
+        //the display context Theme if that was specified.
+        pots.forEach(function (pot) {  //deserialize so ready to use
+            app.refmgr.deserialize(pot); });
+        var updmbc = findMembic(membicid, pots[0].preb);
+        clearCachedThemesForMembic(updmbc);
+        pots.forEach(function (pot) {  //update all given data
+            app.refmgr.put(pot); });
+        app.pcd.fetchAndDisplay(pots[0].dsType, pots[0].dsId,
+                                {go:updmbc.dsId});
+        if(contf) {
+            contf(updmbc); }
+    }
+
+
     //The caller is responsible for clearing any cached Themes that no
     //longer contain the membic being saved.  On return, this will display
     //the user profile, with the membic open for further editing.  The top
@@ -235,20 +251,9 @@ app.membic = (function () {
         savemembic.dsType = "Membic";  //verify for param serialization
         var url = app.login.authURL("/api/membicsave");
         jt.call("POST", url, app.refmgr.postdata(savemembic),
-                //The updated MUser is always the first item returned,
-                //followed by the display context Theme if specified.
                 function (pots) {  //profile or/and theme object(s)
                     savind = "";
-                    pots.forEach(function (pot) {  //deserialize so ready to use
-                        app.refmgr.deserialize(pot); });
-                    var updmbc = findMembic(savemembic.dsId, pots[0].preb);
-                    clearCachedThemesForMembic(updmbc);
-                    pots.forEach(function (pot) {  //update all given data
-                        app.refmgr.put(pot); });
-                    app.pcd.fetchAndDisplay(pots[0].dsType, pots[0].dsId,
-                                           {go:updmbc.dsId});
-                    if(contf) {
-                        contf(updmbc); } },
+                    rebuildDisplayContext(savemembic.dsId, pots, contf); },
                 function (code, errtxt) {
                     savind = "";
                     jt.log("saveMembic " + savemembic.dsId + " " + code + ": " +
@@ -325,7 +330,7 @@ app.membic = (function () {
         tm.details = membic.details || {};
         tm.imguri = membic.imguri || tm.imguri || "";
         tm.revtype = membic.revtype || "article";
-        tm.rating = membic.rating || ratmgr.rati.dfltv;
+        tm.rating = membic.rating || mgrs.rat.rati.dfltv;
         tm.svcdata = tm.svcdata || {};
         tm.svcdata.urlreader = membic.svcdata.urlreader;
         saveMembic("mergeURLReadInfoIntoSavedMembic", tm, function (membic) {
@@ -425,10 +430,18 @@ app.membic = (function () {
 
 
     function mdfs (mgrfname, ...args) {
+        var pstr = app.paramstr(args);
         mgrfname = mgrfname.split(".");
-        return jt.fs("app.membic.managerDispatch('" + mgrfname[0] + "','" +
-                     mgrfname[1] + "'" + app.paramstr(args) + ")");
+        var fstr = "app.membic.managerDispatch('" + mgrfname[0] + "','" +
+            mgrfname[1] + "'" + pstr + ")";
+        if(pstr !== ",event") {  //don't return false from event hooks
+            fstr = jt.fs(fstr); }
+        return fstr;
     }
+
+
+    //General container for all managers, used for dispatch
+    var mgrs = {};
 
 
     function fdfs (formfname, ...args) {
@@ -474,7 +487,7 @@ app.membic = (function () {
     }
 
 
-    var savemgr = {
+    mgrs.save = {
         //If anything has been edited, return true.
         membicEdited: function (cdx, membic) {
             var changed = [];
@@ -520,16 +533,16 @@ app.membic = (function () {
                            jt.out("dlgbsmsgdiv" + cdx, "Save failed " + code +
                                   ": " + txt);
                            jt.out("dlgbsbdiv" + cdx, bhtml);
-                           savemgr.errorRecovery(code, txt, cdx); }); },
+                           mgrs.save.errorRecovery(code, txt, cdx); }); },
         errorRecovery: function (ignore /*code*/, errtxt, cdx) {
             var matches = errtxt.match(/rchived\sTheme\s(\S+)/);
             if(matches) {
-                return savemgr.fixArchivedThemePost(matches, cdx); }
+                return mgrs.save.fixArchivedThemePost(matches, cdx); }
             matches = errtxt.match(
                     /MUser\d+\supdate\sreceived\soutdated\sversion\scheck/);
             if(matches) {
-                return savemgr.fixStaleUserCache(cdx); }
-            jt.log("savemgr.errorRecovery no matching automatic recovery"); },
+                return mgrs.save.fixStaleUserCache(cdx); }
+            jt.log("mgrs.save.errorRecovery no matching automatic recovery"); },
         fixArchivedThemePost: function (matches, cdx) {
             //Note theme archived in profile MUser.themes
             var tid = matches[1];
@@ -543,7 +556,7 @@ app.membic = (function () {
             jt.call("POST", app.dr("/api/associate"), data,
                     function (objs) {  //first object is update profile
                         app.refmgr.put(app.refmgr.deserialize(objs[0]));
-                        tpmgr.themepost(cdx, "remove", tid); },
+                        mgrs.tp.themepost(cdx, "remove", tid); },
                     function (code, errtxt) {
                         jt.log("membicSaveErrorRecovery associate " + code +
                                ": " + errtxt); }); },
@@ -620,7 +633,9 @@ app.membic = (function () {
     }
 
 
-    var sharemgr = {
+    mgrs.shr = (function () {
+        var audfetch = {};
+    return {
         //Thought about adding membic share button to create your own membic
         //from an existing one, but that adds complexity, would likely be of
         //very limited use, and detract from the external nature of sharing.
@@ -638,11 +653,11 @@ app.membic = (function () {
                  socmed:["tw", "fb", "em"]});
             if(myMembic(membic)) {  //author can do extended email sharing
                 tac.push(app.layout.shareButtonsTAC(
-                    {mplusfstr:mdfs("sharemgr.openMailDialog", cdx),
+                    {mplusfstr:mdfs("shr.openMailDialog", cdx),
                      socmed:["mp"]})[0]); }
             else {  //someone else's membic, allow responding to it
                 tac.push(["span", {cla:"sharerespsepspan"}, "&nbsp;|&nbsp;"]);
-                tac.push(sharemgr.responseButtonHTML(cdx, membic));
+                tac.push(mgrs.shr.responseButtonHTML(cdx, membic));
                 tac.push(["div", {id:"mcmtdiv" + cdx}]); }
             return jt.tac2html(tac); },
         //Provide descriptive information for human reference and for use by
@@ -665,7 +680,7 @@ app.membic = (function () {
             return body; },
         responseButtonHTML: function (cdx, membic) {
             var subj = "Re: " + jt.ellipsis(membicReferenceText(membic), 75);
-            var body = sharemgr.emquoteMembicFields(membic);
+            var body = mgrs.shr.emquoteMembicFields(membic);
             var mlink = "mailto:forwarding@membic.org?subject=" +
                 jt.dquotenc(subj) + "&body=" + "%0A%0A" + jt.dquotenc(body) +
                 "%0A";
@@ -676,11 +691,11 @@ app.membic = (function () {
             if(!prof) {
                 linkattrs = {cla:"linkbutton linkbutdis",
                              href:"#signInToRespond",
-                             onclick:mdfs("sharemgr.resperr", cdx, "signin")}; }
+                             onclick:mdfs("shr.resperr", cdx, "signin")}; }
             else if(!assoc.lev) {  //undefined or not following
                 linkattrs = {cla:"linkbutton linkbutdis",
                              href:"#followToRespond",
-                             onclick:mdfs("sharemgr.resperr", cdx, "follow")}; }
+                             onclick:mdfs("shr.resperr", cdx, "follow")}; }
             return jt.tac2html(["a", linkattrs, "Send&nbsp;Comment"]); },
         resperr: function (cdx, errt, ack) {
             var actobj = app.pcd.getDisplayContext().actobj;
@@ -698,7 +713,7 @@ app.membic = (function () {
                 if(!ack) {
                     jt.out("mcmtdiv" + cdx, jt.tac2html(
                         ["a", {href:"#Follow",
-                               onclick:mdfs("sharemgr.resperr", cdx, "follow",
+                               onclick:mdfs("shr.resperr", cdx, "follow",
                                             true)},
                          "To comment, follow " + actobj.contextobj.name])); }
                 else {  //clicked to follow
@@ -707,31 +722,43 @@ app.membic = (function () {
                     app.pcd.managerDispatch("stgmgr", "toggleSettings"); }
                 break;
             default:
-                jt.out("sharemgr.resperr unknown errt: " + errt); } },
+                jt.out("mgrs.shr.resperr unknown errt: " + errt); } },
         openMailDialog: function (cdx) {
             var html = jt.tac2html(
                 ["div", {cla:"mailsharediv"},
                  [["div", {id:"mshaddrsdiv"},
-                   sharemgr.mailShareHTML(cdx)],
+                   mgrs.shr.mailShareHTML(cdx)],
                   ["div", {id:"mailsharecontentdiv"},
-                   sharemgr.mailContentHTML(cdx)]]]);
+                   mgrs.shr.mailContentHTML(cdx)]]]);
             html = app.layout.dlgwrapHTML("Membic Share Mail", html);
             app.layout.openDialog({y:40}, html); }, //no autofocus
         mailShareHTML: function (cdx) {
             return jt.tac2html(
-                [sharemgr.mailShareAddrs(cdx).map(sharemgr.mshselHTML),
-                 sharemgr.addMailAddrHTML(cdx)]); },
+                [mgrs.shr.mailShareAddrs(cdx).map(mgrs.shr.mshselHTML),
+                 mgrs.shr.addMailAddrHTML(cdx)]); },
         mailShareAddrs: function (cdx) {
-            var msh = app.login.myProfile().cliset.mshare || {};
+            var msh = app.login.fullProfile().perset.mshare || {};
             var wrk = {addrs:{}, res:[]};
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-            sharemgr.accumEmAddrs(wrk, msh[membic.ctmid], membic.ctmid, cdx);
-            sharemgr.accumEmAddrs(wrk, msh.profile, !membic.ctmid, cdx);
+            mgrs.shr.accumEmAddrs(wrk, msh[membic.ctmid], membic.ctmid, cdx);
+            mgrs.shr.accumEmAddrs(wrk, msh.profile, !membic.ctmid, cdx);
+            wrk.res.forEach(function (pma, idx) {
+                var following = mgrs.shr.isFollowing(
+                    membic, pma.user, function () {
+                        jt.out("mshaddrsdiv", mgrs.shr.mailShareHTML(cdx)); },
+                    "mshselcbdiv" + idx);
+                if(following) {
+                    pma.dfltChecked = false;
+                    pma.disabled = "following"; }
+                else if(membic.svcdata && membic.svcdata.mshares &&
+                        membic.svcdata.mshares.csvcontains(pma.user)) {
+                    pma.dfltChecked = false;
+                    pma.disabled = "already sent"; } });
             return wrk.res; },
         accumEmAddrs: function (wrk, addrcsv, dfltChecked, cdx) {
             if(!addrcsv) { return; }
             addrcsv.csvarray().forEach(function (addr) {
-                var pma = sharemgr.parseShareAddr(addr);
+                var pma = mgrs.shr.parseShareAddr(addr);
                 if(pma) {
                     pma.dfltChecked = dfltChecked;
                     pma.cdx = cdx;
@@ -742,41 +769,63 @@ app.membic = (function () {
             //"uid:name <emaddr>" e.g. "1234:Test User <test@example.com>"
             var emcs = addr.match(/^(\d+):([^<]*)<(\S+@\S+\.\S+)>/);
             if(emcs) {  //
-                return sharemgr.normEmail(emcs[1], emcs[2], emcs[3]); }
+                return mgrs.shr.normEmail(emcs[1], emcs[2], emcs[3]); }
             return null; },
         normEmail: function (uid, emname, emaddr) {
             var ret = {user:uid, name:emname.trim(), addr:emaddr.toLowerCase()};
             ret.full = ret.name + " <" + ret.addr + ">";
             ret.dbv = ret.user + ":" + ret.full;
             return ret; },
+        isFollowing: function (membic, uid, contf, fmsgdivid) {
+            return ((membic.ctmid &&
+                     mgrs.shr.inAudience("Theme", membic.ctmid, uid,
+                                           contf, fmsgdivid)) ||
+                    (mgrs.shr.inAudience("MUser", membic.penid, uid,
+                                           contf, fmsgdivid))); },
+        inAudience: function (srctype, srcid, uid, contf, fmsgdivid) {
+            var atn = app.theme.managerDispatch("audmgr", "audtype", srctype);
+            var audinfo = app.refmgr.cached(atn, srcid);
+            if(!audinfo && !audfetch[atn + srcid]) {
+                audfetch[atn + srcid] = new Date().toISOString();
+                app.fork({descr:"Membic share audience fetch", ms:100,
+                          func:function () {
+                              app.theme.managerDispatch(
+                                  "audmgr", "fetchInfo", srctype, srcid,
+                                  contf, fmsgdivid); }}); }
+            return (audinfo &&
+                    audinfo.followers.find((fwr) => fwr.uid === uid)); },
         mshselHTML: function (pma, idx) {
             return jt.tac2html(
                 ["div", {cla:"mshselcbdiv", id:"mshselcbdiv" + idx},
-                 [["input", {type:"checkbox", cla:"mshselcb",
-                             id:"mshselcb" + idx, value:jt.enc(pma.full),
+                 [["input", {type:"checkbox", cla:"mshselcb", name:"mshcb",
+                             id:"mshselcb" + idx, value:jt.enc(pma.dbv),
+                             disabled:jt.toru(pma.disabled),
                              checked:jt.toru(pma.dfltChecked)}],
-                  ["label", {fo:"mshselcb" + idx, cla:"mshsellab"},
+                  ["label", {fo:"mshselcb" + idx,
+                             cla:"mshsellab" + ((pma.disabled)? "dis" : "")},
                    pma.name + " &lt;" + pma.addr + "&gt;"],
+                  ["div", {cla:"mshfollowingdiv"},
+                   ((pma.disabled)? "(" + pma.disabled + ")" : "")],
                   ["div", {cla:"mshtrashdiv"},
                    ["a", {href:"#deletecontact",
                           title:"Delete " + pma.name + " contact",
-                          onclick:mdfs("sharemgr.deleteEmail", idx, pma.cdx)},
+                          onclick:mdfs("shr.deleteEmail", idx, pma.cdx)},
                     ["img", {cla:"mshactbimg",
                              src:app.dr("img/trash.png")}]]]]]); },
         deleteEmail: function (idx, cdx) {
             var cb = jt.byId("mshselcb" + idx);
-            var pma = sharemgr.parseShareAddr(jt.dec(cb.value));
+            var pma = mgrs.shr.parseShareAddr(jt.dec(cb.value));
             jt.out("mshselcbdiv" + idx, "Deleting...");
             //remove from current theme and from profile so it doesn't show
             //up again in this theme.  Might still be appropriate for a
             //different theme so leave any other refs alone.
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             var prof = app.login.fullProfile();
-            var msh = prof.cliset.mshare || {};
+            var msh = prof.perset.mshare || {};
             if(msh[membic.ctmid]) {
-                msh[membic.ctmid] = sharemgr.remEmail(pma, msh[membic.ctmid]); }
-            msh.profile = sharemgr.remEmail(pma, msh.profile);
-            prof.cliset.mshare = msh;
+                msh[membic.ctmid] = mgrs.shr.remEmail(pma, msh[membic.ctmid]); }
+            msh.profile = mgrs.shr.remEmail(pma, msh.profile);
+            prof.perset.mshare = msh;
             app.login.updateProfile(prof, 
                 function () {
                     jt.out("mshselcbdiv" + idx, ""); },
@@ -787,21 +836,21 @@ app.membic = (function () {
             csv = csv || "";
             var addrs = csv.csvarray();
             addrs = addrs.filter((em) =>
-                sharemgr.parseShareAddr(em).addr !== pma.addr);
+                mgrs.shr.parseShareAddr(em).addr !== pma.addr);
             return addrs.join(","); },
         addMailAddrHTML: function (cdx) {
             return jt.tac2html(
                 ["div", {id:"newshemdiv"},
                  [["a", {href:"#newaddr", title:"Add new mail share",
                          id:"mailshareplus",
-                         onclick:mdfs("sharemgr.addMailAddr", cdx)}, "+"],
+                         onclick:mdfs("shr.addMailAddr", cdx)}, "+"],
                   ["input", {type:"text", id:"newshnamein", placeholder:"Name",
-                             onchange:mdfs("sharemgr.addMailAddr", cdx)}],
+                             onchange:mdfs("shr.addMailAddr", cdx)}],
                   ["input", {type:"email", id:"newshemin",
                              placeholder:"friend@example.com",
-                             onchange:mdfs("sharemgr.addMailAddr", cdx)}]]]); },
+                             onchange:mdfs("shr.addMailAddr", cdx)}]]]); },
         addMailAddr: function (cdx) {
-            var pma = sharemgr.normEmail(0, jt.byId("newshnamein").value || "",
+            var pma = mgrs.shr.normEmail(0, jt.byId("newshnamein").value || "",
                                          jt.byId("newshemin").value || "");
             if(!pma.name) { return jt.byId("newshnamein").focus(); }
             if(!pma.addr) { return jt.byId("newshemin").focus(); }
@@ -809,29 +858,30 @@ app.membic = (function () {
             jt.call("POST", app.dr("/api/fmkuser"),
                     app.login.authdata({name:pma.name, email:pma.addr}),
                     function (res) {
-                        pma = sharemgr.normEmail(
+                        pma = mgrs.shr.normEmail(
                             res[0].dsId, res[0].name || pma.name, pma.addr);
                         jt.out("newshemdiv", "Adding...");
-                        sharemgr.addRecipient(cdx, pma); },
+                        mgrs.shr.addRecipient(cdx, pma); },
                     function (code, errtxt) {
                         jt.out("newshemdiv", code + ": " + errtxt); },
                     jt.semaphore("membic.addMailAddr")); },
         addRecipient: function (cdx, pma) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             var prof = app.login.fullProfile();
-            var msh = prof.cliset.mshare || {};
+            prof.perset = prof.perset || {};
+            var msh = prof.perset.mshare || {};
             if(membic.ctmid) {
                 msh[membic.ctmid] = msh[membic.ctmid] || "";
                 msh[membic.ctmid] = msh[membic.ctmid].csvappend(pma.dbv); }
             else {
                 msh.profile = msh.profile || "";
                 msh.profile = msh.profile.csvappend(pma.dbv); }
-            prof.cliset.mshare = msh;
+            prof.perset.mshare = msh;
             app.login.updateProfile(prof, 
                 function () {
-                    jt.out("mshaddrsdiv", sharemgr.mailShareHTML(cdx)); },
+                    jt.out("mshaddrsdiv", mgrs.shr.mailShareHTML(cdx)); },
                 function () {  //not much to do if fail. Redraw.
-                    jt.out("mshaddrsdiv", sharemgr.mailShareHTML(cdx)); }); },
+                    jt.out("mshaddrsdiv", mgrs.shr.mailShareHTML(cdx)); }); },
         mailContentHTML: function (cdx) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             var title = membic.details.title || membic.details.name || "";
@@ -839,7 +889,7 @@ app.membic = (function () {
             var prof = app.login.fullProfile();
             return jt.tac2html(
                 [["div", {id:"mshsubjdiv"},
-                  ["&#x261e;",
+                  ["&#x261e;",  //right pointing manicule
                    ["input", {type:"text", id:"mshsubjin",
                               placeholder:"Subject",
                               value:jt.ellipsis(membic.text, 65)}]]],
@@ -852,15 +902,42 @@ app.membic = (function () {
                   prof.name + "\n" + prof.email + "\n"]],
                  ["div", {id:"mshstatmsgdiv"}],
                  ["div", {cla:"formbuttonsdiv"},
-                  ["button", {type:"button", title:"Send Share Email",
-                              onclick:mdfs("sharemgr.sendShareMail")},
+                  ["button", {type:"button", id:"mshsendb",
+                              title:"Send Share Email",
+                              onclick:mdfs("shr.sendShareMail", membic.dsId)},
                    "Send"]]]); },
-        sendShareMail: function () {
-            jt.out("mshstatmsgdiv", "Send not implemented yet"); }
-    };
+        sendShareMail: function (membicid) {
+            jt.byId("mshsendb").disabled = true;  //only click once
+            var rids = Array.prototype.reduce.call(
+                document.querySelectorAll("input[name=mshcb]"),
+                function (acc, cb) {
+                    if(cb.checked) {
+                        var pma = mgrs.shr.parseShareAddr(jt.dec(cb.value));
+                        acc = acc.csvappend(pma.user); }
+                    return acc; }, "");
+            if(!rids) {
+                jt.out("mshstatmsgdiv", "Select contacts to send to.");
+                jt.byId("mshsendb").disabled = false;
+                return; }
+            jt.out("mshstatmsgdiv", "Sending...");
+            jt.call("POST", app.dr("/api/mshare"),
+                    app.login.authdata(
+                        {mid:membicid, sendto:rids,
+                         subj:jt.enc(jt.byId("mshsubjin").value),
+                         body:jt.enc(jt.byId("mshbodyta").innerHTML)}),
+                    function (pots) {  //same result as /api/membicsave
+                        app.layout.closeDialog();
+                        rebuildDisplayContext(membicid, pots); },
+                    function (code, errtxt) {
+                        jt.out("mshstatmsgdiv", "Send failed " + code +
+                               ": " + errtxt);
+                        jt.byId("mshsendb").disabled = false; },
+                    jt.semaphore("shr.sendShareMail")); }
+        };
+    }());
 
 
-    var tpmgr = {
+    mgrs.tp = {
         //If the theme is not cached, then there is no modified value to use
         //as an appropriate cache bust parameter.  Since a plain img src
         //reference can hang around for a potentially really long time, this
@@ -877,19 +954,19 @@ app.membic = (function () {
                 return ""; }
             return jt.tac2html(
                 ["button", {type:"button", title:"Remove membic from theme",
-                            onclick:mdfs("tpmgr.themepost", cdx, "remove",
+                            onclick:mdfs("tp.themepost", cdx, "remove",
                                          pn.ctmid)},
                  "x"]); },
         addPostContentHTML: function (cdx, select) {
             if(!select) {
                 return jt.tac2html(
                     ["button", {type:"button", title:"Add Theme Post",
-                                onclick:mdfs("tpmgr.themepost", cdx, "add")},
+                                onclick:mdfs("tp.themepost", cdx, "add")},
                      "+"]); }
             return jt.tac2html(
                 ["select", {cla:"themepostsel", id:"themepostsel" + cdx,
-                            onchange:mdfs("tpmgr.themepost", cdx, "select")},
-                 tpmgr.themePostOptionsHTML(cdx)]); },
+                            onchange:mdfs("tp.themepost", cdx, "select")},
+                 mgrs.tp.themePostOptionsHTML(cdx)]); },
         availableThemeIds: function (uts, skiptidcsv) {
             return Object.keys(uts).filter(function (tid) {
                 if(skiptidcsv.csvcontains(tid)) { return false; }
@@ -916,8 +993,8 @@ app.membic = (function () {
             if(pnlab) {
                 tidcsv = pnlab.dataset.tidcsv; }
             var uts = app.login.myProfile().themes;
-            var avtis = tpmgr.availableThemeIds(uts, tidcsv);
-            tpmgr.verifyThemePostTimes();
+            var avtis = mgrs.tp.availableThemeIds(uts, tidcsv);
+            mgrs.tp.verifyThemePostTimes();
             avtis.sort(function (a, b) {
                 if(uts[a].lastPost < uts[b].lastPost) { return 1; }
                 if(uts[a].lastPost > uts[b].lastPost) { return -1; }
@@ -932,9 +1009,9 @@ app.membic = (function () {
                  [["a", {href:app.dr("theme/" + pn.ctmid),
                          onclick:jt.fs("app.statemgr.setState('Theme','" +
                                        pn.ctmid + "')")},
-                   [["img", {src:tpmgr.themeImgSrc(pn.ctmid)}],
+                   [["img", {src:mgrs.tp.themeImgSrc(pn.ctmid)}],
                     pn.name]],
-                  tpmgr.removePostButtonHTML(cdx, editable, pn)]]); },
+                  mgrs.tp.removePostButtonHTML(cdx, editable, pn)]]); },
         postNoteForThemeId: function (ignore /*cdx*/, membic, tid) {
             var pn = membic.svcdata.postctms.find((cn) => cn.ctmid === tid);
             if(!pn) {  //no previously existing post
@@ -943,30 +1020,30 @@ app.membic = (function () {
             return pn; },
         redrawUpdatedThemes: function (cdx, pns, membic, selkws) {
             jt.out("postnotescontdiv" + cdx,
-                   tpmgr.themePostsHTML(cdx, true, pns));
-            kwmgr.redrawKeywords(cdx, membic, selkws); },
+                   mgrs.tp.themePostsHTML(cdx, true, pns));
+            mgrs.kw.redrawKeywords(cdx, membic, selkws); },
         themepost: function (cdx, command, ctmid) {
             var pne = jt.byId("postnoteslabel" + cdx);
             pne.innerHTML = "Post to: ";  //clarify actions take effect on save
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-            var selkws = kwmgr.selectedKeywords(cdx, membic);  //opts may change
-            var pns = tpmgr.selectedPostThemes(cdx, membic);
+            var selkws = mgrs.kw.selectedKeywords(cdx, membic);  //changed opts
+            var pns = mgrs.tp.selectedPostThemes(cdx, membic);
             switch(command) {
             case "remove":  //remove the ctmid and redraw posts
                 pns = pns.filter((pn) => pn.ctmid !== ctmid);
                 if(pne) {
                     pne.dataset.tidcsv = pne.dataset.tidcsv.csvremove(ctmid); }
-                tpmgr.redrawUpdatedThemes(cdx, pns, membic, selkws);
+                mgrs.tp.redrawUpdatedThemes(cdx, pns, membic, selkws);
                 break;
             case "add":  //replace '+' with a list of options
                 jt.out("addthemepostdiv" + cdx,
-                       tpmgr.addPostContentHTML(cdx, "select"));
+                       mgrs.tp.addPostContentHTML(cdx, "select"));
                 break;
             case "select":  //add the selected theme and '+' button
                 ctmid = jt.byId("themepostsel" + cdx);
                 ctmid = ctmid.options[ctmid.selectedIndex].value;
-                pns.push(tpmgr.postNoteForThemeId(cdx, membic, ctmid));
-                tpmgr.redrawUpdatedThemes(cdx, pns, membic, selkws);
+                pns.push(mgrs.tp.postNoteForThemeId(cdx, membic, ctmid));
+                mgrs.tp.redrawUpdatedThemes(cdx, pns, membic, selkws);
                 break; }
             app.membic.formInput(cdx); },  //note any changes
         themePostsHTML: function (cdx, editable, pns) {
@@ -979,11 +1056,11 @@ app.membic = (function () {
             var tidcsv = "";
             pns.forEach(function (pn) {
                 tidcsv = tidcsv.csvappend(pn.ctmid);
-                links.push(tpmgr.postNoteHTML(cdx, editable, pn)); });
+                links.push(mgrs.tp.postNoteHTML(cdx, editable, pn)); });
             if(editable) {
                 links.push(jt.tac2html(
                     ["div", {cla:"postnotediv", id:"addthemepostdiv" + cdx},
-                     tpmgr.addPostContentHTML(cdx, !pns.length)])); }
+                     mgrs.tp.addPostContentHTML(cdx, !pns.length)])); }
             return jt.tac2html(
                 [["span", {cla:"postnoteslabel", id:"postnoteslabel" + cdx,
                            "data-tidcsv":tidcsv}, labtxt],
@@ -995,7 +1072,7 @@ app.membic = (function () {
                 return ""; }
             return jt.tac2html(
                 ["div", {cla:"postnotescontdiv", id:"postnotescontdiv" + cdx},
-                 tpmgr.themePostsHTML(cdx, (!readonly && mayEdit(membic)),
+                 mgrs.tp.themePostsHTML(cdx, (!readonly && mayEdit(membic)),
                                       membic.svcdata.postctms)]); },
         selectedPostThemes: function (cdx, membic) {
             var pne = jt.byId("postnoteslabel" + cdx);
@@ -1003,7 +1080,7 @@ app.membic = (function () {
                 return membic.svcdata.postctms; }  //return original
             var pns = [];
             pne.dataset.tidcsv.csvarray().forEach(function (tid) {
-                pns.push(tpmgr.postNoteForThemeId(cdx, membic, tid)); });
+                pns.push(mgrs.tp.postNoteForThemeId(cdx, membic, tid)); });
             return pns; },
         themePostsChanged: function (membic, tps) {
             var postctms = membic.svcdata.postctms;
@@ -1027,7 +1104,7 @@ app.membic = (function () {
     }
 
 
-    var detmgr = {
+    mgrs.det = {
         //The predefined detail attributes in order of display.
         detailattrs: ["author", "publisher", "artist", "album", "starring",
                       "address", "year"],
@@ -1035,7 +1112,7 @@ app.membic = (function () {
             var dets = {mode:"display", edfld:"", flds:{}};
             if(edit) {
                 dets.mode = "add"; }
-            detmgr.detailattrs.forEach(function (key) { dets.flds[key] = ""; });
+            mgrs.det.detailattrs.forEach(function (key) { dets.flds[key] = ""; });
             Object.keys(membic.details || {}).forEach(function (key) {
                 if(key !== "title" && key !== "name") {
                     dets.flds[key] = membic.details[key]; } });
@@ -1071,9 +1148,9 @@ app.membic = (function () {
             Object.keys(dets.flds).forEach(function (fldname) {
                 var val = dets.flds[fldname];
                 if(val) {
-                    html.push(detmgr.row(fldname, val, dets, cdx)); } });
+                    html.push(mgrs.det.row(fldname, val, dets, cdx)); } });
             if(dets.mode === "add") {
-                html.push(detmgr.addrow(dets, cdx)); }
+                html.push(mgrs.det.addrow(dets, cdx)); }
             return jt.tac2html(["table", {cla: "collapse",
                                           id:"detailstable" + cdx}, html]); },
         row: function (fld, val, dets, cdx) {
@@ -1083,9 +1160,9 @@ app.membic = (function () {
                 vh = ["input", {type:"text", cla:"detnewvalin",
                                 id:"detnewvalin" + cdx,
                                 placeholder:"value", value:vh,
-                                onchange:mdfs("detmgr.changevalue", cdx)}]; }
+                                onchange:mdfs("det.changevalue", cdx)}]; }
             else {  //standard value display, click to edit.
-                vh = ["a", {href:"edit", onclick:mdfs("detmgr.clickval",
+                vh = ["a", {href:"edit", onclick:mdfs("det.clickval",
                                                       fld, cdx)}, vh]; }
             return jt.tac2html(
                 ["tr", {"data-mode":mode},
@@ -1093,15 +1170,15 @@ app.membic = (function () {
                   ["td", {cla:"detailvaltd",
                           id:"detail" + fld + "valtd" + cdx}, vh]]]); },
         clickval: function (fld, cdx) {
-            var dets = detmgr.html2dets(cdx);
+            var dets = mgrs.det.html2dets(cdx);
             dets.mode = "edit";
             dets.edfld = fld;
-            jt.out("mddetdiv" + cdx, detmgr.dets2html(dets, cdx)); },
+            jt.out("mddetdiv" + cdx, mgrs.det.dets2html(dets, cdx)); },
         changevalue: function (cdx) {
-            var dets = detmgr.html2dets(cdx);  //read updated attrval
+            var dets = mgrs.det.html2dets(cdx);  //read updated attrval
             dets.mode = "add";
             dets.edfld = "";
-            jt.out("mddetdiv" + cdx, detmgr.dets2html(dets, cdx));
+            jt.out("mddetdiv" + cdx, mgrs.det.dets2html(dets, cdx));
             app.membic.formInput(cdx); },
         addrow: function (dets, cdx) {
             return jt.tac2html(
@@ -1111,17 +1188,17 @@ app.membic = (function () {
                                id:"detnewattrin" + cdx,
                                placeholder:"attribute", value:"",
                                list:"detnewattroptsdl" + cdx,
-                               onchange:mdfs("detmgr.chgadd", cdx)}],
+                               onchange:mdfs("det.chgadd", cdx)}],
                     ["datalist", {id:"detnewattroptsdl" + cdx},
-                     detmgr.attrOptionsForAdd(dets)]]],
+                     mgrs.det.attrOptionsForAdd(dets)]]],
                   ["td", {cla:"detailvaltd"},
                    ["input", {type:"text", cla:"detnewvalin",
                               id:"detnewvalin" + cdx,
                               placeholder:"value", value:"",
-                              onchange:mdfs("detmgr.chgadd", cdx)}]]]]); },
+                              onchange:mdfs("det.chgadd", cdx)}]]]]); },
         attrOptionsForAdd: function (dets) {
             var dlos = [];
-            detmgr.detailattrs.forEach(function (fld) {
+            mgrs.det.detailattrs.forEach(function (fld) {
                 if(!dets.flds[fld]) {  //no assigned value yet
                     dlos.push(["option", {value:fld}]); } });
             return dlos; },
@@ -1129,9 +1206,9 @@ app.membic = (function () {
             var ins = {att:jt.byId("detnewattrin" + cdx),
                        val:jt.byId("detnewvalin" + cdx)};
             if(ins.att.value && ins.val.value) {   //need to redraw
-                var dets = detmgr.html2dets(cdx);  //read new attrval
+                var dets = mgrs.det.html2dets(cdx);  //read new attrval
                 jt.out("mddetdiv" + cdx,           //update display with new add
-                       detmgr.dets2html(dets, cdx));
+                       mgrs.det.dets2html(dets, cdx));
                 app.membic.formInput(cdx); }       //note any changes
             else if(!ins.att.value) {
                 ins.att.focus(); }
@@ -1139,16 +1216,16 @@ app.membic = (function () {
                 ins.val.focus(); } },
         detailsHTML: function (cdx, membic, edit) {
             return jt.tac2html(["div", {cla:"mddetdiv", id:"mddetdiv" + cdx},
-                                detmgr.dets2html(
-                                    detmgr.membic2dets(membic, edit),
+                                mgrs.det.dets2html(
+                                    mgrs.det.membic2dets(membic, edit),
                                     cdx)]); },
         detailsValues: function (cdx) {
-            var dets = detmgr.html2dets(cdx);
+            var dets = mgrs.det.html2dets(cdx);
             return dets.flds; }
     };
 
 
-    var typemgr = {
+    mgrs.type = {
         findType: function (typename) {
             return membicTypes.find((md) => md.type === typename); },
         imgHTMLForType: function (cdx, mt, idsuf) {
@@ -1161,33 +1238,33 @@ app.membic = (function () {
             return jt.tac2html(
                 ["div", {cla:"revtseldiv", id:"revtseldiv" + cdx,
                          "data-state":"collapsed"},
-                 typemgr.typesHTML(cdx, mt)]); },
+                 mgrs.type.typesHTML(cdx, mt)]); },
         openClickHTML: function (cdx, mt) {
             return jt.tac2html(
                 ["a", {href:"#changetype", title:"Change Membic Type",
-                       onclick:mdfs("typemgr.typesel", cdx, mt.type, true)},
-                 typemgr.imgHTMLForType(cdx, mt)]); },
+                       onclick:mdfs("type.typesel", cdx, mt.type, true)},
+                 mgrs.type.imgHTMLForType(cdx, mt)]); },
         selectClickHTML: function (cdx, mt, idsuf) {
             return jt.tac2html(
                 ["a", {href:"#" + mt.type, title:"Select " + mt.type,
-                       onclick:mdfs("typemgr.typesel", cdx, mt.type, false)},
-                 typemgr.imgHTMLForType(cdx, mt, idsuf)]); },
+                       onclick:mdfs("type.typesel", cdx, mt.type, false)},
+                 mgrs.type.imgHTMLForType(cdx, mt, idsuf)]); },
         typesHTML: function (cdx, mt, expanded) {
             if(!expanded) {
-                return typemgr.openClickHTML(cdx, mt); }
-            var html = [typemgr.selectClickHTML(cdx, mt)];
+                return mgrs.type.openClickHTML(cdx, mt); }
+            var html = [mgrs.type.selectClickHTML(cdx, mt)];
             membicTypes.forEach(function (ot) {
                 if(ot.type !== mt.type) {
-                    html.push(typemgr.selectClickHTML(cdx, ot, ot.type)); } });
+                    html.push(mgrs.type.selectClickHTML(cdx, ot, ot.type)); } });
             return jt.tac2html(html); },
         typesel: function (cdx, typename, expanded) {
-            var mt = typemgr.findType(typename);
-            jt.out("revtseldiv" + cdx, typemgr.typesHTML(cdx, mt, expanded));
+            var mt = mgrs.type.findType(typename);
+            jt.out("revtseldiv" + cdx, mgrs.type.typesHTML(cdx, mt, expanded));
             app.membic.formInput(cdx); }
     };
 
 
-    var ratmgr = {
+    mgrs.rat = {
         imgi: {i:app.dr("img/stars20ds17.png"),
                g:app.dr("img/stars20gray.png"),
                w:85, h:15},
@@ -1208,47 +1285,49 @@ app.membic = (function () {
                dfltv:60},  //default rating value is 3 stars
         bg: function (membic) {
             if(mayEdit(membic)) {
-                return ratmgr.imgi.g; }
+                return mgrs.rat.imgi.g; }
             return app.dr("img/blank.png"); },
         ratingInfo: function (rating, roundup) {
             if(typeof rating === "string") { 
                 rating = parseInt(rating, 10); }
             if(!rating || typeof rating !== "number" || rating < 0) { 
-                rating = ratmgr.rati.dfltv; }
+                rating = mgrs.rat.rati.dfltv; }
             if(rating > 93) {   //compensate for floored math low stickiness.
                 rating = 100; } //round up to "dock" right when dragging
-            var mrsi = ratmgr.rati.tis.length - 1;  //max rating step index
+            var mrsi = mgrs.rat.rati.tis.length - 1;  //max rating step index
             var stv = Math.floor((rating * mrsi) / 100);  //step value
             if(roundup) {
                 stv = Math.min(stv + 1, mrsi);
                 rating = Math.floor((stv / mrsi) * 100); }
             return {value:rating, step:stv, maxstep:mrsi,
-                    title:ratmgr.rati.tis[stv], roundnum:ratmgr.rati.sns[stv],
-                    asters:ratmgr.rati.aks[stv], unicode:ratmgr.rati.ucs[stv],
-                    rn:ratmgr.rati.rns[stv], width:ratmgr.rati.wns[stv]}; },
+                    title:mgrs.rat.rati.tis[stv],
+                    roundnum:mgrs.rat.rati.sns[stv],
+                    asters:mgrs.rat.rati.aks[stv],
+                    unicode:mgrs.rat.rati.ucs[stv],
+                    rn:mgrs.rat.rati.rns[stv], width:mgrs.rat.rati.wns[stv]}; },
         getHTML: function (cdx, membic) {
-            var ri = ratmgr.ratingInfo(membic.rating, false);
+            var ri = mgrs.rat.ratingInfo(membic.rating, false);
             return jt.tac2html(
                 ["div", {cla:"starcontdiv", id:"starcontdiv" + cdx,
                          style:"position:relative;" +
-                               "background:url('" + ratmgr.bg(membic) + "');" +
-                               "width:" + ratmgr.imgi.w + "px;" +
-                               "height:" + ratmgr.imgi.h + "px;"},
+                           "background:url('" + mgrs.rat.bg(membic) + "');" +
+                           "width:" + mgrs.rat.imgi.w + "px;" +
+                           "height:" + mgrs.rat.imgi.h + "px;"},
                  [["div", {cla:"ratstardiv", id:"ratstardiv" + cdx,
                            style:"position:absolute;top:0px;left:0px;" +
-                                 "background:url('" + ratmgr.imgi.i + "');" +
-                                 "width:" + ri.width + "px;" +
-                                 "height:" + ratmgr.imgi.h + "px;"}],
-                  ratmgr.ctrlOverlayHTML(cdx, membic)]]); },
+                             "background:url('" + mgrs.rat.imgi.i + "');" +
+                             "width:" + ri.width + "px;" +
+                             "height:" + mgrs.rat.imgi.h + "px;"}],
+                  mgrs.rat.ctrlOverlayHTML(cdx, membic)]]); },
         ctrlOverlayHTML: function (cdx, membic) {
             if(mayEdit(membic)) {
-                var ehs = mdfs("ratmgr.handleEvent", "event");
+                var ehs = mdfs("mgrs.rat.handleEvent", "event");
                 ehs = ehs.replace("return false;", "");  //don't latch event
                 return jt.tac2html(
                     ["div", {cla:"ratctrldiv", id:"ratctrldiv" + cdx,
                              style:"position:absolute;top:0px;left:0px;" +
-                                   "width:" + ratmgr.imgi.w + "px;" +
-                                   "height:" + ratmgr.imgi.h + "px;",
+                                   "width:" + mgrs.rat.imgi.w + "px;" +
+                                   "height:" + mgrs.rat.imgi.h + "px;",
                              "data-cdx":String(cdx), "data-pointing":"",
                              onmousedown:ehs, onmouseup:ehs, onmouseout:ehs,
                              onmousemove:ehs, onclick:ehs, ontouchstart:ehs,
@@ -1260,7 +1339,7 @@ app.membic = (function () {
             case "mousedown":
             case "touchstart":
                 event.target.dataset.pointing = "active";
-                ratmgr.adjustDisplay(event, true);
+                mgrs.rat.adjustDisplay(event, true);
                 break;
             case "mouseup":
             case "touchend":
@@ -1272,17 +1351,18 @@ app.membic = (function () {
             case "mousemove":
             case "touchmove":
                 if(event.target.dataset.pointing) {
-                    ratmgr.adjustDisplay(event); }
+                    mgrs.rat.adjustDisplay(event); }
                 break;
             case "click":
-                ratmgr.adjustDisplay(event, true);
+                mgrs.rat.adjustDisplay(event, true);
                 break; } },
         adjustDisplay: function (event, roundup) {
             var br = event.target.getBoundingClientRect();
             var acs = {x:event.clientX - br.left, y:event.clientY - br.top};
             // jt.log("adjustDisplay " + event.target.dataset.cdx + " x:" +
             //        acs.x + ", y:" + acs.y); }
-            var ri = ratmgr.ratingInfo((acs.x / ratmgr.imgi.w) * 100, roundup);
+            var ri = mgrs.rat.ratingInfo(
+                (acs.x / mgrs.rat.imgi.w) * 100, roundup);
             var sdiv = jt.byId("ratstardiv" + event.target.dataset.cdx);
             if(sdiv) {
                 sdiv.style.width = ri.width + "px"; }
@@ -1290,18 +1370,19 @@ app.membic = (function () {
         ratingValue: function (cdx) {
             var width = jt.byId("ratstardiv" + cdx).offsetWidth;
             //pass the same roundup value as getHTML to start unchanged.
-            var ri = ratmgr.ratingInfo((width / ratmgr.imgi.w) * 100, false);
+            var ri = mgrs.rat.ratingInfo(
+                (width / mgrs.rat.imgi.w) * 100, false);
             return ri.rn; }
     };
 
 
-    var kwmgr = {
+    mgrs.kw = {
         //Return all the possible keywords grouped by source.
         keywordGroups: function (cdx, membic, selkwcsv) {
             selkwcsv = selkwcsv || membic.keywords;
             var mt = membicTypes.find((md) => md.type === membic.revtype);
             var keygrps = [{name:"", kwcsv:mt.dkwords.join(",")}];
-            tpmgr.selectedPostThemes(cdx, membic).forEach(function (pn) {
+            mgrs.tp.selectedPostThemes(cdx, membic).forEach(function (pn) {
                 var proftheme = app.login.myProfile().themes[pn.ctmid];
                 keygrps.push({name:proftheme.name,
                               kwcsv:proftheme.keywords}); });
@@ -1326,7 +1407,7 @@ app.membic = (function () {
                     ["div", togIfEdit({cla:"mdkwsdiv"}, cdx, membic), kwrds]); }
             skcsv = skcsv || membic.keywords;
             var html = [];
-            kwmgr.keywordGroups(cdx, membic, skcsv).forEach(function (kg, idx) {
+            mgrs.kw.keywordGroups(cdx, membic, skcsv).forEach(function (kg, idx) {
                 if(kg.kwcsv) {
                     var kwshtml = [];
                     kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
@@ -1351,14 +1432,14 @@ app.membic = (function () {
                   ["input", {type:"text", id:"newkwin" + cdx,
                              placeholder:"New Keyword"}],
                   ["button", {type:"button", title:"Add Keyword",
-                              onclick:mdfs("kwmgr.addNew", cdx)},
+                              onclick:mdfs("kw.addNew", cdx)},
                    "+"]]]));
             return jt.tac2html(
                 ["div", {cla:"mdkwsdiv"},
                  ["div", {id:"mdkwscontentdiv" + cdx}, html]]); },
         selectedKeywords: function (cdx, membic) {
             var skws = "";
-            var kwgs = kwmgr.keywordGroups(cdx, membic);
+            var kwgs = mgrs.kw.keywordGroups(cdx, membic);
             kwgs.forEach(function (kg, idx) {
                 kg.kwcsv.csvarray().forEach(function (kwd, csvidx) {
                     var kwid = "m" + cdx + "g" + idx + "c" + csvidx;
@@ -1385,27 +1466,27 @@ app.membic = (function () {
             return (kwsa === kwsb); },
         redrawKeywords: function (cdx, membic, currkws) {
             jt.out("mdkwscontentdiv" + cdx,
-                   kwmgr.keywordsHTML(cdx, membic, true, currkws)); },
+                   mgrs.kw.keywordsHTML(cdx, membic, true, currkws)); },
         addNew: function (cdx) {
             var nkin = jt.byId("newkwin" + cdx);
             if(nkin && nkin.value) {
                 var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-                var currkws = kwmgr.selectedKeywords(cdx, membic);
+                var currkws = mgrs.kw.selectedKeywords(cdx, membic);
                 currkws = currkws.csvappend(nkin.value);
-                kwmgr.redrawKeywords(cdx, membic, currkws);
+                mgrs.kw.redrawKeywords(cdx, membic, currkws);
                 app.membic.formInput(cdx); } }
     };
 
 
     //Reader details and image management access
-    var rdrmgr = {
+    mgrs.rdr = {
         toggle: function (cdx) {
             if(jt.byId("mdrdrdetcontdiv" + cdx).innerHTML) {
                 return jt.out("mdrdrdetcontdiv" + cdx, ""); }
-            var rsd = rdrmgr.readerSummaryDetails(cdx);
+            var rsd = mgrs.rdr.readerSummaryDetails(cdx);
             jt.out("mdrdrdetcontdiv" + cdx, jt.tac2html(
                 [["div", {cla:"toprightxdiv"},
-                  ["a", {href:"#close", onclick:mdfs("rdrmgr.toggle", cdx)},
+                  ["a", {href:"#close", onclick:mdfs("rdr.toggle", cdx)},
                    "X"]],
                  ["div",
                   [["b", rsd.name], " ",
@@ -1414,7 +1495,7 @@ app.membic = (function () {
                  ["div", rsd.timing],
                  ["div", rsd.filled],
                  ["div", {cla:"formbuttonsdiv", id:"mdrdetbuttonsdiv" + cdx},
-                  rdrmgr.buttons(cdx, rsd)]])); },
+                  mgrs.rdr.buttons(cdx, rsd)]])); },
         readerSummaryDetails: function (cdx) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             var rsd = {name:"Unknown", status:"None", result:"-",
@@ -1434,7 +1515,7 @@ app.membic = (function () {
             return rsd; },
         buttons: function (cdx, rsd) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-            if(savemgr.membicEdited(cdx, membic)) {
+            if(mgrs.save.membicEdited(cdx, membic)) {
                 //simplest to keep db info in sync with UI.
                 return "Save changes before uploading image."; }
             var subj = "Missing info for Membic " + membic.dsId;
@@ -1448,11 +1529,11 @@ app.membic = (function () {
             var link = "mailto:support@membic.org?subject=" +
                 jt.dquotenc(subj) + "&body=" + jt.dquotenc(body) + "%0A%0A";
             var imgselb = ["button", {type:"button", cla:"membicformbutton",
-                                      onclick:mdfs("rdrmgr.uploadForm", cdx)},
+                                      onclick:mdfs("rdr.uploadForm", cdx)},
                            "Upload&nbsp;Image"];
             if(membic.svcdata.picdisp === "upldpic") {
                 imgselb = ["button", {type:"button", cla:"membicformbutton",
-                                      onclick:mdfs("rdrmgr.useSitePic", cdx)},
+                                      onclick:mdfs("rdr.useSitePic", cdx)},
                            "Use&nbsp;Site&nbsp;Image"]; }
             return jt.tac2html(
                 [["a", {cla:"linkbutton", href:link},
@@ -1461,9 +1542,9 @@ app.membic = (function () {
                  imgselb]); },
         uploadForm: function (cdx) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
-            rdrmgr.switchToPrevUploadPic(cdx, membic);
+            mgrs.rdr.switchToPrevUploadPic(cdx, membic);
             var auth = app.login.authenticated();
-            var monfstr = mdfs("rdrmgr.monitorUpload", cdx, true);
+            var monfstr = mdfs("rdr.monitorUpload", cdx, true);
             jt.out("mdrdetbuttonsdiv" + cdx, jt.tac2html(
                 [["form", {id:"mpuform", action:"/api/uploadimg",
                            method:"post", target:"mpuif" + cdx,
@@ -1475,11 +1556,11 @@ app.membic = (function () {
                    ["label", {fo:"picfilein"}, "Upload image"],
                    ["input", {type:"file", id:"picfilein", name:"picfilein",
                               accept:"image/*",
-                              onchange:mdfs("rdrmgr.enableUploadButton", cdx)}],
+                              onchange:mdfs("rdr.enableUploadButton", cdx)}],
                    ["div", {id:"mbcpicupldstatdiv" + cdx}],
                    ["div", {id:"mbcpicupldbuttonsdiv" + cdx},
                     [["button", {type:"button", cla:"membicformbutton",
-                                 onclick:mdfs("rdrmgr.useSitePic", cdx)},
+                                 onclick:mdfs("rdr.useSitePic", cdx)},
                       "Cancel"], " &nbsp; ",
                      ["button", {type:"submit", id:"mbcpicupldbutton" + cdx,
                                  onclick:monfstr}, "Upload"]]]]],
@@ -1498,7 +1579,7 @@ app.membic = (function () {
         monitorUpload: function (cdx, submit) {
             var iframe = jt.byId("mpuif" + cdx);
             if(!iframe) {
-                return jt.log("rdrmgr.monitorUpload exiting since no iframe"); }
+                return jt.log("rdr.monitorUpload exiting since no iframe"); }
             jt.byId("mbcpicupldbutton" + cdx).disabled = true;
             if(submit) {
                 jt.byId("mpuform").submit(); }
@@ -1511,13 +1592,13 @@ app.membic = (function () {
             if(!txt || !txt.body || txt.body.innerHTML.indexOf("Ready") >= 0) {
                 return app.fork({descr:"monitor membic img upload", ms:1000,
                                  func:function () {
-                                     rdrmgr.monitorUpload(cdx); }}); }
+                                     mgrs.rdr.monitorUpload(cdx); }}); }
             //upload complete, update image or report error
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             txt = txt.body.innerHTML;
             if(txt.indexOf("Done: ") >= 0) { //successful upload
                 membic.svcdata.picdisp = "upldpic";
-                membic.svcdata.picchgt = rdrmgr.readDoneTimestamp(txt); }
+                membic.svcdata.picchgt = mgrs.rdr.readDoneTimestamp(txt); }
             else {  //report error
                 jt.err(txt); }
             app.membic.toggleMembic(cdx, "unchanged", membic); },
@@ -1564,17 +1645,17 @@ app.membic = (function () {
         share: {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {
-                return sharemgr.membicShareHTML(cdx, membic); },
+                return mgrs.shr.membicShareHTML(cdx, membic); },
             changed: function () { return false; },
             write: function () { return; } },
         revtype: {
             closed: function () { return ""; },
             expanded: function (cdx, membic) {
-                var mt = typemgr.findType(membic.revtype);
+                var mt = mgrs.type.findType(membic.revtype);
                 if(mayEdit(membic)) {
-                    return typemgr.clickHTMLForType(cdx, mt); }
+                    return mgrs.type.clickHTMLForType(cdx, mt); }
                 else {
-                    return typemgr.imgHTMLForType(cdx, mt); } },
+                    return mgrs.type.imgHTMLForType(cdx, mt); } },
             changed: function (cdx, membic) {
                 var rt = jt.byId("revtypeimg" + cdx).title;
                 return jt.toru(membic.revtype !== rt, rt); },
@@ -1615,9 +1696,9 @@ app.membic = (function () {
             expanded: function (cdx, membic) {
                 return jt.tac2html(
                     ["span", {cla:"masratspan"},
-                     ratmgr.getHTML(cdx, membic)]); },
+                     mgrs.rat.getHTML(cdx, membic)]); },
             changed: function (cdx, membic) {
-                var rat = ratmgr.ratingValue(cdx);
+                var rat = mgrs.rat.ratingValue(cdx);
                 //jt.log("rat: " + rat + ", membic.rating: " + membic.rating);
                 return jt.toru(membic.rating !== rat, rat); },
             write: function (chgval, updobj) {
@@ -1641,7 +1722,7 @@ app.membic = (function () {
                      ["div", {cla:"dlgbsbdiv", id:"dlgbsbdiv" + cdx},
                       html]]); },
             actionButtons: function (cdx, membic) {
-                var edited = savemgr.membicEdited(cdx, membic);
+                var edited = mgrs.save.membicEdited(cdx, membic);
                 var mkb = formElements.dlgbs.makeActionButton;
                 var ret = [];
                 if(edited) {
@@ -1661,7 +1742,7 @@ app.membic = (function () {
                     bas.cla = "membicformbuttondisabled"; }
                 return jt.tac2html(["button", bas, name]); },
             mrkdel: function (cdx) { markMembicDeleted(cdx); },
-            save: function (cdx) { savemgr.updateMembic(cdx); },
+            save: function (cdx) { mgrs.save.updateMembic(cdx); },
             read: function (cdx, overwrite) {
                 jt.out("dlgbsbdiv" + cdx, "Reading...");
                 var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
@@ -1690,7 +1771,7 @@ app.membic = (function () {
                         ["div", {cla:"mdpicdiv"},
                          ["a", {href:"#readinfo", cla:"mdrdrdetlink",
                                 title:"Show reader details",
-                                onclick:mdfs("rdrmgr.toggle", cdx)},
+                                onclick:mdfs("rdr.toggle", cdx)},
                           ["img", {cla:"mdimg", src:membicImgSrc(membic)}]]]); }
                 return formElements.picture.closed(cdx, membic); },
             changed: function (ignore /*cdx*/, membic) {
@@ -1727,9 +1808,9 @@ app.membic = (function () {
             closed: function () {
                 return ""; },  //clutter. not always full/accurate 24jun20
             expanded: function (cdx, membic) {
-                return detmgr.detailsHTML(cdx, membic, mayEdit(membic)); },
+                return mgrs.det.detailsHTML(cdx, membic, mayEdit(membic)); },
             changed: function (cdx, membic) {
-                var dvo = detmgr.detailsValues(cdx, membic);
+                var dvo = mgrs.det.detailsValues(cdx, membic);
                 return jt.toru(!objKVEq(dvo, membic.details), dvo); },
             write: function (chgval, updobj) {
                 updobj.details = updobj.details || {};
@@ -1739,25 +1820,25 @@ app.membic = (function () {
             closed: function (cdx, membic) {
                 return jt.tac2html(
                     ["div", {cla:"mdptsdiv", id:"mdptsdiv" + cdx},
-                     tpmgr.membicThemePostsHTML(cdx, membic, true)]); },
+                     mgrs.tp.membicThemePostsHTML(cdx, membic, true)]); },
             expanded: function (cdx, membic) {
                 return jt.tac2html(
                     ["div", {cla:"mdptsdiv", id:"mdptsdiv" + cdx},
-                     tpmgr.membicThemePostsHTML(cdx, membic)]); },
+                     mgrs.tp.membicThemePostsHTML(cdx, membic)]); },
             changed: function (cdx, membic) {
-                var tps = tpmgr.selectedPostThemes(cdx, membic);
-                return jt.toru(tpmgr.themePostsChanged(membic, tps), tps); },
+                var tps = mgrs.tp.selectedPostThemes(cdx, membic);
+                return jt.toru(mgrs.tp.themePostsChanged(membic, tps), tps); },
             write: function (chgval, updobj, membic) {
                 updobj.svcdata = updobj.svcdata || copySvcData(membic);
                 updobj.svcdata.postctms = chgval; } },
         keywords: {
             closed: function (cdx, membic) {
-                return kwmgr.keywordsHTML(cdx, membic, false); },
+                return mgrs.kw.keywordsHTML(cdx, membic, false); },
             expanded: function (cdx, membic) {
-                return kwmgr.keywordsHTML(cdx, membic, mayEdit(membic)); },
+                return mgrs.kw.keywordsHTML(cdx, membic, mayEdit(membic)); },
             changed: function (cdx, membic) {
-                var kws = kwmgr.selectedKeywords(cdx, membic);
-                return jt.toru(!kwmgr.equivKwrds(membic.keywords, kws),
+                var kws = mgrs.kw.selectedKeywords(cdx, membic);
+                return jt.toru(!mgrs.kw.equivKwrds(membic.keywords, kws),
                                kws || "unset_value"); },
             write: function (chgval, updobj) {
                 updobj.keywords = chgval; } }
@@ -1886,7 +1967,7 @@ return {
             if(!jt.byId("newmembicform").checkValidity()) {
                 return; }  //fix why memorable if needed
             addmem.text = jt.byId("whymemin").value;
-            addmem.rating = ratmgr.rati.dfltv;
+            addmem.rating = mgrs.rat.rati.dfltv;
             addmem.revtype = addmem.revtype || "article";
             jt.out("amprocmsgdiv", "Writing membic...");
             jt.byId("ambuttonsdiv").style.display = "none";
@@ -2010,14 +2091,8 @@ return {
 
 
     managerDispatch: function (mgrname, fname, ...args) {
-        switch(mgrname) {
-        case "rdrmgr": return rdrmgr[fname].apply(app.membic, args);
-        case "tpmgr": return tpmgr[fname].apply(app.membic, args);
-        case "typemgr": return typemgr[fname].apply(app.membic, args);
-        case "ratmgr": return ratmgr[fname].apply(app.membic, args);
-        case "sharemgr": return sharemgr[fname].apply(app.membic, args);
-        case "detmgr": return detmgr[fname].apply(app.membic, args);
-        default: jt.log("membic.managerDispatch unknown manager: " + mgrname); }
+        //best to just crash on a bad reference, easier to see
+        return mgrs[mgrname][fname].apply(app.membic, args);
     }
 
 

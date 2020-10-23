@@ -98,6 +98,10 @@ def audblock(): #params: an, at, srctype, srcid, uid, blocked
 def fmkuser(): #params: an, at, name, email
     return useract.fmkuser()
 
+@app.route('/api/mshare', methods=['GET', 'POST'])
+def mshare(): #params: an, at, mid, sendto, subj, body
+    return useract.mshare()
+
 @app.route('/api/urlcontents')
 def urlcontents():  # params: an, at, url
     return util.urlcontents()

@@ -14,7 +14,14 @@ app.login = (function () {
         prof.email = authobj.email;
         prof.status = authobj.status;
         prof.altinmail = authobj.altinmail;
+        prof.perset = authobj.perset;
         return prof;
+    }
+
+
+    function authobjDeserialize (ao) {
+        app.refmgr.reconstituteFieldJSONObject("perset", ao);
+        return ao;
     }
 
 
@@ -138,7 +145,7 @@ app.login = (function () {
 
 
     function successfulSignIn (resultarray) {
-        authobj = resultarray[0];
+        authobj = authobjDeserialize(resultarray[0]);
         authPersist.save();
         jt.out("topmessagelinediv", "");
         jt.out("topactiondiv", jt.tac2html(
@@ -258,7 +265,7 @@ return {
     //"isLoggedIn" check and/or for access to personal info.
     authenticated: function () { return authobj; },
     setAuthentication: function (obj) { 
-        authobj = obj;
+        authobj = authobjDeserialize(obj);
         authPersist.save();
     },
     authURL: function (apiurl) {

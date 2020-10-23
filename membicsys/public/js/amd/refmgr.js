@@ -41,6 +41,7 @@ app.refmgr = (function () {
         switch(obj.dsType) {
         case "MUser": 
             reconstituteFieldJSONObject("cliset", obj);
+            reconstituteFieldJSONObject("perset", obj);
             reconstituteFieldJSONObject("themes", obj);
             reconstituteFieldJSONObject("preb", obj);
             break;
@@ -77,6 +78,7 @@ app.refmgr = (function () {
         switch(obj.dsType) {
         case "MUser": 
             obj.cliset = JSON.stringify(obj.cliset);
+            obj.perset = JSON.stringify(obj.perset);
             obj.themes = JSON.stringify(obj.themes);
             obj.preb = JSON.stringify(obj.preb);
             break;
@@ -115,6 +117,7 @@ app.refmgr = (function () {
             obj.email = "";
             obj.status = "";
             obj.altinmail = "";
+            obj.perset = "";
             break;
         case "Theme": 
             break;
@@ -205,6 +208,11 @@ return {
 
     deserialize: function (obj) {
         return deserialize(obj);
+    },
+
+
+    reconstituteFieldJSONObject: function (field, obj) {
+        reconstituteFieldJSONObject(field, obj);
     },
 
 

@@ -490,14 +490,18 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 /* membic share dialog */
 .mshsellab { font-size:medium; }
 .mshactbimg { max-width:20px; max-height:20px; vertical-align:middle;
-  padding:0px 5px; }
+  padding:0px 2px; background:#fcf4eb}
 #mailshareplus { margin:0px 3px; }
 #newshnamein { width:90px; }
 #newshemin { width:160px; }
 #mshsubjin { width:250px; }
 #mshstatmsgdiv { font-size:small; }
 .mshselcbdiv { position:relative; }
+.mshsellab, .mshsellabdis { font-size:medium; }
+.mshsellabdis { color:#999; }
 .mshtrashdiv { position:absolute; top:0px; right:0px; }
+.mshfollowingdiv { position:absolute; top:0px; right:90px;
+  font-style:italic; background:#fcf4eb }
 
 /* >> share buttons */
 /* thanks to https://sharingbuttons.io */

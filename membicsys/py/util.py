@@ -218,7 +218,7 @@ def authenticate():
 
 
 def administrator_auth():
-    muser, srvtok = authenticate()
+    muser, _ = authenticate()
     cs = get_connection_service("Administrators")
     if not val_in_csv(muser["dsId"], cs["data"]):
         raise ValueError("Not authorized as admin")
@@ -408,12 +408,14 @@ def send_mail(emaddr, subj, body, domain=None, sender="support", replyto=""):
         smtp.sendmail(fromaddr, emaddr, msg.as_string())
 
 
+# Return the auth token, user private fields, and other info
 def make_auth_obj(muser, srvtok):
     authobj = {"email": muser["email"],
                "token": srvtok,
                "authId": muser["dsId"],
                "status": muser["status"],
                "altinmail": muser["altinmail"],
+               "perset": muser["perset"],
                "signInTS": dbacc.nowISO()}
     return authobj
 

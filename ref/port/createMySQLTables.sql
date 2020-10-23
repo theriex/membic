@@ -15,6 +15,7 @@ CREATE TABLE MUser (  -- Membic User account.
   hashtag VARCHAR(256) UNIQUE,
   profpic LONGBLOB,
   cliset LONGTEXT,
+  perset LONGTEXT,
   themes LONGTEXT,
   lastwrite VARCHAR(256),
   preb LONGTEXT,

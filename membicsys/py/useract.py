@@ -74,7 +74,8 @@ def assoc_level(assocstr):
            "Moderator": 2,
            "Member": 1,
            "Unknown": 0,
-           "Following": -1}
+           "Following": -1,
+           "Blocking": -2}
     return mls[assocstr]
 
 
@@ -423,7 +424,9 @@ def theme_membic_from_source_membic(theme, srcmbc):
     svcdata = srcmbc.get("svcdata", {})  # may already be deserialized
     if isinstance(svcdata, str):
         svcdata = json.loads(svcdata)
-    tmbc["svcdata"] = json.dumps({"picdisp": svcdata.get("picdisp", "sitepic")})
+    tmbc["svcdata"] = json.dumps(
+        {"picdisp": svcdata.get("picdisp", "sitepic"),
+         "mshares": svcdata.get("mshares", "")})
     tmbc["icdata"] = None  # all image caching is off the source membic
     tmbc["importid"] = 0   # only the source membic is imported
     tmbc["icwhen"] = ""
@@ -620,6 +623,54 @@ def change_membic_keywords(tid, oldkw, newkw):
     return "<br/>\n".join(msgs)
 
 
+def send_mshare_email(muser, recip, subj, body):
+    # don't attempt to guess the recipient name from their email.  Worse
+    # than nothing.
+    body = body.replace("$NAME", recip.get("name", ""))
+    # verify sig so the recipient knows who actually sent the mail and can
+    # reply directly to them if they want.
+    sig = muser.get("name", "") + "\n" + muser["email"]
+    if sig not in body:
+        body += "\n" + sig + "\n"
+    util.send_mail(recip["email"], subj, body, replyto=muser["email"])
+
+
+def following_or_blocking(muser, membic):
+    themes = json.loads(muser.get("themes") or "{}")
+    refs = ["P" + membic["penid"]]
+    tid = membic.get("ctmid", "")
+    if tid:
+        refs.append(tid)
+    for refid in refs:
+        logging.info("processing refid " + refid)
+        refobj = themes.get(refid)
+        if refobj and refobj.get("lev"):  # have non-zero assoc
+            return True
+    return False
+
+
+def process_mshare(muser, membic, sendto, subj, body):
+    subj = verify_simple_html(urllib.parse.unquote(subj))
+    body = verify_simple_html(urllib.parse.unquote(body))
+    svcdata = json.loads(membic.get("svcdata") or "{}")
+    mshares = util.csv_to_list(svcdata.get("mshares", ""))
+    for uid in util.csv_to_list(sendto):
+        if uid in mshares:
+            continue   # previously sent, so don't send again.
+        recip = dbacc.cfbk("MUser", "dsId", uid)
+        if not recip:
+            continue   # shouldn't happen, if it does, don't send or record
+        try:
+            if not following_or_blocking(recip, membic):
+                send_mshare_email(muser, recip, subj, body)
+            mshares.append(uid)
+        except Exception as e:
+            logging.error("process_mshare mail send failed: " + str(e))
+    svcdata["mshares"] = ",".join(mshares)
+    membic["svcdata"] = json.dumps(svcdata)
+    return membic
+
+
 ##################################################
 #
 # API entrypoints
@@ -638,7 +689,7 @@ def accupd():
         prevalt = muser["altinmail"]
         prevhash = muser["hashtag"]
         read_values(muser, {"inflds": ["email", "altinmail", "name", "aboutme",
-                                       "hashtag", "cliset"],
+                                       "hashtag", "cliset", "perset"],
                             "special": {"aboutme": "simplehtml"}})
         val = dbacc.reqarg("password")
         if not val and muser["email"] != prevemail:
@@ -873,7 +924,7 @@ def audblock():
 # Find or make user given an email address.  Must be signed in.  Returns
 # public user information.  Used for sharing membics outside of current
 # followers, providing a mechanism for the recipient to block any further
-# contact from the sender as needed.
+# contact from the sender as wanted.
 def fmkuser():
     try:
         muser, _ = util.authenticate()
@@ -894,6 +945,22 @@ def fmkuser():
     except ValueError as e:
         return util.srverr(str(e))
     return util.respJSON("[" + util.safe_JSON(fmu) + "]")
+
+
+def mshare():
+    res = ""
+    try:
+        muser, _ = util.authenticate()
+        mid = dbacc.reqarg("mid", "string", required=True)
+        sendto = dbacc.reqarg("sendto", "string", required=True)
+        subj = verify_simple_html(dbacc.reqarg("subj", "string", required=True))
+        body = verify_simple_html(dbacc.reqarg("body", "string", required=True))
+        oldmbc = dbacc.cfbk("Membic", "dsId", mid, required=True)
+        newmbc = process_mshare(muser, oldmbc.copy(), sendto, subj, body)
+        res = update_membic_and_preb(muser, newmbc, oldmbc)
+    except ValueError as e:
+        return util.srverr(str(e))
+    return "[" + res + "]"
 
 
 # Administrator utility to change a theme keyword, update all membics to

@@ -918,7 +918,7 @@ app.pcd = (function () {
                     if(aldiv.innerText) {
                         aldiv.innerHTML += " | "; }
                     aldiv.innerHTML += app.membic.managerDispatch(
-                        "tpmgr", "postNoteHTML", 0, 0, pn); } }); }
+                        "tp", "postNoteHTML", 0, 0, pn); } }); }
     }
 
 
