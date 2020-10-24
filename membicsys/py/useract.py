@@ -7,6 +7,8 @@
 #pylint: disable=broad-except
 #pylint: disable=logging-not-lazy
 #pylint: disable=too-many-locals
+#pylint: disable=line-too-long
+#pylint: disable=too-many-lines
 import logging
 import flask
 import py.dbacc as dbacc
@@ -623,16 +625,39 @@ def change_membic_keywords(tid, oldkw, newkw):
     return "<br/>\n".join(msgs)
 
 
-def send_mshare_email(muser, recip, subj, body):
+def send_mshare_email(muser, membic, recip, subj, body):
     # don't attempt to guess the recipient name from their email.  Worse
     # than nothing.
     body = body.replace("$NAME", recip.get("name", ""))
-    # verify sig so the recipient knows who actually sent the mail and can
-    # reply directly to them if they want.
+    # verify sig so the recipient knows who actually sent the mail and who
+    # they sent it as so the reply-to is not surprising.
     sig = muser.get("name", "") + "\n" + muser["email"]
     if sig not in body:
         body += "\n" + sig + "\n"
+    # Provide an "unsubscribe" block/follow link.
+    bfl = "$SENDER sent you this message via membic share. To prevent $SENDER from sending you membics, or to follow $SENDER and get summarized membics automatically instead, use this link "
+    bfl = bfl.replace("$SENDER", muser["name"])
+    bfl += util.my_login_url(recip) + "&mshare=" + membic["dsId"]
+    if recip["status"] != "Active":
+        bfl += "&actcode=" + recip["actcode"]
+    body += "\n\n" + bfl
     util.send_mail(recip["email"], subj, body, replyto=muser["email"])
+
+
+def verify_mshare_content(txt, membic=None, unquote=True):
+    if unquote:
+        txt = urllib.parse.unquote(txt)
+    txt = verify_simple_html(txt)  # strip any embedded html
+    hrefcount = len(re.findall(r"https?://", txt, flags=re.IGNORECASE))
+    if not membic and hrefcount > 0:
+        raise ValueError("No href allowed in subject")
+    if membic and hrefcount > 1:
+        raise ValueError("Only one href allowed in message body")
+    if membic:
+        url = membic.get("url") or membic.get("rurl")
+        if url not in txt:
+            raise ValueError("Membic url not found in message body")
+    return txt
 
 
 def following_or_blocking(muser, membic):
@@ -650,10 +675,13 @@ def following_or_blocking(muser, membic):
 
 
 def process_mshare(muser, membic, sendto, subj, body):
-    subj = verify_simple_html(urllib.parse.unquote(subj))
-    body = verify_simple_html(urllib.parse.unquote(body))
+    if not muser.get("name"):
+        raise ValueError("You need to set your profile name")
+    subj = verify_mshare_content(subj)
+    body = verify_mshare_content(body, membic)
     svcdata = json.loads(membic.get("svcdata") or "{}")
     mshares = util.csv_to_list(svcdata.get("mshares", ""))
+    sendmax = 6  # send in small batches only (request proc time, no spamming)
     for uid in util.csv_to_list(sendto):
         if uid in mshares:
             continue   # previously sent, so don't send again.
@@ -662,10 +690,13 @@ def process_mshare(muser, membic, sendto, subj, body):
             continue   # shouldn't happen, if it does, don't send or record
         try:
             if not following_or_blocking(recip, membic):
-                send_mshare_email(muser, recip, subj, body)
+                send_mshare_email(muser, membic, recip, subj, body)
+                sendmax -= 1
             mshares.append(uid)
         except Exception as e:
             logging.error("process_mshare mail send failed: " + str(e))
+        if sendmax <= 0:
+            break
     svcdata["mshares"] = ",".join(mshares)
     membic["svcdata"] = json.dumps(svcdata)
     return membic
@@ -951,13 +982,18 @@ def mshare():
     res = ""
     try:
         muser, _ = util.authenticate()
-        mid = dbacc.reqarg("mid", "string", required=True)
         sendto = dbacc.reqarg("sendto", "string", required=True)
         subj = verify_simple_html(dbacc.reqarg("subj", "string", required=True))
         body = verify_simple_html(dbacc.reqarg("body", "string", required=True))
-        oldmbc = dbacc.cfbk("Membic", "dsId", mid, required=True)
-        newmbc = process_mshare(muser, oldmbc.copy(), sendto, subj, body)
-        res = update_membic_and_preb(muser, newmbc, oldmbc)
+        mid = dbacc.reqarg("mid", "string", required=True)
+        msgmbc = dbacc.cfbk("Membic", "dsId", mid, required=True)
+        srcmbc = msgmbc
+        # Theme membics may not be updated directly, all changes to source.
+        if srcmbc.get("ctmid"):
+            srcmbc = dbacc.cfbk("Membic", "dsId", srcmbc["srcrev"],
+                                required=True)
+        updmbc = process_mshare(muser, srcmbc.copy(), sendto, subj, body)
+        res = update_membic_and_preb(muser, updmbc, srcmbc)
     except ValueError as e:
         return util.srverr(str(e))
     return "[" + res + "]"

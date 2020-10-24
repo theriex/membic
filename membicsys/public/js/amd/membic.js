@@ -209,12 +209,27 @@ app.membic = (function () {
     }
 
 
-    //If no mid, then this assumes a new membic was just added and that it
-    //is therefore the first element in mbcs.
-    function findMembic(mid, mbcs) {
+    function findUpdatedMembic(mid, mbcs) {
+        //If no mid, then assume a new membic was just added, so it will be
+        //the first element in mbcs.
         if(!mid) {  //assume a new membic was just added
-            return mbcs[0]; }
-        return mbcs.find((mbc) => mbc.dsId === mid);
+            return {dt:"MUser", di:mbcs[0].dsId, mbc:mbcs[0]}; }
+        //The mid may be either a profile membic or theme membic.
+        var i; var j; var cm; var pt;
+        for(i = 0; i < mbcs.length; i += 1) {
+            cm = mbcs[i];
+            if(cm.dsId === mid) {
+                return {dt:"MUser", di:mbcs[i].dsId, mbc:mbcs[i]}; }
+            if(cm.svcdata && cm.svcdata.postctms) {
+                for(j = 0; j < cm.svcdata.postctms.length; j += 1) {
+                    pt =  cm.svcdata.postctms[j];
+                    if(pt.revid === mid) {
+                        return {dt:"Theme", di:pt.ctmid, mbc:mbcs[i]}; } } } }
+        //Even if a theme membic was updated via mshare, and the source
+        //membic was marked as deleted, the source membic should still have
+        //been found.  Log a message if we ever get here.
+        jt.log("membic.findUpdatedMembic logic fail: " + mid + " not found.");
+        return null;
     }
 
 
@@ -223,14 +238,13 @@ app.membic = (function () {
         //the display context Theme if that was specified.
         pots.forEach(function (pot) {  //deserialize so ready to use
             app.refmgr.deserialize(pot); });
-        var updmbc = findMembic(membicid, pots[0].preb);
-        clearCachedThemesForMembic(updmbc);
+        var updm = findUpdatedMembic(membicid, pots[0].preb);
+        clearCachedThemesForMembic(updm.mbc);
         pots.forEach(function (pot) {  //update all given data
             app.refmgr.put(pot); });
-        app.pcd.fetchAndDisplay(pots[0].dsType, pots[0].dsId,
-                                {go:updmbc.dsId});
+        app.pcd.fetchAndDisplay(updm.dt, updm.di, {go:membicid});
         if(contf) {
-            contf(updmbc); }
+            contf(updm.mbc); }
     }
 
 
@@ -731,7 +745,8 @@ app.membic = (function () {
                   ["div", {id:"mailsharecontentdiv"},
                    mgrs.shr.mailContentHTML(cdx)]]]);
             html = app.layout.dlgwrapHTML("Membic Share Mail", html);
-            app.layout.openDialog({y:40}, html); }, //no autofocus
+            var gp = jt.geoPos(jt.byId("pcditemdiv" + cdx));
+            app.layout.openDialog({y:gp.y}, html); }, //no autofocus
         mailShareHTML: function (cdx) {
             return jt.tac2html(
                 [mgrs.shr.mailShareAddrs(cdx).map(mgrs.shr.mshselHTML),
@@ -2040,8 +2055,9 @@ return {
             ["div", {cla:"mdouterdiv", "data-dsId":membic.dsId,
                      "data-ctmid":membic.ctmid, "data-srcrev":membic.srcrev},
              ["div", {cla:"mdinnerdiv"},
-              [["a", {href:"#expand" + cdx, title:"Toggle Membic Expansion",
-                    onclick:jt.fs("app.membic.toggleMembic(" + cdx + ")")},
+              [["a", {href:"#expand" + cdx + "-" + membic.dsId,  //debug info
+                      title:"Toggle Membic Expansion",
+                      onclick:jt.fs("app.membic.toggleMembic(" + cdx + ")")},
                 ["img", {cla:"mbtkebabimg", src:app.dr("img/kebab.png")}]],
                formElementHTML("title", cdx, membic),
                formElementHTML("share", cdx, membic),
