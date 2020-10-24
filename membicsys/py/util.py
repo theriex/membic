@@ -595,6 +595,13 @@ def signin():
     oj = ""
     try:
         muser, srvtok = authenticate()
+        if muser["status"] != "Active":
+            actcode = dbacc.reqarg("actcode", "string")
+            if actcode == muser["actcode"]:
+                logging.info("Activating MUser " + muser["dsId"] + " " +
+                             muser["email"])
+                muser["status"] = "Active"
+                muser = dbacc.write_entity(muser, muser["modified"])
         authobj = make_auth_obj(muser, srvtok)
         oj = json.dumps(authobj)
     except ValueError as e:

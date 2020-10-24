@@ -185,9 +185,10 @@ return {
         var ps = {an:app.startParams.an || sav.authname || "",
                   at:app.startParams.at || sav.authtoken || "",
                   emailin:jt.safeget("emailin", "value") || "",
-                  passin:jt.safeget("passin", "value")};
+                  passin:jt.safeget("passin", "value") || "",
+                  actcode:app.startParams.actcode || ""};
         if(!((ps.an || ps.emailin) && (ps.at || ps.passin))) {
-            return; }  //not trying to sign in yet.
+            return; }  //not trying to sign in yet.  actcode has login also.
         jt.out("topmessagelinediv", "Signing in...");
         jt.byId("topsectiondiv").style.cursor = "wait";
         //Regardless of whether the signin call works or not, clear any auth
