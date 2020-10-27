@@ -74,13 +74,13 @@ app.connect = (function () {
                 copyfields.forEach(function (fld) {
                     si[fld] = cached[fld]; }); }
             allobjs[obinf.obtype + obinf.dsId] = si; }
-        si.sprio = 0;  //In case still in uinf and no longer associated
-        if(uinf.lev) { //-1 (following) or positive value
-            si.sprio = 1;  //convert lev -1 (following) to sort priority 1
-            switch(uinf.lev) {  //bump other lev values up to match
+        si.sprio = 0;  //Reset in case still in uinf and no longer associated.
+        switch(uinf.lev) {
+            case -1: si.sprio = 1; break;
             case 1: si.sprio = 2; break;
             case 2: si.sprio = 3; break;
-            case 3: si.sprio = 4; break; } }
+            case 3: si.sprio = 4; break;
+            default: si.prio = 0; }
     }
 
 
@@ -211,9 +211,9 @@ app.connect = (function () {
             ["A better way to share memorable links.",
              ["p", {cla:"membicdetailsp"},
               ["Create resource lists people can reference and follow. Explore these profiles and themes or ",
-               ["a", {href:"docs/about.html",
-                     onclick:jt.fs("app.layout.displayDoc('docs/about.html'" +
-                                   ",true)")},
+               ["a", {href:"docs/about.html", cla:"localdocslink",
+                      onclick:jt.fs("app.layout.displayDoc('docs/about.html'" +
+                                    ",true)")},
                 "learn more"],
                "."]]]);
     }

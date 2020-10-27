@@ -74,7 +74,7 @@ module.exports = (function () {
         //   authoritative and may be out of date.  Each ref object has
         //     name, hashtag, description, picture (idstr), keywords,
         //     archived:ISO
-        //     lev: <-2:blocking, -1:following, 0:noassoc,
+        //     lev: <-2:blocking (profile only), -1:following, 0:noassoc,
         //            1:member, 2:moderator, 3:founder>
         //     followmech: <"email" or "RSS">
         //     //notices: []  //not currently used, old membership mgmt

@@ -15,6 +15,7 @@ app.theme = (function () {
         case 2: return "Moderator";
         case 1: return "Member";
         case -1: return "Following";
+        case -2: return "Blocking";
         default: return "Unknown"; }
     }
 
@@ -336,6 +337,12 @@ app.theme = (function () {
 return {
 
     association: function (pto) { return association(pto); },
+    isFollowing: function (tid) {
+        var tref = app.login.myProfile().themes[tid];
+        return (tref && tref.lev && tref.lev >= -1); },
+    isBlocking: function (tid) {
+        var tref = app.login.myProfile().themes[tid];
+        return (tref && tref.lev === -2); },
 
 
     //Called from settings, which are enabled only if profile is available.

@@ -947,7 +947,145 @@ app.membic = (function () {
                         jt.out("mshstatmsgdiv", "Send failed " + code +
                                ": " + errtxt);
                         jt.byId("mshsendb").disabled = false; },
-                    jt.semaphore("shr.sendShareMail")); }
+                    jt.semaphore("shr.sendShareMail")); },
+        verifyMembicShare: function () {
+            var mshare = app.startParams.mshare;
+            if(!mshare || !app.login.authenticated()) { return; }
+            app.refmgr.getFull("Membic", mshare, function (srcmbc) {
+                var html = jt.tac2html(
+                    ["div", {cla:"adjmshdiv"},
+                     [["div", {id:"adjmoptsdiv"},
+                        mgrs.shr.adjoptsHTML(srcmbc)],
+                      ["div", {id:"adjmoptmsgdiv"}],
+                      ["div", {cla:"formbuttonsdiv", id:"adjmoptbdiv"},
+                       ["button", {type:"button", id:"mshsendb",
+                                   title:"Save contact choices",
+                                   onclick:mdfs("shr.saveMshOpts")},
+                        "Save"]]]]);
+                html = app.layout.dlgwrapHTML("Membic Share Mail", html);
+                app.layout.openDialog(null, html);
+                mgrs.shr.adjoptDescrs(); }); },
+        adjoptsHTML: function (srcmbc) {
+            var mvb = ":MUser:" + srcmbc.penid + ":" + srcmbc.penname;
+            var html = [
+                ["div", {id:"adjmshsubtitlediv"},
+                 "Adjust how " + srcmbc.penname + " may contact you:"],
+                ["div", {id:"adjmshblockdiv", cla:"adjmshoptdiv"},
+                 [["input", {type:"checkbox", cla:"mocb", name:"mshopt",
+                             id:"mocbb", value:"block" + mvb,
+                             checked:jt.toru(app.theme.isBlocking(
+                                 "P" + srcmbc.penid))}],
+                  ["label", {fo:"mocbb", cla:"molab", id:"molabb"},
+                   "Block " + srcmbc.penname],
+                  ["div", {cla:"modescrdiv", id:"moddb"}]]],
+                ["div", {id:"adjmshfoldiv", cla:"adjmshoptdiv"},
+                 [["input", {type:"checkbox", cla:"mocb", name:"mshopt",
+                             id:"mocbf", value:"follow" + mvb,
+                             checked:jt.toru(app.theme.isFollowing(
+                                 "P" + srcmbc.penid)),
+                             onclick:mdfs("shr.adjoptDescrs", "event")}],
+                  ["label", {fo:"mocbf", cla:"molab", id:"molabf"},
+                   "Follow " + srcmbc.penname],
+                  ["div", {cla:"modescrdiv", id:"moddf"},
+                   "Receive membics from " + srcmbc.penname +
+                   " in a daily membic summary mail or by web feed."]]]];
+            srcmbc.svcdata.postctms = srcmbc.svcdata.postctms || [];
+            srcmbc.svcdata.postctms.forEach(function (pn) { html.push(
+                ["div", {id:"adjmsh" + pn.ctmid, cla:"adjmshoptdiv"},
+                 [["input", {type:"checkbox", cla:"mocb", name:"mshopt",
+                             id:"mocbt" + pn.ctmid,
+                             checked:jt.toru(app.theme.isFollowing(pn.ctmid)),
+                             value:"follow:Theme:" + pn.ctmid + ":" + pn.name}],
+                  ["label", {fo:"mocbt" + pn.ctmid, cla:"molab",
+                             id:"molabt" + pn.ctmid},
+                   "Follow " + pn.name]]]); });
+            return jt.tac2html(html); },
+        parseOptVal: function (val) {
+            var flds = ["verb", "dt", "di", "name"];
+            return val.split(":").reduce(function (acc, x, i) {
+                acc[flds[i]] = x; return acc; }, {}); },
+        parseOptCbs: function () {
+            return Array.prototype.reduce.call(
+                document.querySelectorAll("input[name=mshopt]"),
+                function (acc, cb) {
+                    var po = mgrs.shr.parseOptVal(cb.value);
+                    po.checked = cb.checked;
+                    acc[cb.id] = po;
+                    return acc; }, {}); },
+        adjoptDescrs: function () {
+            var cbs = mgrs.shr.parseOptCbs();
+            if(cbs.mocbf.checked) {
+                jt.byId("mocbb").checked = false;
+                jt.byId("mocbb").disabled = true;
+                jt.out("moddb", "Membic Share disabled if following.");
+                jt.byId("molabb").className = "molabdis"; }
+            else {
+                jt.byId("mocbb").disabled = false;
+                jt.out("moddb", "Prevent " + cbs.mocbb.name +
+                       " from sending you mail using Membic Share.");
+                jt.byId("molabb").className = "molab"; } },
+        buildAssociations: function () {
+            var cbs = mgrs.shr.parseOptCbs();
+            var mulev = (cbs.mocbf.checked? -1 : 0);
+            if(cbs.mocbb.checked) { mulev = -2; }
+            var assocs = [{dt:"MUser", di:cbs.mocbb.di, lev:mulev,
+                           name:cbs.mocbb.name}];
+            delete cbs.mocbb;
+            delete cbs.mocbf;
+            Object.values(cbs).forEach(function (cb) {
+                assocs.push({dt:cb.dt, di:cb.di, lev:(cb.checked? -1 : 0),
+                             name:cb.name}); });
+            return assocs; },
+        assocmatch: function (assoc) {
+            var tid = assoc.di;
+            if(assoc.dt === "MUser") {
+                tid = "P" + assoc.di; }
+            var tref = app.login.myProfile().themes[tid];
+            return ((tref && tref.lev === assoc.lev) ||
+                    (!tref && !assoc.lev)); },
+        updateAssociation: function (aso, contf) {
+            var authobj = app.login.authenticated();
+            var data = jt.objdata(
+                {an:authobj.email, at:authobj.token, aot:aso.dt, aoi:aso.di,
+                 pid:authobj.authId, assoc:app.theme.nameForLevel(aso.lev),
+                 fm:"nochange"});
+            jt.call("POST", app.dr("/api/associate"), data,
+                    function (result) {
+                        app.refmgr.put(app.refmgr.deserialize(result[0]));
+                        contf(); },
+                    function (code, errtxt) {
+                        jt.out("adjmoptmsgdiv", "Save failed " + code + ": " +
+                               errtxt);
+                        jt.byId("adjmoptbdiv").disabled = false; },
+                    jt.semaphore("shr.updateAssociation")); },
+        saveMshOpts: function () {
+            jt.byId("adjmoptbdiv").disabled = true;
+            jt.out("adjmoptbdiv", "Saving...");  //remove button
+            jt.out("adjmoptmsgdiv", "");  //clear any previous messages
+            var as = mgrs.shr.buildAssociations(); var i; var msgs = [];
+            for(i = 0; i < as.length; i += 1) {
+                if(mgrs.shr.assocmatch(as[i])) {
+                    msgs.push("Saved settings for " + as[i].name); }
+                else {
+                    msgs.push("Saving settings for " + as[i].name);
+                    jt.out("adjmoptmsgdiv", msgs.join("<br/>"));
+                    return mgrs.shr.updateAssociation(as[i],
+                                                      mgrs.shr.saveMshOpts); } }
+            var html = [["p", "Contact preferences saved."]];
+            var prof = app.login.myProfile();
+            if(!prof.preb || !prof.preb.length) {
+                html.push(["p",
+                           ["You can safely ignore the placeholder profile used to hold your contact preferences, or use it to post your own membics. ",
+                            ["a", {href:"docs/about.html", cla:"localdocslink",
+                                   onclick:jt.fs("app.layout.displayDoc('" +
+                                                 app.dr("/docs/about.html") +
+                                                 "',true)")},
+                             "About Membic"]]]); }
+            jt.out("adjmoptmsgdiv", jt.tac2html(html));
+            jt.out("adjmoptbdiv", jt.tac2html(
+                ["button", {type:"button",
+                            onclick:jt.fs("app.layout.closeDialog")},
+                 "Ok"])); }
         };
     }());
 
@@ -1953,7 +2091,8 @@ return {
                    ["div", {id:"ambuttonsdiv"},
                     ["button", {type:"submit"}, "Make Membic"]]]]]));
             jt.on("newmembicform", "submit", app.membic.amfact);
-            verifyMayPost("newmembicdiv");
+            verifyMayPost();     //shows activation form if needed
+            mgrs.shr.verifyMembicShare(); //shows membic share adjustment dlg
             break;
         case "whymem":
             if(!jt.byId("newmembicform").checkValidity()) {

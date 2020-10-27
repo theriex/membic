@@ -59,7 +59,7 @@ def verify_active_account(muser, lax=False):
 
 
 MEMBERASSOCS = ["Founder", "Moderator", "Member"]
-FOLLOWASSOCS = ["Following", "Unknown"]
+FOLLOWASSOCS = ["Blocking", "Following", "Unknown"]
 
 def theme_association(theme, pid):
     if util.val_in_csv(pid, theme["founders"]):
@@ -128,12 +128,13 @@ def update_profile_association(prof, ao, ras):
     themes = json.loads(prof.get("themes") or "{}")
     previnf = themes.get(tid, {})
     previnf["followmech"] = previnf.get("followmech", "email")
-    inf = {
-        "lev": assoc_level(ras["assoc"]),
-        "followmech": ras.get("fm", previnf["followmech"]),
-        "name": ao["name"],
-        "hashtag": ao["hashtag"],
-        "picture": ""}
+    if ras.get("fm") == "nochange":
+        ras["fm"] = previnf["followmech"]
+    inf = {"lev": assoc_level(ras["assoc"]),
+           "followmech": ras.get("fm", previnf["followmech"]),
+           "name": ao["name"],
+           "hashtag": ao["hashtag"],
+           "picture": ""}
     if ao["dsType"] == "Theme":
         inf["description"] = ao["description"]
         if ao["picture"]:

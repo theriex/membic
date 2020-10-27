@@ -497,11 +497,14 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 #mshsubjin { width:250px; }
 #mshstatmsgdiv { font-size:small; }
 .mshselcbdiv { position:relative; }
-.mshsellab, .mshsellabdis { font-size:medium; }
-.mshsellabdis { color:#999; }
+.mshsellab, .mshsellabdis, .molab, .molabdis { font-size:medium; }
+.mshsellabdis, .molabdis { color:#999; }
 .mshtrashdiv { position:absolute; top:0px; right:0px; }
 .mshfollowingdiv { position:absolute; top:0px; right:90px;
   font-style:italic; background:#fcf4eb }
+.modescrdiv { margin:0px 0px 0px 20px; font-size:small; }
+#adjmshsubtitlediv { font-size:medium; padding:3px 0px; }
+#adjmoptmsgdiv { font-size:small; }
 
 /* >> share buttons */
 /* thanks to https://sharingbuttons.io */
