@@ -987,8 +987,8 @@ app.membic = (function () {
                   ["label", {fo:"mocbf", cla:"molab", id:"molabf"},
                    "Follow " + srcmbc.penname],
                   ["div", {cla:"modescrdiv", id:"moddf"},
-                   "Receive membics from " + srcmbc.penname +
-                   " in a daily membic summary mail or by web feed."]]]];
+                   "See membics from " + srcmbc.penname +
+                   " in your daily summary or web feed."]]]];
             srcmbc.svcdata.postctms = srcmbc.svcdata.postctms || [];
             srcmbc.svcdata.postctms.forEach(function (pn) { html.push(
                 ["div", {id:"adjmsh" + pn.ctmid, cla:"adjmshoptdiv"},
@@ -1017,7 +1017,7 @@ app.membic = (function () {
             if(cbs.mocbf.checked) {
                 jt.byId("mocbb").checked = false;
                 jt.byId("mocbb").disabled = true;
-                jt.out("moddb", "Membic Share disabled if following.");
+                jt.out("moddb", "Membic Share disabled when following.");
                 jt.byId("molabb").className = "molabdis"; }
             else {
                 jt.byId("mocbb").disabled = false;

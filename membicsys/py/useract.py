@@ -636,7 +636,7 @@ def send_mshare_email(muser, membic, recip, subj, body):
     if sig not in body:
         body += "\n" + sig + "\n"
     # Provide an "unsubscribe" block/follow link.
-    bfl = "$SENDER sent you this message via membic share. To prevent $SENDER from sending you membics, or to follow $SENDER and get summarized membics automatically instead, use this link "
+    bfl = "$SENDER sent you this message via membic share. To prevent $SENDER from sending you membics, or get summarized membics instead, use this link "
     bfl = bfl.replace("$SENDER", muser["name"])
     bfl += util.my_login_url(recip) + "&mshare=" + membic["dsId"]
     if recip["status"] != "Active":
