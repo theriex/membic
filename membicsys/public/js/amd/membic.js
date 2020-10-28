@@ -987,7 +987,7 @@ app.membic = (function () {
                   ["label", {fo:"mocbf", cla:"molab", id:"molabf"},
                    "Follow " + srcmbc.penname],
                   ["div", {cla:"modescrdiv", id:"moddf"},
-                   "See membics from " + srcmbc.penname +
+                   "See all membics from " + srcmbc.penname +
                    " in your daily summary or web feed."]]]];
             srcmbc.svcdata.postctms = srcmbc.svcdata.postctms || [];
             srcmbc.svcdata.postctms.forEach(function (pn) { html.push(
@@ -998,7 +998,10 @@ app.membic = (function () {
                              value:"follow:Theme:" + pn.ctmid + ":" + pn.name}],
                   ["label", {fo:"mocbt" + pn.ctmid, cla:"molab",
                              id:"molabt" + pn.ctmid},
-                   "Follow " + pn.name]]]); });
+                   "Follow " + pn.name],
+                  ["div", {cla:"modescrdiv"},
+                   "Follow membics posted to the &quot;" + pn.name + "&quot;" +
+                   " Theme, from " + srcmbc.penname + " or others."]]]); });
             return jt.tac2html(html); },
         parseOptVal: function (val) {
             var flds = ["verb", "dt", "di", "name"];
@@ -1075,7 +1078,7 @@ app.membic = (function () {
             var prof = app.login.myProfile();
             if(!prof.preb || !prof.preb.length) {
                 html.push(["p",
-                           ["You can safely ignore the placeholder profile used to hold your contact preferences, or use it to post your own membics. ",
+                           ["You can safely ignore the placeholder profile used to hold your contact preferences, or use it for your own membics. ",
                             ["a", {href:"docs/about.html", cla:"localdocslink",
                                    onclick:jt.fs("app.layout.displayDoc('" +
                                                  app.dr("/docs/about.html") +
