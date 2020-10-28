@@ -306,28 +306,26 @@ def feed_info_for_object(ob):
 # start.py
 def feed_object_from_path(path):
     if not path:
-        return util.srverr("No path given for RSS content")
+        raise ValueError("No path given for RSS content")
     ob = None
     pes = path.split("/")
-    if len(pes) > 1:
-        if pes[0] == "profile":
-            ob = dbacc.cfbk("MUser", "dsId", pes[1], required=True)
-        elif pes[0] == "theme":
-            ob = dbacc.cfbk("Theme", "dsId", pes[1], required=True)
-        else:
-            return util.srverr("feed url first part must be profile or theme")
+    if len(pes) > 1:  # accessing as /dbType/dbid
+        fts = {"profile":"MUser", "theme":"Theme"}
+        if pes[0] not in fts:
+            raise ValueError("Invalid feed type: " + pes[0])
+        if not pes[1].isnumeric():
+            raise ValueError("Invalid " + pes[0] + " id: " + pes[1])
+        ob = dbacc.cfbk(fts[pes[0]], "dsId", pes[1], required=True)
     else:  # find as hashtag
-        ob = None
         if pes[0] == "rsscoop":  # legacy feed
-            coopid = flask.request.args.get("coop", "")
-            if coopid:
-                ob = dbacc.cfbk("Theme", "importid", coopid)
-        if not ob:
+            coopid = flask.request.args.get("coop", "", required=True)
+            ob = dbacc.cfbk("Theme", "importid", coopid)
+        else:
             ob = dbacc.cfbk("Theme", "hashtag", pes[0])
-        if not ob:
-            ob = dbacc.cfbk("MUser", "hashtag", pes[0])
-        if not ob:
-            return util.srverr("Unknown feed hashtag: " + path)
+            if not ob:
+                ob = dbacc.cfbk("MUser", "hashtag", pes[0])
+            if not ob:
+                raise ValueError("Unknown feed hashtag: " + path)
     return ob
 
 
@@ -340,18 +338,19 @@ def feed_object_from_path(path):
 # The path is everything *after* "/feed/".  Feeds can be customized via URL
 # parameters, see the FeedInfo class notes for details.
 def webfeed(path):
-    path = path or ""
-    ob = feed_object_from_path(path.lower())
-    fi = feed_info_for_object(ob)
-    logging.info("webfeed for " + fi.dbtype + fi.dbid + " " + fi.feedform +
-                 ", ts: " + fi.titlespec + ", ds: " + fi.descspec)
-    if fi.feedform == "rss":
-        content, ctype = rss_content(fi)
-    elif fi.feedform == "rdf":
-        content, ctype = rdf_content(fi)
-    elif fi.feedform == "json":
-        content, ctype = json_content(fi)
-    else:
-        return util.srverr("Unknown web feed type: " + fi.feedform)
-    logging.info("webfeed " + fi.feedform + " content delivered")
+    try:
+        path = path or ""
+        if not path:
+            raise ValueError("No webfeed path provided")
+        ob = feed_object_from_path(path.lower())
+        fi = feed_info_for_object(ob)
+        fmts = {"rss":rss_content, "rdf":rdf_content, "json":json_content}
+        if fi.feedform not in fmts:
+            raise ValueError("Invalid feed format: " + fi.feedform)
+        logging.info("webfeed path " + path + ", ob: " + fi.dbtype + " " +
+                     fi.dbid + ", feedform: " + fi.feedform + ", ts: " +
+                     fi.titlespec + ", ds: " + fi.descspec)
+        content, ctype = fmts[fi.feedform](fi)
+    except ValueError as e:
+        return util.srverr("Feed error: " + str(e))
     return util.respond(content, mimetype=ctype)
