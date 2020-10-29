@@ -209,17 +209,20 @@ app.membic = (function () {
     }
 
 
-    function findUpdatedMembic(mid, mbcs) {
+    //Find the updated membic and identify if it was updated from the MUser
+    //or shared from a specific theme.
+    function findUpdatedMembic(mid, user) {
+        var mbcs = user.preb;
         //If no mid, then assume a new membic was just added, so it will be
         //the first element in mbcs.
         if(!mid) {  //assume a new membic was just added
-            return {dt:"MUser", di:mbcs[0].dsId, mbc:mbcs[0]}; }
+            return {dt:"MUser", di:user.dsId, mbc:mbcs[0]}; }
         //The mid may be either a profile membic or theme membic.
         var i; var j; var cm; var pt;
         for(i = 0; i < mbcs.length; i += 1) {
             cm = mbcs[i];
             if(cm.dsId === mid) {
-                return {dt:"MUser", di:mbcs[i].dsId, mbc:mbcs[i]}; }
+                return {dt:"MUser", di:user.dsId, mbc:mbcs[i]}; }
             if(cm.svcdata && cm.svcdata.postctms) {
                 for(j = 0; j < cm.svcdata.postctms.length; j += 1) {
                     pt =  cm.svcdata.postctms[j];
@@ -238,7 +241,7 @@ app.membic = (function () {
         //the display context Theme if that was specified.
         pots.forEach(function (pot) {  //deserialize so ready to use
             app.refmgr.deserialize(pot); });
-        var updm = findUpdatedMembic(membicid, pots[0].preb);
+        var updm = findUpdatedMembic(membicid, pots[0]);
         clearCachedThemesForMembic(updm.mbc);
         pots.forEach(function (pot) {  //update all given data
             app.refmgr.put(pot); });
@@ -258,7 +261,7 @@ app.membic = (function () {
     //that results in the site seizing up due to a previous call never
     //returning, that is still far preferable to duplicate data.
     function saveMembic (logmsg, savemembic, contf, failf) {
-        jt.log("saveMembic logmsg: " + logmsg);
+        jt.log("saveMembic called from " + logmsg);
         if(savind) {  //default call will retry. Debounce extra event calls
             return jt.log("saveMembic in progress, ignoring spurious call"); }
         savind = new Date().toISOString();  //indicate we are saving
