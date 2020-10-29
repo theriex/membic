@@ -1480,7 +1480,7 @@ app.membic = (function () {
                   mgrs.rat.ctrlOverlayHTML(cdx, membic)]]); },
         ctrlOverlayHTML: function (cdx, membic) {
             if(mayEdit(membic)) {
-                var ehs = mdfs("mgrs.rat.handleEvent", "event");
+                var ehs = mdfs("rat.handleEvent", "event");
                 ehs = ehs.replace("return false;", "");  //don't latch event
                 return jt.tac2html(
                     ["div", {cla:"ratctrldiv", id:"ratctrldiv" + cdx,
