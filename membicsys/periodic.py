@@ -64,6 +64,8 @@ def note_follower(musers, src, info, follower):
                             "name":follower["name"]}
     if not info["lev"]:
         return  # No longer following, so don't send anything
+    if info["lev"] == -2:
+        return  # Blocking. Don't send anything
     if mech == "RSS":
         return  # Following via webfeed, not email
     muser = musers.get(uid)
