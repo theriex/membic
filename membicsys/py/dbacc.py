@@ -445,6 +445,8 @@ def db2app_fieldval(entity, field, inst):
 
 
 def ISO2dt(isostr):
+    if ";" in isostr:
+        isostr = isostr.split(";")[0]
     dt = datetime.datetime.utcnow()
     dt = dt.strptime(isostr, "%Y-%m-%dT%H:%M:%SZ")
     return dt

@@ -412,6 +412,8 @@ function helperFunctions () {
     pyc += "\n";
     pyc += "\n";
     pyc += "def ISO2dt(isostr):\n";
+    pyc += "    if \";\" in isostr:\n";
+    pyc += "        isostr = isostr.split(\";\")[0]\n";
     pyc += "    dt = datetime.datetime.utcnow()\n";
     pyc += "    dt = dt.strptime(isostr, \"%Y-%m-%dT%H:%M:%SZ\")\n";
     pyc += "    return dt\n";
@@ -1008,6 +1010,11 @@ function createJSServerAcc () {
     jsc += "\n";
     jsc += "    deserialize: function (obj) {\n";
     jsc += "        return deserialize(obj);\n";
+    jsc += "    },\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    reconstituteFieldJSONObject: function (field, obj) {\n";
+    jsc += "        reconstituteFieldJSONObject(field, obj);\n";
     jsc += "    },\n";
     jsc += "\n";
     jsc += "\n";

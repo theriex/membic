@@ -456,6 +456,15 @@ def jsonget_api_headers(url):
     return hd
 
 
+def set_response_cache_headers(resp, secs, mod=None):
+    if mod:
+        resp.last_modified = dbacc.ISO2dt(mod)
+    exp = datetime.datetime.utcnow() + datetime.timedelta(seconds=secs)
+    resp.expires = exp
+    resp.cache_control.max_age = secs
+
+
+
 ##################################################
 #
 # API entrypoints
@@ -587,6 +596,7 @@ def imagerelay():
     except ValueError as e:
         return serve_value_error(e)
     resp = flask.make_response(imgdat)
+    set_response_cache_headers(resp, 90 * 24 * 60 * 60, mod=inst["modified"])
     resp.mimetype = "image/png"
     return resp
 
