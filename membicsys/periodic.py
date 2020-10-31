@@ -231,21 +231,24 @@ def audience_summary_text(src):
     dbobj = src["dbobj"]
     txt = dbobj["name"] or (dbobj["dsType"] + dbobj["dsId"])
     txt = "Following " + txt + ":\n"
-    if len(src["mars"]) == 0:
-        txt += "  No audience changes\n"
-    for audrec in src["mars"]:
+    if len(src["nafs"]) == 0:
+        txt += "  No new followers\n"
+    for audrec in src["nafs"]:
         txt += "  " + audrec["name"] + " via " + audrec["mech"] + "\n"
     txt += "\n"
     return txt
 
 
+# Currently this is only sending notices for new followers.  If someone has
+# stopped following or is blocking, that's something to find out when
+# viewing audience interactively.  Not worth and email announcement.
 def send_audience_change(muser, sources, preview=False):
     cliset = json.loads(muser.get("cliset") or "{}")
     if cliset.get("audchgem") == "disabled":
         return
     updated = False
     for _, src in sources.items():
-        if len(src["mars"]) > 0:
+        if len(src["nafs"]) > 0:
             updated = True
     if not updated:
         return
@@ -287,6 +290,7 @@ def send_aud_change_notices(nd, previewuser=None):
         where = ("WHERE srctype=\"" + src["dsType"] + "\" AND srcid=" +
                  str(src["dsId"]) + " AND modified > \"" + src["ppct"] + "\"")
         src["mars"] = dbacc.query_entity("Audience", where)
+        src["nafs"] = [x for x in src["mars"] if x["lev"] and x["lev"] > -2]
     if previewuser:
         send_audience_change(previewuser, nd["sources"], preview=True)
         return
