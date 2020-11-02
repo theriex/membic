@@ -491,7 +491,9 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .mshsellab { font-size:medium; }
 .mshactbimg { max-width:20px; max-height:20px; vertical-align:middle;
   padding:0px 2px; background:#fcf4eb}
+#mshdefaddrsdiv { overflow:scroll; }
 #mailshareplus { margin:0px 3px; }
+#mshbodyta { width:280px; }
 #newshnamein { width:90px; }
 #newshemin { width:160px; }
 #mshsubjin { width:250px; }

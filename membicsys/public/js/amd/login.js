@@ -41,7 +41,7 @@ app.login = (function () {
             else if(app.startParams.go) {
                 app.statemgr.redispatch({go:app.startParams.go}); }
             //if showing the general landing page, switch to their profile.
-            else if(app.statemgr.urlForInstance() === "/connect") {
+            else if(window.location.href.indexOf("/connect") >= 0) {
                 app.statemgr.setState("MUser", muser.dsId); }
             //By default, redisplay now that user info is available.
             else {

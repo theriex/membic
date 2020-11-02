@@ -749,11 +749,19 @@ app.membic = (function () {
                    mgrs.shr.mailContentHTML(cdx)]]]);
             html = app.layout.dlgwrapHTML("Membic Share Mail", html);
             var gp = jt.geoPos(jt.byId("pcditemdiv" + cdx));
-            app.layout.openDialog({y:gp.y}, html); }, //no autofocus
+            app.layout.openDialog({y:gp.y}, html, function () {
+                mgrs.shr.redrawDefEmAddrs(cdx); }); },
         mailShareHTML: function (cdx) {
             return jt.tac2html(
-                [mgrs.shr.mailShareAddrs(cdx).map(mgrs.shr.mshselHTML),
+                [["div", {id:"mshdefaddrsdiv"},
+                  mgrs.shr.mailShareAddrs(cdx).map(mgrs.shr.mshselHTML)],
                  mgrs.shr.addMailAddrHTML(cdx)]); },
+        redrawDefEmAddrs: function (cdx) {
+            jt.out("mshaddrsdiv", mgrs.shr.mailShareHTML(cdx));
+            var dad = jt.byId("mshdefaddrsdiv");
+            var bta = jt.byId("mshbodyta");
+            dad.style.maxWidth = bta.offsetWidth + "px";
+            dad.style.maxHeight = bta.offsetHeight + "px"; },
         mailShareAddrs: function (cdx) {
             var msh = app.login.fullProfile().perset.mshare || {};
             var wrk = {addrs:{}, res:[]};
@@ -761,9 +769,10 @@ app.membic = (function () {
             mgrs.shr.accumEmAddrs(wrk, msh[membic.ctmid], membic.ctmid, cdx);
             mgrs.shr.accumEmAddrs(wrk, msh.profile, !membic.ctmid, cdx);
             wrk.res.forEach(function (pma, idx) {
-                var following = mgrs.shr.isFollowing(
+                pma.disabled = "";  //define value for sort
+                var following = mgrs.shr.inProfOrThemeAudience(
                     membic, pma.user, function () {
-                        jt.out("mshaddrsdiv", mgrs.shr.mailShareHTML(cdx)); },
+                        mgrs.shr.redrawDefEmAddrs(cdx); },
                     "mshselcbdiv" + idx);
                 if(following) {
                     pma.dfltChecked = false;
@@ -772,6 +781,7 @@ app.membic = (function () {
                         membic.svcdata.mshares.csvcontains(pma.user)) {
                     pma.dfltChecked = false;
                     pma.disabled = "already sent"; } });
+            wrk.res.sort(mgrs.shr.compareDecoratedParsedMailAddress);
             return wrk.res; },
         accumEmAddrs: function (wrk, addrcsv, dfltChecked, cdx) {
             if(!addrcsv) { return; }
@@ -794,7 +804,7 @@ app.membic = (function () {
             ret.full = ret.name + " <" + ret.addr + ">";
             ret.dbv = ret.user + ":" + ret.full;
             return ret; },
-        isFollowing: function (membic, uid, contf, fmsgdivid) {
+        inProfOrThemeAudience: function (membic, uid, contf, fmsgdivid) {
             return ((membic.ctmid &&
                      mgrs.shr.inAudience("Theme", membic.ctmid, uid,
                                            contf, fmsgdivid)) ||
@@ -812,6 +822,14 @@ app.membic = (function () {
                                   contf, fmsgdivid); }}); }
             return (audinfo &&
                     audinfo.followers.find((fwr) => fwr.uid === uid)); },
+        compareDecoratedParsedMailAddress: function (a, b) {
+            function cd (a, b) {
+                return a.disabled.toLowerCase().localeCompare(
+                    b.disabled.toLowerCase()); }
+            function cn (a, b) {
+                return a.name.toLowerCase().localeCompare(
+                    b.name.toLowerCase()); }
+            return cd(a, b) || cn(a, b); },
         mshselHTML: function (pma, idx) {
             return jt.tac2html(
                 ["div", {cla:"mshselcbdiv", id:"mshselcbdiv" + idx},
@@ -897,9 +915,9 @@ app.membic = (function () {
             prof.perset.mshare = msh;
             app.login.updateProfile(prof, 
                 function () {
-                    jt.out("mshaddrsdiv", mgrs.shr.mailShareHTML(cdx)); },
+                    mgrs.shr.redrawDefEmAddrs(cdx); },
                 function () {  //not much to do if fail. Redraw.
-                    jt.out("mshaddrsdiv", mgrs.shr.mailShareHTML(cdx)); }); },
+                    mgrs.shr.redrawDefEmAddrs(cdx); }); },
         mailContentHTML: function (cdx) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             var title = membic.details.title || membic.details.name || "";
