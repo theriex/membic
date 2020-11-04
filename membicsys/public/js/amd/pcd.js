@@ -219,13 +219,15 @@ app.pcd = (function () {
                                    style:"max-width:24px;"}]]);
                 tac.push(["div", {id:"pcdaudcontdiv"}]); }
             return tac; },
-        togshare: function () {
+        togshare: function (bname) {
             jt.byId("pcdsettingsdiv").style.display = "none";
             var sharediv = jt.byId("pcdsharediv");
             if(sharediv.style.display === "block") {
                 sharediv.style.display = "none"; }
             else {
-                sharediv.style.display = "block"; } }
+                sharediv.style.display = "block";
+                if(bname === "audience") {
+                    app.theme.audience(null, "block"); } } }
     };  //end sharemgr
 
 
@@ -831,8 +833,9 @@ app.pcd = (function () {
                  ["span", {cla:"penbutton"},
                   stgmgr.settingsButtonHTML()]]],
                ["div", {id:"pcdacsrchdiv"}, searchdivcontents]]],
-             ["div", {id:"pcdsharediv", style:"display:none;"}, 
-              sharemgr.shareAndFollowButtons()],
+             ["div", {id:"pcdsharediv", style:"display:none;"},
+              ["div", {id:"pcdsharecontdiv"},
+               sharemgr.shareAndFollowButtons()]],
              ["div", {id:"pcdsettingsdiv", style:"display:none;"},
               ["div", {id:"pcdsetcontdiv"}]]]));
         embedmgr.unhideSoloPageActions();

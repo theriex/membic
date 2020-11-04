@@ -140,18 +140,27 @@ app.theme = (function () {
             link.src = "acbullet.png"; }
         else if(setctx.assoc === "Following") {
             link.text = "Following"; }  //"Settings" on the end gets confusing
-        jt.out(setctx.mendivid, jt.tac2html(
+        var html = jt.tac2html(
             ["a", {href:"#relationship", title:link.title,
                    onclick:jt.fs("app.theme.connopt()")},
              [["img", {cla:"setassocimg", src:app.dr("img/" + link.src)}],
-              ["span", {cla:"setassocspan"}, link.text]]]));
+              ["span", {cla:"setassocspan"}, link.text]]]);
+        if(setctx.assoc === "Founder") {
+            html = jt.tac2html(
+                [html,
+                 "&nbsp;|&nbsp;",
+                 ["a", {href:"#audience", title:"Show Audience",
+                        onclick:jt.fs("app.pcd.managerDispatch(" +
+                                      "'sharemgr','togshare','audience')")},
+                  ["img", {src:app.dr("img/audience.png")}]]]); }
+        jt.out(setctx.mendivid, html);
     }
 
 
     var audmgr = {
         followerLinkHTML: function (f) {
             return ["a", {href:"#" + f.uid, 
-                          title:"Show profile for " + f.name,
+                          title:f.name + " (via " + f.mech + ")",
                           onclick:jt.fs("app.statemgr.setState('MUser','" +
                                         f.uid + "')")},
                     [["img", {cla:"followerimg",
@@ -169,9 +178,6 @@ app.theme = (function () {
             assoc = ["span", {cla:"flevspan"}, assoc];
             return assoc;
         },
-        followMechHTML: function (f) {
-            return ["span", {cla:"fmechspan"}, f.mech];
-        },
         mayBlockEmail: function (f) {
             //You may not block email contact from members.  Demote them first.
             return f.lev <= 0 && app.theme.mayViewAudience() === "edit";
@@ -179,19 +185,23 @@ app.theme = (function () {
         blockHTML: function (f, idx) {
             var emb;
             if(f.blocked) {
-                emb = ["img", {src:app.dr("img/emailgenprohib.png")}];
+                emb = ["img", {src:app.dr("img/emailgenprohib.png"),
+                               alt:"mail icon"}];
                 if(audmgr.mayBlockEmail(f)) {
                     emb = ["a", {href:"#unblock" + f.uid, 
                                  title:"allow email contact from " + f.name,
                                  onclick:jt.fs("app.theme.blockFollower(" +
                                                idx + ",false)")}, emb]; } }
             else {
-                emb = ["img", {src:app.dr("img/email.png")}];
+                emb = ["img", {src:app.dr("img/email.png"),
+                               alt:"mail icon"}];
                 if(audmgr.mayBlockEmail(f)) {
                     emb = ["a", {href:"#block" + f.uid, 
-                                 title:"block email from " + f.name,
+                                 title:"Block contact email from " + f.name,
                                  onclick:jt.fs("app.theme.blockFollower('" +
-                                               idx + "',true)")}, emb]; } }
+                                               idx + "',true)")}, emb]; }
+                else {
+                    emb[1].title = "Cannot block contact mail from members"; } }
             return [emb, ["span", {id:"fblockstatspan" + idx}, ""]];
         },
         mailBlockHTML: function (f, idx) {
@@ -251,10 +261,9 @@ app.theme = (function () {
                 ams.push(["tr", [
                     ["td", audmgr.followerLinkHTML(f)],
                     ["td", audmgr.assocHTML(f, idx)],
-                    ["td", {cla:"fmechtd"}, audmgr.followMechHTML(f)],
                     ["td", {cla:"fblocktd"}, audmgr.mailBlockHTML(f, idx)]]]);
                 ams.push(["tr",
-                    ["td", {colspan:4},
+                    ["td", {colspan:3},
                      ["div", {id:"audlevdiv" + idx, cla:"audlevdiv",
                               style:"display:none;"}]]]); });
             if(!ams.length) {
@@ -569,13 +578,15 @@ return {
     },
 
 
-    audience: function (uid) {
+    audience: function (uid, disp) {
         var div = jt.byId("pcdaudcontdiv");
         if(!div.innerHTML) {
             div.style.display = "none";  //toggled on in next step
             var obj = app.pcd.getActobjContext();
             audmgr.fetchAndDisplay(obj.dsType, obj.dsId, uid); }
-        if(div.style.display === "none") {
+        if(disp) {
+            div.style.display = disp; }
+        else if(div.style.display === "none") {
             div.style.display = "block"; }
         else {
             div.style.display = "none"; }

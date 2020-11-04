@@ -233,7 +233,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 
 /* >> settings layout */
 #descrupdbutton { margin-bottom:10px; }
-#pcdsetcontdiv { display:table; margin:0px auto; }
+#pcdsetcontdiv, #pcdsharecontdiv { display:table; margin:0px auto; }
 #settingsmenudiv { margin:0px 0px 5px 5px; }
 #settingsmenudiv button { margin:0px 10px; }
 #settingsmenudiv img { max-height:24px; max-width:24px; padding-right:5px; }
