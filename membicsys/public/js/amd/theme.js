@@ -201,7 +201,8 @@ app.theme = (function () {
                                  onclick:jt.fs("app.theme.blockFollower('" +
                                                idx + "',true)")}, emb]; }
                 else {
-                    emb[1].title = "Cannot block contact mail from members"; } }
+                    emb[1].title = "Cannot block contact mail from members";
+                    emb[1].cla = "icodis"; } }
             return [emb, ["span", {id:"fblockstatspan" + idx}, ""]];
         },
         mailBlockHTML: function (f, idx) {

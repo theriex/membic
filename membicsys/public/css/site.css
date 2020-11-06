@@ -342,7 +342,7 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .secondaryfield { font-style:italic; }
 .revimg, .revimgdis { max-width:125px; max-height:80px; }
 .profimgdis { max-width:125px; max-height:125px; }
-.revimgdis, .profimgdis { opacity:0.3; filter:alpha(opacity=30); }
+.revimgdis, .profimgdis, .icodis { opacity:0.3; filter:alpha(opacity=30); }
 .webjump { width:20px; height:20px; vertical-align:middle; border:none; }
 .buttondiv { padding:0px 5px; font-size:large; }
 .starsimg { vertical-align:middle; }
