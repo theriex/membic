@@ -99,9 +99,11 @@ entdefs = {
         "modified": {"pt": "string", "un": False, "dv": ""},
         "letype": {"pt": "string", "un": False, "dv": ""},
         "leid": {"pt": "dbid", "un": False, "dv": 0},
+        "lename": {"pt": "string", "un": False, "dv": ""},
         "adminid": {"pt": "dbid", "un": False, "dv": 0},
         "adminname": {"pt": "string", "un": False, "dv": ""},
         "action": {"pt": "string", "un": False, "dv": ""},
+        "data": {"pt": "string", "un": False, "dv": ""},
         "target": {"pt": "string", "un": False, "dv": ""},
         "targid": {"pt": "dbid", "un": False, "dv": 0},
         "targname": {"pt": "string", "un": False, "dv": ""},
@@ -614,9 +616,11 @@ def app2db_AdminLog(inst):
     cnv["modified"] = app2db_fieldval(None, "modified", inst)
     cnv["letype"] = app2db_fieldval("AdminLog", "letype", inst)
     cnv["leid"] = app2db_fieldval("AdminLog", "leid", inst)
+    cnv["lename"] = app2db_fieldval("AdminLog", "lename", inst)
     cnv["adminid"] = app2db_fieldval("AdminLog", "adminid", inst)
     cnv["adminname"] = app2db_fieldval("AdminLog", "adminname", inst)
     cnv["action"] = app2db_fieldval("AdminLog", "action", inst)
+    cnv["data"] = app2db_fieldval("AdminLog", "data", inst)
     cnv["target"] = app2db_fieldval("AdminLog", "target", inst)
     cnv["targid"] = app2db_fieldval("AdminLog", "targid", inst)
     cnv["targname"] = app2db_fieldval("AdminLog", "targname", inst)
@@ -634,9 +638,11 @@ def db2app_AdminLog(inst):
     cnv["modified"] = db2app_fieldval(None, "modified", inst)
     cnv["letype"] = db2app_fieldval("AdminLog", "letype", inst)
     cnv["leid"] = db2app_fieldval("AdminLog", "leid", inst)
+    cnv["lename"] = db2app_fieldval("AdminLog", "lename", inst)
     cnv["adminid"] = db2app_fieldval("AdminLog", "adminid", inst)
     cnv["adminname"] = db2app_fieldval("AdminLog", "adminname", inst)
     cnv["action"] = db2app_fieldval("AdminLog", "action", inst)
+    cnv["data"] = db2app_fieldval("AdminLog", "data", inst)
     cnv["target"] = db2app_fieldval("AdminLog", "target", inst)
     cnv["targid"] = db2app_fieldval("AdminLog", "targid", inst)
     cnv["targname"] = db2app_fieldval("AdminLog", "targname", inst)
@@ -1023,16 +1029,18 @@ def update_existing_Theme(cnx, cursor, fields, vck):
 def insert_new_AdminLog(cnx, cursor, fields):
     fields = app2db_AdminLog(fields)
     stmt = (
-        "INSERT INTO AdminLog (created, modified, letype, leid, adminid, adminname, action, target, targid, targname, reason) "
-        "VALUES (%(created)s, %(modified)s, %(letype)s, %(leid)s, %(adminid)s, %(adminname)s, %(action)s, %(target)s, %(targid)s, %(targname)s, %(reason)s)")
+        "INSERT INTO AdminLog (created, modified, letype, leid, lename, adminid, adminname, action, data, target, targid, targname, reason) "
+        "VALUES (%(created)s, %(modified)s, %(letype)s, %(leid)s, %(lename)s, %(adminid)s, %(adminname)s, %(action)s, %(data)s, %(target)s, %(targid)s, %(targname)s, %(reason)s)")
     data = {
         'created': fields.get("created"),
         'modified': fields.get("modified"),
         'letype': fields.get("letype", entdefs["AdminLog"]["letype"]["dv"]),
         'leid': fields.get("leid", entdefs["AdminLog"]["leid"]["dv"]),
+        'lename': fields.get("lename", entdefs["AdminLog"]["lename"]["dv"]),
         'adminid': fields.get("adminid", entdefs["AdminLog"]["adminid"]["dv"]),
         'adminname': fields.get("adminname", entdefs["AdminLog"]["adminname"]["dv"]),
         'action': fields.get("action", entdefs["AdminLog"]["action"]["dv"]),
+        'data': fields.get("data", entdefs["AdminLog"]["data"]["dv"]),
         'target': fields.get("target", entdefs["AdminLog"]["target"]["dv"]),
         'targid': fields.get("targid", entdefs["AdminLog"]["targid"]["dv"]),
         'targname': fields.get("targname", entdefs["AdminLog"]["targname"]["dv"]),
@@ -1484,12 +1492,12 @@ def query_Theme(cnx, cursor, where):
 
 def query_AdminLog(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
-    query += "letype, leid, adminid, adminname, action, target, targid, targname, reason"
+    query += "letype, leid, lename, adminid, adminname, action, data, target, targid, targname, reason"
     query += " FROM AdminLog " + where
     cursor.execute(query)
     res = []
-    for (dsId, created, modified, letype, leid, adminid, adminname, action, target, targid, targname, reason) in cursor:
-        inst = {"dsType": "AdminLog", "dsId": dsId, "created": created, "modified": modified, "letype": letype, "leid": leid, "adminid": adminid, "adminname": adminname, "action": action, "target": target, "targid": targid, "targname": targname, "reason": reason}
+    for (dsId, created, modified, letype, leid, lename, adminid, adminname, action, data, target, targid, targname, reason) in cursor:
+        inst = {"dsType": "AdminLog", "dsId": dsId, "created": created, "modified": modified, "letype": letype, "leid": leid, "lename": lename, "adminid": adminid, "adminname": adminname, "action": action, "data": data, "target": target, "targid": targid, "targname": targname, "reason": reason}
         inst = db2app_AdminLog(inst)
         res.append(inst)
     dblogmsg("QRY", "AdminLog", res)

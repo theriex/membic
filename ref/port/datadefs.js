@@ -105,9 +105,11 @@ module.exports = (function () {
     {entity:"AdminLog", descr:"Administrative actions log.", fields:[
         {f:"letype", d:"req string", c:"log entry type, e.g. 'Theme'"},
         {f:"leid", d:"req dbid", c:"e.g. the dsId of the Theme"},
+        {f:"lename", d:"string", c:"theme name for ease of reference"},
         {f:"adminid", d:"req dbid", c:"dsId of the MUser who took action"},
-        {f:"adminname", d:"string", c:"The name of the admin for readability"},
-        {f:"action", d:"req string", c:"'Accepted Member', 'Removed Membic'"},
+        {f:"adminname", d:"string", c:"name of the admin for readability"},
+        {f:"action", d:"req string", c:"'Membership Change', 'Removed Membic'"},
+        {f:"data", d:"text", c:"Arbitrary data value for action"},
         {f:"target", d:"string", c:"Affected entity type e.g. MUser, Membic"},
         {f:"targid", d:"dbid", c:"dsId of the affected entity"},
         {f:"targname", d:"string", c:"name of user or url of membic"},

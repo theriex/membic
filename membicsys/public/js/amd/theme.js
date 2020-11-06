@@ -438,7 +438,8 @@ return {
              pid:amb.uid, assoc:association, fm:amb.mech});
         jt.call("POST", app.dr("api/associate"), data,
                 function (result) { //just the updated Theme.
-                    app.refmgr.put(app.refmgr.deserialize(result[0]));
+                    if(result && result.length) {
+                        app.refmgr.put(app.refmgr.deserialize(result[0])); }
                     //Audience entry updated on server.  Update local record.
                     amb.lev = levelForAssociationName(association);
                     amb.blocked = "";  //members may not be blocked

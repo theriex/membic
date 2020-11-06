@@ -43,6 +43,12 @@ def nd_as_string(nd):
             for fld in ["uid", "name", "lev", "mech"]:
                 txt += " " + str(ac["fra"][fld])
             txt += "\n"
+    txt += "AdminLog actions:\n"
+    for mc in nd["mbrcs"].values():
+        txt += ("    MUser" + mc["aid"] + " (" + mc["aname"] + ") lev " +
+                str(mc["prevlev"]) + " -> " + str(mc["currlev"]) + " MUser" +
+                mc["uid"] + " (" + mc["uname"] + ") for Theme" + mc["tid"] +
+                " (" + mc["tname"] + ")\n")
     return txt
 
 
@@ -109,6 +115,24 @@ def find_users_to_notify(nd):
                         note_follower(nd["musers"], src, info, muser)
 
 
+def tabulate_membership_changes(nd):
+    mbrcs = {}
+    where = ("WHERE created > \"" + nd["start"] + "\" AND created <= \"" +
+             nd["end"] + "\" AND action = \"Membership Change\"")
+    for ale in dbacc.query_entity("AdminLog", where):
+        levchg = ale["data"].split(":")
+        mc = mbrcs.get(ale["targid"])  # membership change summary for MUser
+        if not mc:
+            mc = {"uid":ale["targid"], "uname":ale["targname"],
+                  "tid":ale["leid"], "tname":ale["lename"],
+                  "prevlev":int(levchg[0])}
+            mbrcs[ale["targid"]] = mc
+        mc["currlev"] = int(levchg[1])
+        mc["aid"] = ale["adminid"]
+        mc["aname"] = ale["adminname"]
+    nd["mbrcs"] = mbrcs
+
+
 # Return a dict with new membics and the users to be emailed.  Fetches
 # only source membics to avoid sending duplicate notices for the same link.
 # If the membic is not posted to a theme until the next day, notices won't
@@ -130,6 +154,7 @@ def fetch_notifications_data(sts, ets):
                 tin = {"type":"Theme", "id":pn["ctmid"], "name":pn["name"]}
                 note_source(nd["sources"], tin, membic, pn["revid"])
     find_users_to_notify(nd)
+    tabulate_membership_changes(nd)
     logging.info("fetch_notifications_data nd_as_string\n" + nd_as_string(nd))
     return nd
 
@@ -317,12 +342,33 @@ def notice_membics_for_user(muser):
     return membics
 
 
+def send_membership_change_notice(mc, nd):
+    if mc["prevlev"] >= mc["currlev"]:
+        return  # not a promotion, don't send
+    levname = ["Unknown", "Member", "Moderator", "Founder"]
+    subj = mc["tname"] + " membership"
+    body = ("Congratulations! " + mc["aname"] + " has made you a " +
+            levname[mc["currlev"]] + " of the \"" + mc["tname"] +
+            "\" Theme.\n\n" +
+            "For options on how to follow, see your theme settings at " +
+            "https://membic.org/theme/" + mc["tid"] + "\n")
+    muser = nd["musers"].get(mc["uid"])
+    if not muser:
+        muser = dbacc.cfbk("MUser", "dsId", mc["uid"])
+    util.send_mail(muser["email"], subj, body, domain=mconf.domain,
+                   sender="support")
+
+
+# Send new membic notices to followers, audience change notices to founders,
+# general activity summary to support.
 def send_follower_notifications(nd, mn):
     uids = []
     for uid, muser in nd["musers"].items():
         membics = notice_membics_for_user(muser)
         send_follower_notice(muser, membics)
         uids.append(uid)
+    for mc in nd["mbrcs"].values():
+        send_membership_change_notice(mc, nd)
     send_aud_change_notices(nd)
     # Send the notifications data summary to support for general checking
     util.send_mail(None, "membic notifications data", nd_as_string(nd),
@@ -346,12 +392,15 @@ def preview_daily():
             send_follower_notice(follower, membics, preview=True)
         else:
             send_aud_change_notices(nd, previewuser=muser)
+        mc = nd["mbrcs"].get(muser["dsId"])
+        if mc:
+            send_membership_change_notice(mc, nd)
     else:
         logging.info("preview_daily nd_as_string\n" + nd_as_string(nd))
 
 
 # Don't particularly care what time the server is using, or what time this
-# runs, as long as it is consistent.  Midnight to midnight ISO.
+# runs, as long as it is consistent.  Tabulates midnight to midnight ISO.
 def daily_notices():
     if len(sys.argv) > 1 and sys.argv[1] == "preview":
         return preview_daily()

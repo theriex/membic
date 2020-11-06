@@ -120,6 +120,17 @@ def update_theme_membership(updt, prof, assoc):
     #              "\n  Members: " + updt["members"]);
 
 
+def note_membership_change(muser, ao, prof, prevassoc, assoc):
+    # prevassoc is the theme association, which is 0 if not a member.
+    ale = {"dsType":"AdminLog",
+           "letype":"Theme", "leid":ao["dsId"], "lename":ao["name"],
+           "adminid":muser["dsId"], "adminname":muser["name"],
+           "action":"Membership Change",
+           "data":str(assoc_level(prevassoc)) + ":" + str(assoc_level(assoc)),
+           "target":"MUser", "targid":prof["dsId"], "targname":prof["name"]}
+    dbacc.write_entity(ale)
+
+
 # This does not currently preserve existing notices.  If preservation is
 # needed, then they need to be identified as ok in response to a level or
 # follow mechanism change.
@@ -196,6 +207,7 @@ def update_association(muser, ao, prof, ras):
                 prof = dbacc.write_entity(prof, vck=prof["modified"])
                 dbacc.entcache.cache_put(prof)  # latest for next fetch
             objs.append(ao)
+            note_membership_change(muser, ao, prof, prevassoc, assoc)
     if len(objs) > 0:  # Note audience change
         update_audience_record({"uid":prof["dsId"], "name":prof["name"],
                                 "srctype":ao["dsType"], "srcid":ao["dsId"],
