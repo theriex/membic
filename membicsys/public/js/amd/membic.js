@@ -800,7 +800,8 @@ app.membic = (function () {
                 return mgrs.shr.normEmail(emcs[1], emcs[2], emcs[3]); }
             return null; },
         normEmail: function (uid, emname, emaddr) {
-            var ret = {user:uid, name:emname.trim(), addr:emaddr.toLowerCase()};
+            var ret = {user:uid, name:emname.trim(),
+                       addr:app.refmgr.plainEmail(emaddr)};
             ret.full = ret.name + " <" + ret.addr + ">";
             ret.dbv = ret.user + ":" + ret.full;
             return ret; },

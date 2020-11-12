@@ -263,6 +263,19 @@ function entityCache () {
 
 function helperFunctions () {
     var pyc = "";
+    pyc += "# See also refmgr.js plainEmail\n";
+    pyc += "def plain_email_address(emaddr):\n";
+    pyc += "    emaddr = emaddr or \"\"\n";
+    pyc += "    emaddr = emaddr.lower().strip()\n";
+    pyc += "    emaddr = re.sub('%40', '@', emaddr)\n";
+    pyc += "    cm = re.search(r\"<([^>\\s]+)>\", emaddr)\n";
+    pyc += "    if cm:  # e.g. \"Test User <test@example.com>\"\n";
+    pyc += "        emaddr = cm.group(1)\n";
+    pyc += "    if emaddr and not re.match(r\"[^@\\s]+@[^@\\s]+\\.[^@\\s]+\", emaddr):\n";
+    pyc += "        raise ValueError(\"Invalid email address: \" + emaddr)\n";
+    pyc += "    return emaddr\n";
+    pyc += "\n";
+    pyc += "\n";
     pyc += "def reqarg(argname, fieldtype=\"string\", required=False):\n";
     pyc += "    argval = flask.request.args.get(argname)  # None if not found\n";
     pyc += "    if not argval:\n";
@@ -275,11 +288,9 @@ function helperFunctions () {
     pyc += "        fieldname = fieldtype[dotidx + 1:]\n";
     pyc += "        fieldtype = entdefs[entity][fieldname][\"pt\"]\n";
     pyc += "    if fieldtype == \"email\":\n";
-    pyc += "        emaddr = argval or \"\"\n";
-    pyc += "        emaddr = emaddr.lower()\n";
-    pyc += "        emaddr = re.sub('%40', '@', emaddr)\n";
-    pyc += "        if required and not re.match(r\"[^@]+@[^@]+\\.[^@]+\", emaddr):\n";
-    pyc += "            raise ValueError(\"Invalid \" + argname + \" value: \" + emaddr)\n";
+    pyc += "        emaddr = plain_email_address(argval)\n";
+    pyc += "        if required and not emaddr:\n";
+    pyc += "            raise ValueError(\"Missing required value for \" + argname)\n";
     pyc += "        return emaddr\n";
     pyc += "    if fieldtype in [\"string\", \"isodate\", \"isomod\",\n";
     pyc += "                     \"text\", \"json\", \"idcsv\", \"isodcsv\", \"gencsv\", \"url\"]:\n";
@@ -1015,6 +1026,23 @@ function createJSServerAcc () {
     jsc += "\n";
     jsc += "    reconstituteFieldJSONObject: function (field, obj) {\n";
     jsc += "        reconstituteFieldJSONObject(field, obj);\n";
+    jsc += "    },\n";
+    jsc += "\n";
+    jsc += "\n";
+    jsc += "    //See also dbacc.py plain_email_address\n";
+    jsc += "    plainEmail: function (emaddr) {\n";
+    jsc += "        emaddr = emaddr || \"\";\n";
+    jsc += "        emaddr = emaddr.toLowerCase().trim();\n";
+    jsc += "        emaddr = emaddr.replace(/%40/g, \"@\");\n";
+    jsc += "        var match = emaddr.match(/[^<]*<([^>\\s]+)>/);\n";
+    jsc += "        if(match) {\n";
+    jsc += "            emaddr = match[1]; }\n";
+    jsc += "        match = emaddr.match(/[^@\\s]+@[^@\\s]+\\.[^@\\s]+/);\n";
+    jsc += "        if(match) {  //either the whole string or a substring is valid\n";
+    jsc += "            emaddr = match[0]; }\n";
+    jsc += "        else {\n";
+    jsc += "            emaddr = \"\"; }\n";
+    jsc += "        return emaddr;\n";
     jsc += "    },\n";
     jsc += "\n";
     jsc += "\n";

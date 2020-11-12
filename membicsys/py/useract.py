@@ -975,7 +975,9 @@ def fmkuser():
         name = dbacc.reqarg("name", "string", required=True)
         email = dbacc.reqarg("email", "string", required=True)
         fmu = dbacc.cfbk("MUser", "email", email)
+        stat = "fmkuser found "
         if not fmu:  # make a new user. see util.py newacct
+            stat = "fmkuser created "
             cliset = {"contactfrom": (muser["dsId"] + ":" + muser["name"] +
                                       " <" + muser["email"] + ">")}
             fmu = {"dsType":"MUser", "email":email, "phash":"temporary",
@@ -986,6 +988,7 @@ def fmkuser():
             fmu["phash"] = util.make_password_hash(fmu["email"], pwd,
                                                    fmu["created"])
             fmu = dbacc.write_entity(fmu, vck=fmu["modified"])
+        logging.info(stat + fmu["email"] + " (" + fmu["name"] + ")")
     except ValueError as e:
         return util.srverr(str(e))
     return util.respJSON("[" + util.safe_JSON(fmu) + "]")

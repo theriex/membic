@@ -216,6 +216,23 @@ return {
     },
 
 
+    //See also dbacc.py plain_email_address
+    plainEmail: function (emaddr) {
+        emaddr = emaddr || "";
+        emaddr = emaddr.toLowerCase().trim();
+        emaddr = emaddr.replace(/%40/g, "@");
+        var match = emaddr.match(/[^<]*<([^>\s]+)>/);
+        if(match) {
+            emaddr = match[1]; }
+        match = emaddr.match(/[^@\s]+@[^@\s]+\.[^@\s]+/);
+        if(match) {  //either the whole string or a substring is valid
+            emaddr = match[0]; }
+        else {
+            emaddr = ""; }
+        return emaddr;
+    },
+
+
     postdata: function (obj) {
         serialize(obj);
         var dat = jt.objdata(obj);

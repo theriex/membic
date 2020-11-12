@@ -298,6 +298,19 @@ class EntityCache():
 entcache = EntityCache()
 
 
+# See also refmgr.js plainEmail
+def plain_email_address(emaddr):
+    emaddr = emaddr or ""
+    emaddr = emaddr.lower().strip()
+    emaddr = re.sub('%40', '@', emaddr)
+    cm = re.search(r"<([^>\s]+)>", emaddr)
+    if cm:  # e.g. "Test User <test@example.com>"
+        emaddr = cm.group(1)
+    if emaddr and not re.match(r"[^@\s]+@[^@\s]+\.[^@\s]+", emaddr):
+        raise ValueError("Invalid email address: " + emaddr)
+    return emaddr
+
+
 def reqarg(argname, fieldtype="string", required=False):
     argval = flask.request.args.get(argname)  # None if not found
     if not argval:
@@ -310,11 +323,9 @@ def reqarg(argname, fieldtype="string", required=False):
         fieldname = fieldtype[dotidx + 1:]
         fieldtype = entdefs[entity][fieldname]["pt"]
     if fieldtype == "email":
-        emaddr = argval or ""
-        emaddr = emaddr.lower()
-        emaddr = re.sub('%40', '@', emaddr)
-        if required and not re.match(r"[^@]+@[^@]+\.[^@]+", emaddr):
-            raise ValueError("Invalid " + argname + " value: " + emaddr)
+        emaddr = plain_email_address(argval)
+        if required and not emaddr:
+            raise ValueError("Missing required value for " + argname)
         return emaddr
     if fieldtype in ["string", "isodate", "isomod",
                      "text", "json", "idcsv", "isodcsv", "gencsv", "url"]:
