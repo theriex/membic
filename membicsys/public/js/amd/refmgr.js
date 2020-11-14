@@ -17,7 +17,7 @@ app.refmgr = (function () {
 
     var cache = {};
 
-    var persistentTypes = ["MUser", "Theme", "AdminLog", "Membic", "Overflow", "MailNotice", "Audience", "ActivitySummary", "ConnectionService"];
+    var persistentTypes = ["MUser", "Theme", "AdminLog", "Membic", "Overflow", "MailNotice", "SentMail", "Audience", "ActivitySummary", "ConnectionService"];
 
 
     //All json fields are initialized to {} so they can be accessed directly.
@@ -62,6 +62,8 @@ app.refmgr = (function () {
             break;
         case "MailNotice": 
             break;
+        case "SentMail": 
+            break;
         case "Audience": 
             break;
         case "ActivitySummary": 
@@ -99,6 +101,8 @@ app.refmgr = (function () {
             break;
         case "MailNotice": 
             break;
+        case "SentMail": 
+            break;
         case "Audience": 
             break;
         case "ActivitySummary": 
@@ -128,6 +132,8 @@ app.refmgr = (function () {
         case "Overflow": 
             break;
         case "MailNotice": 
+            break;
+        case "SentMail": 
             break;
         case "Audience": 
             break;

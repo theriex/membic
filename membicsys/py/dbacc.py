@@ -151,6 +151,15 @@ entdefs = {
         "uidcsv": {"pt": "string", "un": False, "dv": ""},
         "lastupd": {"pt": "string", "un": False, "dv": ""}
     },
+    "SentMail": {  # Log of server sent mail messages
+        "dsId": {"pt": "dbid", "un": True, "dv": 0},
+        "created": {"pt": "string", "un": False, "dv": ""},
+        "modified": {"pt": "string", "un": False, "dv": ""},
+        "sender": {"pt": "email", "un": False, "dv": ""},
+        "replyto": {"pt": "email", "un": False, "dv": ""},
+        "recip": {"pt": "email", "un": False, "dv": ""},
+        "subj": {"pt": "string", "un": False, "dv": ""}
+    },
     "Audience": {  # Accumulated follower relationships
         "dsId": {"pt": "dbid", "un": True, "dv": 0},
         "created": {"pt": "string", "un": False, "dv": ""},
@@ -198,6 +207,7 @@ entkeys = {
     "Membic": ["importid"],
     "Overflow": [],
     "MailNotice": ["name"],
+    "SentMail": [],
     "Audience": [],
     "ActivitySummary": ["refp"],
     "ConnectionService": ["name"]
@@ -211,6 +221,7 @@ cachedefs = {
     "Membic": {"minutes": 0, "manualadd": False},
     "Overflow": {"minutes": 0, "manualadd": False},
     "MailNotice": {"minutes": 0, "manualadd": False},
+    "SentMail": {"minutes": 0, "manualadd": False},
     "Audience": {"minutes": 0, "manualadd": False},
     "ActivitySummary": {"minutes": 0, "manualadd": False},
     "ConnectionService": {"minutes": 240, "manualadd": False}
@@ -784,6 +795,37 @@ def db2app_MailNotice(inst):
     return cnv
 
 
+# Convert the given SentMail inst dict from app values to db values.  Removes
+# the dsType field to avoid trying to write it to the db.
+def app2db_SentMail(inst):
+    cnv = {}
+    cnv["dsId"] = None
+    if "dsId" in inst:
+        cnv["dsId"] = app2db_fieldval(None, "dsId", inst)
+    cnv["created"] = app2db_fieldval(None, "created", inst)
+    cnv["modified"] = app2db_fieldval(None, "modified", inst)
+    cnv["sender"] = app2db_fieldval("SentMail", "sender", inst)
+    cnv["replyto"] = app2db_fieldval("SentMail", "replyto", inst)
+    cnv["recip"] = app2db_fieldval("SentMail", "recip", inst)
+    cnv["subj"] = app2db_fieldval("SentMail", "subj", inst)
+    return cnv
+
+
+# Convert the given SentMail inst dict from db values to app values.  Adds the
+# dsType field for general app processing.
+def db2app_SentMail(inst):
+    cnv = {}
+    cnv["dsType"] = "SentMail"
+    cnv["dsId"] = db2app_fieldval(None, "dsId", inst)
+    cnv["created"] = db2app_fieldval(None, "created", inst)
+    cnv["modified"] = db2app_fieldval(None, "modified", inst)
+    cnv["sender"] = db2app_fieldval("SentMail", "sender", inst)
+    cnv["replyto"] = db2app_fieldval("SentMail", "replyto", inst)
+    cnv["recip"] = db2app_fieldval("SentMail", "recip", inst)
+    cnv["subj"] = db2app_fieldval("SentMail", "subj", inst)
+    return cnv
+
+
 # Convert the given Audience inst dict from app values to db values.  Removes
 # the dsType field to avoid trying to write it to the db.
 def app2db_Audience(inst):
@@ -905,6 +947,7 @@ def dblogmsg(op, entity, res):
         "Membic": ["url", "penname", "penid", "ctmid"],
         "Overflow": ["dbkind", "dbkeyid"],
         "MailNotice": ["name"],
+        "SentMail": ["sender", "replyto", "recip", "subj"],
         "Audience": ["srctype", "srcid", "name", "uid", "lev", "mech"],
         "ActivitySummary": ["refp", "tstart", "tuntil"],
         "ConnectionService": ["name"]}
@@ -1242,6 +1285,52 @@ def update_existing_MailNotice(cnx, cursor, fields, vck):
     return fields
 
 
+# Write a new SentMail row, using the given field values or defaults.
+def insert_new_SentMail(cnx, cursor, fields):
+    fields = app2db_SentMail(fields)
+    stmt = (
+        "INSERT INTO SentMail (created, modified, sender, replyto, recip, subj) "
+        "VALUES (%(created)s, %(modified)s, %(sender)s, %(replyto)s, %(recip)s, %(subj)s)")
+    data = {
+        'created': fields.get("created"),
+        'modified': fields.get("modified"),
+        'sender': fields.get("sender", entdefs["SentMail"]["sender"]["dv"]),
+        'replyto': fields.get("replyto", entdefs["SentMail"]["replyto"]["dv"]),
+        'recip': fields.get("recip", entdefs["SentMail"]["recip"]["dv"]),
+        'subj': fields.get("subj", entdefs["SentMail"]["subj"]["dv"])}
+    cursor.execute(stmt, data)
+    fields["dsId"] = cursor.lastrowid
+    cnx.commit()
+    fields = db2app_SentMail(fields)
+    dblogmsg("ADD", "SentMail", fields)
+    return fields
+
+
+# Update the specified SentMail row with the given field values.
+def update_existing_SentMail(cnx, cursor, fields, vck):
+    fields = app2db_SentMail(fields)
+    dsId = int(fields["dsId"])  # Verify int value
+    stmt = ""
+    for field in fields:  # only updating the fields passed in
+        if stmt:
+            stmt += ", "
+        stmt += field + "=(%(" + field + ")s)"
+    stmt = "UPDATE SentMail SET " + stmt + " WHERE dsId=" + str(dsId)
+    if vck != "override":
+        stmt += " AND modified=\"" + vck + "\""
+    data = {}
+    for field in fields:
+        data[field] = fields[field]
+    cursor.execute(stmt, data)
+    if cursor.rowcount < 1 and vck != "override":
+        raise ValueError("SentMail" + str(dsId) + " update received outdated version check value " + vck + ".")
+    cnx.commit()
+    fields = db2app_SentMail(fields)
+    dblogmsg("UPD", "SentMail", fields)
+    entcache.cache_remove(fields)
+    return fields
+
+
 # Write a new Audience row, using the given field values or defaults.
 def insert_new_Audience(cnx, cursor, fields):
     fields = app2db_Audience(fields)
@@ -1417,6 +1506,8 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                     return update_existing_Overflow(cnx, cursor, inst, vck)
                 if entity == "MailNotice":
                     return update_existing_MailNotice(cnx, cursor, inst, vck)
+                if entity == "SentMail":
+                    return update_existing_SentMail(cnx, cursor, inst, vck)
                 if entity == "Audience":
                     return update_existing_Audience(cnx, cursor, inst, vck)
                 if entity == "ActivitySummary":
@@ -1438,6 +1529,8 @@ def write_entity(inst, vck="1234-12-12T00:00:00Z"):
                 return insert_new_Overflow(cnx, cursor, inst)
             if entity == "MailNotice":
                 return insert_new_MailNotice(cnx, cursor, inst)
+            if entity == "SentMail":
+                return insert_new_SentMail(cnx, cursor, inst)
             if entity == "Audience":
                 return insert_new_Audience(cnx, cursor, inst)
             if entity == "ActivitySummary":
@@ -1557,6 +1650,20 @@ def query_MailNotice(cnx, cursor, where):
     return res
 
 
+def query_SentMail(cnx, cursor, where):
+    query = "SELECT dsId, created, modified, "
+    query += "sender, replyto, recip, subj"
+    query += " FROM SentMail " + where
+    cursor.execute(query)
+    res = []
+    for (dsId, created, modified, sender, replyto, recip, subj) in cursor:
+        inst = {"dsType": "SentMail", "dsId": dsId, "created": created, "modified": modified, "sender": sender, "replyto": replyto, "recip": recip, "subj": subj}
+        inst = db2app_SentMail(inst)
+        res.append(inst)
+    dblogmsg("QRY", "SentMail", res)
+    return res
+
+
 def query_Audience(cnx, cursor, where):
     query = "SELECT dsId, created, modified, "
     query += "uid, name, srctype, srcid, lev, mech, blocked"
@@ -1622,6 +1729,8 @@ def query_entity(entity, where):
                 return query_Overflow(cnx, cursor, where)
             if entity == "MailNotice":
                 return query_MailNotice(cnx, cursor, where)
+            if entity == "SentMail":
+                return query_SentMail(cnx, cursor, where)
             if entity == "Audience":
                 return query_Audience(cnx, cursor, where)
             if entity == "ActivitySummary":
@@ -1714,6 +1823,13 @@ def visible_MailNotice_fields(obj, audience):
     return filtobj
 
 
+def visible_SentMail_fields(obj, audience):
+    filtobj = {}
+    for fld, val in obj.items():
+        filtobj[fld] = val
+    return filtobj
+
+
 def visible_Audience_fields(obj, audience):
     filtobj = {}
     for fld, val in obj.items():
@@ -1752,6 +1868,8 @@ def visible_fields(obj, audience="public"):
         return visible_Overflow_fields(obj, audience)
     if obj["dsType"] == "MailNotice":
         return visible_MailNotice_fields(obj, audience)
+    if obj["dsType"] == "SentMail":
+        return visible_SentMail_fields(obj, audience)
     if obj["dsType"] == "Audience":
         return visible_Audience_fields(obj, audience)
     if obj["dsType"] == "ActivitySummary":

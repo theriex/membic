@@ -688,28 +688,31 @@ def following_or_blocking(muser, membic):
 
 
 def process_mshare(muser, membic, sendto, subj, body):
+    sendmax = 5
+    uids = util.csv_to_list(sendto)
+    if len(uids) > sendmax:
+        raise ValueError("Maximum " + str(sendmax) + " sends per share.")
     if not muser.get("name"):
-        raise ValueError("You need to set your profile name")
+        raise ValueError("You need to set your profile name.")
     subj = verify_mshare_content(subj)
     body = verify_mshare_content(body, membic)
     svcdata = json.loads(membic.get("svcdata") or "{}")
     mshares = util.csv_to_list(svcdata.get("mshares", ""))
-    sendmax = 6  # send in small batches only (request proc time, no spamming)
-    for uid in util.csv_to_list(sendto):
-        if uid in mshares:
+    mshids = [x.split(";")[0] for x in mshares]
+    for uid in uids:
+        if uid in mshids:
+            logging.info("process_mshare already sent to " + uid)
             continue   # previously sent, so don't send again.
         recip = dbacc.cfbk("MUser", "dsId", uid)
         if not recip:
+            logging.info("process_mshare no recipient " + uid)
             continue   # shouldn't happen, if it does, don't send or record
         try:
             if not following_or_blocking(recip, membic):
                 send_mshare_email(muser, membic, recip, subj, body)
-                sendmax -= 1
-            mshares.append(uid)
+            mshares.append(uid + ";" + dbacc.nowISO())
         except Exception as e:
             logging.error("process_mshare mail send failed: " + str(e))
-        if sendmax <= 0:
-            break
     svcdata["mshares"] = ",".join(mshares)
     membic["svcdata"] = json.dumps(svcdata)
     return membic

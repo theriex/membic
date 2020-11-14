@@ -49,6 +49,12 @@ def nd_as_string(nd):
                 str(mc["prevlev"]) + " -> " + str(mc["currlev"]) + " MUser" +
                 mc["uid"] + " (" + mc["uname"] + ") for Theme" + mc["tid"] +
                 " (" + mc["tname"] + ")\n")
+    txt += "Sent mail:\n"
+    for ms in nd["msnds"]:
+        txt += "    " + ms["sender"]
+        if ms["replyto"]:
+            txt += " (" + ms["replyto"] + ")"
+        txt += " -> " + ms["recip"] + " " + ms["subj"] + "\n"
     return txt
 
 
@@ -133,6 +139,12 @@ def tabulate_membership_changes(nd):
     nd["mbrcs"] = mbrcs
 
 
+def collect_sent_mail(nd):
+    where = ("WHERE created > \"" + nd["start"] + "\" AND created <= \"" +
+             nd["end"] + "\"")
+    nd["msnds"] = dbacc.query_entity("SentMail", where)
+
+
 # Return a dict with new membics and the users to be emailed.  Fetches
 # only source membics to avoid sending duplicate notices for the same link.
 # If the membic is not posted to a theme until the next day, notices won't
@@ -155,6 +167,7 @@ def fetch_notifications_data(sts, ets):
                 note_source(nd["sources"], tin, membic, pn["revid"])
     find_users_to_notify(nd)
     tabulate_membership_changes(nd)
+    collect_sent_mail(nd)
     logging.info("fetch_notifications_data nd_as_string\n" + nd_as_string(nd))
     return nd
 
@@ -416,6 +429,7 @@ def daily_notices():
         return
     nd = fetch_notifications_data(sts, ets)
     verify_audiences(nd)
+    # prevent duplicate sends
     mn = dbacc.write_entity({"dsType": "MailNotice",
                              "name": notice_name,
                              "subject": notice_subj})

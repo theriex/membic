@@ -762,25 +762,44 @@ app.membic = (function () {
             var bta = jt.byId("mshbodyta");
             dad.style.maxWidth = bta.offsetWidth + "px";
             dad.style.maxHeight = bta.offsetHeight + "px"; },
+        findShared: function (membic, uid) {
+            if(!membic || !membic.svcdata || !membic.svcdata.mshares) {
+                return null; }
+            var share = membic.svcdata.mshares.csvarray().find(
+                (sh) => sh.split(";")[0] === uid);
+            if(!share) {
+                return null; }
+            share = share.split(";");
+            return {uid:share[0], ts:share[1] || ""}; },
+        verifyShareableOpts: function (res, membic, cdx) {
+            res.forEach(function (pma, idx) {
+                pma.disabled = "";  //overlay display text if disabled
+                pma.sort = 0;       //primary sort ordering
+                var following = mgrs.shr.inProfOrThemeAudience(
+                    membic, pma.user, function () {
+                        mgrs.shr.redrawDefEmAddrs(cdx); },
+                    "mshselcbdiv" + idx);
+                if(following) {
+                    pma.sort = 2;
+                    pma.dfltChecked = false;
+                    pma.disabled = "following"; }
+                else {
+                    var shared = mgrs.shr.findShared(membic, pma.user);
+                    if(shared) {
+                        pma.dfltChecked = false;
+                        pma.sort = 1;
+                        if(shared.ts) {
+                            pma.disabled = "shared " + jt.colloquialDate(
+                                shared.ts, "compress"); }
+                        else {
+                            pma.disabled = "shared already"; } } } }); },
         mailShareAddrs: function (cdx) {
             var msh = app.login.fullProfile().perset.mshare || {};
             var wrk = {addrs:{}, res:[]};
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             mgrs.shr.accumEmAddrs(wrk, msh[membic.ctmid], membic.ctmid, cdx);
             mgrs.shr.accumEmAddrs(wrk, msh.profile, !membic.ctmid, cdx);
-            wrk.res.forEach(function (pma, idx) {
-                pma.disabled = "";  //define value for sort
-                var following = mgrs.shr.inProfOrThemeAudience(
-                    membic, pma.user, function () {
-                        mgrs.shr.redrawDefEmAddrs(cdx); },
-                    "mshselcbdiv" + idx);
-                if(following) {
-                    pma.dfltChecked = false;
-                    pma.disabled = "following"; }
-                else if(membic.svcdata && membic.svcdata.mshares &&
-                        membic.svcdata.mshares.csvcontains(pma.user)) {
-                    pma.dfltChecked = false;
-                    pma.disabled = "already sent"; } });
+            mgrs.shr.verifyShareableOpts(wrk.res, membic, cdx);
             wrk.res.sort(mgrs.shr.compareDecoratedParsedMailAddress);
             return wrk.res; },
         accumEmAddrs: function (wrk, addrcsv, dfltChecked, cdx) {
@@ -824,10 +843,9 @@ app.membic = (function () {
             return (audinfo &&
                     audinfo.followers.find((fwr) => fwr.uid === uid)); },
         compareDecoratedParsedMailAddress: function (a, b) {
-            function cd (a, b) {
-                return a.disabled.toLowerCase().localeCompare(
-                    b.disabled.toLowerCase()); }
-            function cn (a, b) {
+            function cd (a, b) {  //compare disabled value
+                return a.sort - b.sort; }
+            function cn (a, b) {  //compare name
                 return a.name.toLowerCase().localeCompare(
                     b.name.toLowerCase()); }
             return cd(a, b) || cn(a, b); },

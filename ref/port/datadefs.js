@@ -227,6 +227,15 @@ module.exports = (function () {
      logflds:["name"]},
 
 
+    {entity:"SentMail", descr:"Log of server sent mail messages", fields:[
+        {f:"sender", d:"req email", c:"from address"},
+        {f:"replyto", d:"email", c:"reply-to address"},
+        {f:"recip", d:"req email", c:"to address"},
+        {f:"subj", d:"req string", c:"subject of email (possibly truncated)"}],
+     cache:{minutes:0},  //not generally referenced
+     logflds:["sender", "replyto", "recip", "subj"]},
+
+
     //Audience relationships are not updated transactionally.  Normally they
     //are discovered through periodic sweeps or email processing.  Audience
     //entries can be updated directly by those managing their audiences.

@@ -117,6 +117,18 @@ CREATE TABLE MailNotice (  -- Broadcast email tracking
 );
 ALTER TABLE MailNotice AUTO_INCREMENT = 2020;
 
+CREATE TABLE SentMail (  -- Log of server sent mail messages
+  dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
+  created VARCHAR(256) NOT NULL,
+  modified VARCHAR(256) NOT NULL,
+  sender VARCHAR(256) NOT NULL,
+  replyto VARCHAR(256),
+  recip VARCHAR(256) NOT NULL,
+  subj VARCHAR(256) NOT NULL,
+  PRIMARY KEY (dsId)
+);
+ALTER TABLE SentMail AUTO_INCREMENT = 2020;
+
 CREATE TABLE Audience (  -- Accumulated follower relationships
   dsId BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
   created VARCHAR(256) NOT NULL,

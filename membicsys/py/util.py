@@ -406,6 +406,8 @@ def send_mail(emaddr, subj, body, domain=None, sender="support", replyto=""):
     with smtplib.SMTP_SSL(mconf.email["smtp"], 465, context=sctx) as smtp:
         smtp.login(fromaddr, mconf.email[sender])
         smtp.sendmail(fromaddr, emaddr, msg.as_string())
+    dbacc.write_entity({"dsType":"SentMail", "sender":fromaddr,
+                        "replyto":replyto, "recip":emaddr, "subj":subj})
 
 
 # Return the auth token, user private fields, and other info
