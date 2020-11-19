@@ -73,6 +73,8 @@ app.theme = (function () {
 
 
     function emailOrRSSFollowHTML () {
+        if(setctx.assoc === "Blocking") {
+            return ""; }
         return jt.tac2html(
             ["div", {id:"followseldiv"},
              [["span", {id:"followselspan"}, "Follow via"],
@@ -107,6 +109,9 @@ app.theme = (function () {
                    Following:{
                        btxt:"Stop&nbsp;Following",
                        fstr:jt.fs("app.theme.relupd('Unknown')")},
+                   Blocking:{
+                       btxt:"Stop&nbsp;Blocking",
+                       fstr:jt.fs("app.theme.relupd('Unknown')")},
                    Unknown:{
                        btxt:"Follow",
                        fstr:jt.fs("app.theme.relupd('Following')")}};
@@ -138,8 +143,10 @@ app.theme = (function () {
             link.text = "Follow " + jt.escq(setctx.tpo.name);
             link.title = link.text;
             link.src = "acbullet.png"; }
-        else if(setctx.assoc === "Following") {
-            link.text = "Following"; }  //"Settings" on the end gets confusing
+        else {
+            var undecorated = ["Following", "Blocking"];
+            if(undecorated.includes(setctx.assoc)) {
+                link.text = setctx.assoc; } }
         var html = jt.tac2html(
             ["a", {href:"#relationship", title:link.title,
                    onclick:jt.fs("app.theme.connopt()")},
