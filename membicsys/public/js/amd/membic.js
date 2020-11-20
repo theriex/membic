@@ -840,8 +840,12 @@ app.membic = (function () {
                               app.theme.managerDispatch(
                                   "audmgr", "fetchInfo", srctype, srcid,
                                   contf, fmsgdivid); }}); }
-            return (audinfo &&
-                    audinfo.followers.find((fwr) => fwr.uid === uid)); },
+            var retval = false;
+            if(audinfo) {
+                var inf = audinfo.followers.find((f) => f.uid === uid);
+                if(inf && inf.lev) {  //show any non-zero as following
+                    retval = true; } }
+            return retval; },
         compareDecoratedParsedMailAddress: function (a, b) {
             function cd (a, b) {  //compare disabled value
                 return a.sort - b.sort; }
