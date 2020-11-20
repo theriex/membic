@@ -51,7 +51,7 @@ def nd_as_string(nd):
                 " (" + mc["tname"] + ")\n")
     txt += "Sent mail:\n"
     for ms in nd["msnds"]:
-        txt += "    " + ms["sender"]
+        txt += "    " + ms["created"][11:16:] + " " + ms["sender"]
         if ms["replyto"]:
             txt += " (" + ms["replyto"] + ")"
         txt += " -> " + ms["recip"] + " " + ms["subj"] + "\n"
