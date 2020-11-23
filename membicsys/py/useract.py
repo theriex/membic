@@ -638,7 +638,7 @@ def send_mshare_email(muser, membic, recip, subj, body):
     bfl = bfl.replace("$SENDER", muser["name"])
     bfl = bfl.replace("$RESPURL", util.site_home() + "/irsp/block?msid=" +
                       membic["dsId"] + "&em=" +
-                      urllib.parse.quote(muser["email"]))
+                      urllib.parse.quote(recip["email"]))
     body += "\n\n" + bfl
     util.send_mail(recip["email"], subj, body, replyto=muser["email"])
 
