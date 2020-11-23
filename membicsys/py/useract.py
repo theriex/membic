@@ -41,23 +41,6 @@ def verify_hashtag(hashtag):
         raise ValueError("Hashtag " + hashtag + " already in use")
 
 
-def verify_active_account(muser, lax=False):
-    if muser["status"] == "Active":
-        return
-    actcode = dbacc.reqarg("actcode")
-    if not actcode:
-        if lax:     # probably still doing initial account setup but not
-            return  # trying to activate yet
-        raise ValueError("Account is not active")
-    if actcode == "requestresend":
-        util.send_activation_code(muser)
-        return
-    if actcode == muser["actcode"]:
-        muser["status"] = "Active"
-        return
-    raise ValueError("Activation code did not match")
-
-
 MEMBERASSOCS = ["Founder", "Moderator", "Member"]
 FOLLOWASSOCS = ["Blocking", "Following", "Unknown"]
 
@@ -647,12 +630,15 @@ def send_mshare_email(muser, membic, recip, subj, body):
     sig = muser.get("name", "") + "\n" + muser["email"]
     if sig not in body:
         body += "\n" + sig + "\n"
-    # Provide an "unsubscribe" block/follow link.
-    bfl = "$SENDER sent you this message via membic share. To prevent $SENDER from sending you membics, or get summarized membics instead, use this link "
+    # Provide an "unsubscribe" block/follow link without any direct access
+    # credentials, since the recipient might forward the shared mail to
+    # others.  The recipient is *probably* reading their email as html, but
+    # could be text.
+    bfl = "To block $SENDER from sending you any further membic share email, click this link: $RESPURL"
     bfl = bfl.replace("$SENDER", muser["name"])
-    bfl += util.my_login_url(recip) + "&mshare=" + membic["dsId"]
-    if recip["status"] != "Active":
-        bfl += "&actcode=" + recip["actcode"]
+    bfl = bfl.replace("$RESPURL", util.site_home() + "/irsp/block?msid=" +
+                      membic["dsId"] + "&em=" +
+                      urllib.parse.quote(muser["email"]))
     body += "\n\n" + bfl
     util.send_mail(recip["email"], subj, body, replyto=muser["email"])
 
@@ -694,6 +680,10 @@ def process_mshare(muser, membic, sendto, subj, body):
         raise ValueError("Maximum " + str(sendmax) + " sends per share.")
     if not muser.get("name"):
         raise ValueError("You need to set your profile name.")
+    # The subject and body of the mail can be edited by the sender, and are
+    # then delivered by the client for processing.  Do some basic
+    # verification of url, html embedding and so forth.  The "unsubscribe"
+    # link is appended by send_mshare_email
     subj = verify_mshare_content(subj)
     body = verify_mshare_content(body, membic)
     svcdata = json.loads(membic.get("svcdata") or "{}")
@@ -731,7 +721,7 @@ def accupd():
     res = ""
     try:
         muser, srvtok = util.authenticate()
-        verify_active_account(muser, lax=True)
+        util.verify_active_account(muser, lax=True)
         prevemail = muser["email"]
         prevalt = muser["altinmail"]
         prevhash = muser["hashtag"]
@@ -772,7 +762,7 @@ def themeupd():
     res = ""
     try:
         muser, _ = util.authenticate()
-        verify_active_account(muser)
+        util.verify_active_account(muser)
         dsId = dbacc.reqarg("dsId", "dbid")
         if dsId:
             theme = dbacc.cfbk("Theme", "dsId", dsId, required=True)
@@ -804,7 +794,7 @@ def associate():
     res = ""
     try:
         muser, _ = util.authenticate()
-        verify_active_account(muser)
+        util.verify_active_account(muser)
         aot = dbacc.reqarg("aot", "string", required=True)
         aoi = dbacc.reqarg("aoi", "dbid", required=True)
         ao = dbacc.cfbk(aot, "dsId", aoi, required=True)
@@ -837,13 +827,13 @@ def uploadimg():
             # account does not need to be active to upload a profile pic
             picfld = "profpic"
         elif dsType == "Membic":
-            verify_active_account(muser)
+            util.verify_active_account(muser)
             updobj = dbacc.cfbk("Membic", "dsId", dsId, required=True)
             if updobj["penid"] != muser["dsId"]:
                 raise ValueError("Can only upload image to your own membic")
             picfld = "revpic"
         else:  # treat as Theme
-            verify_active_account(muser)
+            util.verify_active_account(muser)
             updobj = dbacc.cfbk("Theme", "dsId", dsId, required=True)
             if theme_association(updobj, muser["dsId"]) != "Founder":
                 raise ValueError("Only Founders may upload an image")

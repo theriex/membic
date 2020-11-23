@@ -446,6 +446,23 @@ def send_activation_code(muser):
     return muser
 
 
+def verify_active_account(muser, lax=False):
+    if muser["status"] == "Active":
+        return
+    actcode = dbacc.reqarg("actcode")
+    if not actcode:
+        if lax:     # probably still doing initial account setup but not
+            return  # trying to activate yet
+        raise ValueError("Account is not active")
+    if actcode == "requestresend":
+        send_activation_code(muser)
+        return
+    if actcode == muser["actcode"]:
+        muser["status"] = "Active"
+        return
+    raise ValueError("Activation code did not match")
+
+
 # Return a dict of custom headers for the jsonget request based on the url.
 def jsonget_api_headers(url):
     hd = None

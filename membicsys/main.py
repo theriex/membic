@@ -22,6 +22,7 @@ import py.useract as useract
 import py.util as util
 import py.start as start
 import py.feed as feed
+import py.irsp as irsp
 
 # Create a default entrypoint for the app.
 app = flask.Flask(__name__)
@@ -114,6 +115,11 @@ def jsonget():  # params: an, at, url
 @app.route('/feed/<path:path>')
 def webfeed(path):
     return util.secure(lambda: feed.webfeed(path))
+
+@app.route('/irsp/', defaults={'path': ''})
+@app.route('/irsp/<path:path>')
+def rspg(path):
+    return util.secure(lambda: irsp.rspg(path))
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
