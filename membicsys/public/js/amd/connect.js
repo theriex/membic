@@ -127,7 +127,8 @@ app.connect = (function () {
             Object.keys(allobjs).forEach(function (key) {  //convert to array
                 decos.push(allobjs[key]); }); }
         decos.forEach(function (deco) {
-            deco.lastwd = deco.lastwrite || deco.modified;
+            //MembicDefinition has no write/mod tstamp
+            deco.lastwd = deco.lastwrite || deco.modified || "";
             deco.lastwd = deco.lastwd.slice(0, 10); });
         decos.sort(function (a, b) {
             if(a.sprio !== b.sprio) {

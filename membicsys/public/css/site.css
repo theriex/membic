@@ -502,8 +502,11 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 .mshsellab, .mshsellabdis, .molab, .molabdis { font-size:medium; }
 .mshsellabdis, .molabdis { color:#999; }
 .mshtrashdiv { position:absolute; top:0px; right:0px; }
-.mshfollowingdiv { position:absolute; top:0px; right:90px;
-  font-style:italic; background:#fcf4eb }
+.mshdisablemsgdiv { position:absolute; top:0px; right:40px; width:180px;
+  text-align:center; }
+.mshdisablemsgtextspan { font-size:small; font-weight:bold; font-style:italic;
+  background:#fcf4eb }
+.mshdetaildiv { margin:0px 10px 5px 10px; font-size:small; }
 .modescrdiv { margin:0px 0px 0px 20px; font-size:small; }
 #adjmshsubtitlediv { font-size:medium; padding:3px 0px; }
 #adjmoptmsgdiv { font-size:small; }

@@ -653,20 +653,21 @@ app.membic = (function () {
     mgrs.shr = (function () {
         var audfetch = {};
     return {
+        membicEmailLink: function (membic, recip) {
+            recip = jt.dquotenc(recip || "");
+            var subj = membic.text;
+            var body = linkForMembic(membic) || "No URL available";
+            return "mailto:" + recip + "?subject=" + jt.dquotenc(subj) +
+                "&body=" + jt.dquotenc(body) + "%0A%0A"; },
         //Thought about adding membic share button to create your own membic
         //from an existing one, but that adds complexity, would likely be of
         //very limited use, and detract from the external nature of sharing.
-        //To make a membic off an existing membic you can always use the
-        //mail share and mail it in.
+        //To make a membic off an existing membic you can just copy the link.
         membicShareHTML: function  (cdx, membic) {
-            var subj = membic.text;
-            var body = linkForMembic(membic) || "No URL available";
-            var mlink = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
-                jt.dquotenc(body) + "%0A%0A";
             var tac = app.layout.shareButtonsTAC(
-                {url:body,
-                 title:subj,
-                 mref:mlink,
+                {url:linkForMembic(membic),
+                 title:membic.text,
+                 mref:mgrs.shr.membicEmailLink(membic),
                  socmed:["tw", "fb", "em"]});
             if(myMembic(membic)) {  //author can do extended email sharing
                 tac.push(app.layout.shareButtonsTAC(
@@ -791,7 +792,7 @@ app.membic = (function () {
                         if(shared.ts) {
                             pma.disabled = "shared " + jt.colloquialDate(
                                 shared.ts, "compress"); }
-                        else {
+                        else {  //if no timestamp, use a generic message
                             pma.disabled = "shared already"; } } } }); },
         mailShareAddrs: function (cdx) {
             var msh = app.login.fullProfile().perset.mshare || {};
@@ -854,23 +855,43 @@ app.membic = (function () {
                     b.name.toLowerCase()); }
             return cd(a, b) || cn(a, b); },
         mshselHTML: function (pma, idx) {
+            var dmt = pma.disabled || "";
+            if(dmt) {
+                dmt = jt.tac2html(
+                    ["a", {href:"#disabledmsgdetails",
+                           onclick:mdfs("shr.disMsgDet", idx, pma.cdx)},
+                     dmt]); }
             return jt.tac2html(
                 ["div", {cla:"mshselcbdiv", id:"mshselcbdiv" + idx},
                  [["input", {type:"checkbox", cla:"mshselcb", name:"mshcb",
                              id:"mshselcb" + idx, value:jt.enc(pma.dbv),
-                             disabled:jt.toru(pma.disabled),
-                             checked:jt.toru(pma.dfltChecked)}],
+                             //max of 5 sends at a time, so no dfltChecked
+                             //checked:jt.toru(pma.dfltChecked),
+                             disabled:jt.toru(pma.disabled)}],
                   ["label", {fo:"mshselcb" + idx,
                              cla:"mshsellab" + ((pma.disabled)? "dis" : "")},
                    pma.name + " &lt;" + pma.addr + "&gt;"],
-                  ["div", {cla:"mshfollowingdiv"},
-                   ((pma.disabled)? "(" + pma.disabled + ")" : "")],
+                  ["div", {cla:"mshdisablemsgdiv"},
+                   ["span", {cla:"mshdisablemsgtextspan"}, dmt]],
                   ["div", {cla:"mshtrashdiv"},
                    ["a", {href:"#deletecontact",
                           title:"Delete " + pma.name + " contact",
                           onclick:mdfs("shr.deleteEmail", idx, pma.cdx)},
                     ["img", {cla:"mshactbimg",
-                             src:app.dr("img/trash.png")}]]]]]); },
+                             src:app.dr("img/trash.png")}]]],
+                  ["div", {cla:"mshdetaildiv", id:"mshdetaildiv" + idx}]]]); },
+        disMsgDet: function (idx, cdx) {
+            var div = jt.byId("mshdetaildiv" + idx);
+            if(div.innerHTML) {  //already displayed, toggle off
+                div.innerHTML = "";
+                return; }
+            var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
+            var cb = jt.byId("mshselcb" + idx);
+            var pma = mgrs.shr.parseShareAddr(jt.dec(cb.value));
+            div.innerHTML = jt.tac2html(
+                ["This membic was already shared with " + pma.name + ". ",
+                 ["a", {href:mgrs.shr.membicEmailLink(membic, pma.addr)},
+                  "Follow up"]]); },
         deleteEmail: function (idx, cdx) {
             var cb = jt.byId("mshselcb" + idx);
             var pma = mgrs.shr.parseShareAddr(jt.dec(cb.value));

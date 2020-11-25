@@ -594,7 +594,9 @@ app.pcd = (function () {
             //may or may not position the item at the top of the display,
             //but at least not at the bottom if there are items after it.
             var idx = ctx.actobj.itlist.findIndex((m) => m.dsId === ctx.jumpto);
-            jt.byId("pcditemdiv" + idx).scrollIntoView();
+            var itemdiv = jt.byId("pcditemdiv" + idx);
+            if(!itemdiv) { return; }  //stray click or otherwise invalid
+            itemdiv.scrollIntoView();
             ctx.jumpto = "";
             if(app.startParams.mdisp === "expanded") {
                 app.membic.toggleMembic(idx, "expanded",
