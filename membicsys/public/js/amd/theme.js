@@ -528,6 +528,8 @@ return {
 
 
     settingsUpdate: function () {
+        jt.out("settingsinfdiv", "Updating...");
+        jt.byId("settingsupdbutton").disabled = true;
         var theme = app.pcd.getActobjContext();
         var tu = {dsType:"Theme", dsId:theme.dsId};
         app.pcd.managerDispatch("stgmgr", "readCommonFields", tu, theme);

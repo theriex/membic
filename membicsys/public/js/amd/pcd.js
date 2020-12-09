@@ -452,13 +452,15 @@ app.pcd = (function () {
             obj.cliset = src.cliset;  //unsaved changes in cached obj are ok
             embedmgr.standardOverrideColors.forEach(function (od) {
                 obj.cliset[od.name] = jt.byId(od.name + "in").value; }); },
-        //Do a full page redisplay to reflect the potentially updated url
-        //from changing the hashtag.  Leave the settings open so they can
-        //see the changes were reflected.
+        //Do a full page redisplay to reflect the potentially updated url if
+        //the hashtag changed.  Close the settings because user is typically
+        //finished with them after updating.  If the settings need to remain
+        //open, then add a parameter to trigger go:"settings" being added to
+        //the setState call.
         redisplay: function (updatedObj) {
             app.statemgr.notehash(updatedObj);
             app.statemgr.setState(updatedObj.dsType, updatedObj.dsId,
-                                  {forceReplace:true, go:"settings"}); }
+                                  {forceReplace:true}); }
     };  //end stgmgr
 
 
