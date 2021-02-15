@@ -256,6 +256,8 @@ button, .loginbutton, .formbutton, .filesellab, .linkbutton {
 #followseldiv input { margin-left:12px; }
 #followseldiv a { margin-left:3px; }
 #assocbuttonsdiv button { margin:0px 10px; }
+#signintofollowdiv { font-size:x-small; text-align:center; letter-spacing:3px;
+  font-style:italic; }
 
 /* >> membic content layout */
 .mdouterdiv, #pcdmorediv { margin:0px 0px 6px 0px; padding:0; }

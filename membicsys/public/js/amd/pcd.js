@@ -803,6 +803,20 @@ app.pcd = (function () {
     };  //end picmgr
 
 
+    function encourageSignInAndFollow () {
+        var auth = app.login.authenticated();
+        if(!auth && ctx.descobj.disptype !== "app") { //prof/theme
+            jt.out("pcdnotidiv", jt.tac2html(
+                ["div", {id:"signintofollowdiv"},
+                 "Sign in to follow " + ctx.descobj.name])); }
+        else { //signed in, suggest following if not associated
+            var obj = ctx.actobj.contextobj;
+            if(obj && obj.dsId !== auth.authId &&  //not self
+               app.theme.association(obj) === "Unknown") {  //not following
+                stgmgr.toggleSettings("show"); } }
+    }
+
+
     function writeActionsArea () {
         var searchdivcontents = [
             ["a", {href:"#search", id:"srchlink", title:"Search items",
@@ -843,6 +857,7 @@ app.pcd = (function () {
              ["div", {id:"pcdsettingsdiv", style:"display:none;"},
               ["div", {id:"pcdsetcontdiv"}]]]));
         embedmgr.unhideSoloPageActions();
+        encourageSignInAndFollow();
     }
 
 
