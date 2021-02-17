@@ -974,6 +974,12 @@ app.membic = (function () {
                               placeholder:"Subject",
                               value:jt.ellipsis(membic.text, 65)}]]],
                  ["div", {id:"mshbodydiv"},
+                  //Adding "follow posts like this at..." type verbiage
+                  //seriously detracts from the personal nature of these
+                  //comms.  Goal is for the recipient to eventually ask if
+                  //all the posts are accessible online, for their own
+                  //reference, for others, or with the intent of 
+                  //building their own reference page.  If they want.
                   ["textarea", {id:"mshbodyta", rows:20, cols:35},
                   "Hey $NAME,\n\n" +
                   "Thought you might find this interesting:\n\n" +
