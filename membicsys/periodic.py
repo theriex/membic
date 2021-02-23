@@ -285,21 +285,20 @@ def send_audience_change(muser, sources, preview=False):
     if cliset.get("audchgem") == "disabled":
         return
     updated = False
-    for _, src in sources.items():
-        if len(src["nafs"]) > 0:
-            updated = True
-    if not updated:
-        return
     subj = "Audience updates since your last membic"
     body = "These followers were updated since the last membic post.\n\n"
     for _, src in sources.items():
         if src["dsType"] == "MUser" and src["dsId"] == muser["dsId"]:
+            updated = updated or (len(src["nafs"]) > 0)
             body += audience_summary_text(src)
     themes = json.loads(muser.get("themes") or "{}")
     for _, src in sources.items():
         if src["dsType"] == "Theme" and themes.get(src["dsId"]):
             if themes.get(src["dsId"])["lev"] > 0:  # your content
+                updated = updated or (len(src["nafs"]) > 0)
                 body += audience_summary_text(src)
+    if not updated:
+        return  # no updates worth emailing about
     body += "To invite followers, use the share menu from your profile or theme. To stop receiving audience update information when you post new membics, change the tracking in your profile audience."
     if preview:
         logging.info("send_audience_change upcoming send to " + muser["email"] +
