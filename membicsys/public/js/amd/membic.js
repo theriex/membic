@@ -962,6 +962,14 @@ app.membic = (function () {
                     mgrs.shr.redrawDefEmAddrs(cdx); },
                 function () {  //not much to do if fail. Redraw.
                     mgrs.shr.redrawDefEmAddrs(cdx); }); },
+        shareMailSigLine: function (membic, prof) {
+            //Need to stay carefully within acceptable text here, protecting
+            //the personal share communications.
+            if(!membic.ctmid || !prof.themes[membic.ctmid]) {
+                return ""; }
+            var turl = "https://membic.org/" +
+                (prof.themes[membic.ctmid].hashtag || "theme/" + membic.ctmid);
+            return "Check out my theme at " + turl + "\n"; },
         mailContentHTML: function (cdx) {
             var membic = app.pcd.getDisplayContext().actobj.itlist[cdx];
             var title = membic.details.title || membic.details.name || "";
@@ -974,18 +982,13 @@ app.membic = (function () {
                               placeholder:"Subject",
                               value:jt.ellipsis(membic.text, 65)}]]],
                  ["div", {id:"mshbodydiv"},
-                  //Adding "follow posts like this at..." type verbiage
-                  //seriously detracts from the personal nature of these
-                  //comms.  Goal is for the recipient to eventually ask if
-                  //all the posts are accessible online, for their own
-                  //reference, for others, or with the intent of 
-                  //building their own reference page.  If they want.
                   ["textarea", {id:"mshbodyta", rows:20, cols:35},
                   "Hey $NAME,\n\n" +
                   "Thought you might find this interesting:\n\n" +
-                  title + "\n" + url + "\n\n" +
-                  membic.text + "\n\n" +
-                  prof.name + "\n" + prof.email + "\n"]],
+                   title + "\n" + url + "\n\n" +
+                   membic.text + "\n\n" +
+                   prof.name + "\n" + prof.email + "\n" +
+                   mgrs.shr.shareMailSigLine(membic, prof)]],
                  ["div", {id:"mshstatmsgdiv"}],
                  ["div", {cla:"formbuttonsdiv"},
                   ["button", {type:"button", id:"mshsendb",
