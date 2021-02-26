@@ -647,12 +647,15 @@ def verify_mshare_content(txt, membic=None, unquote=True):
     if unquote:
         txt = urllib.parse.unquote(txt)
     txt = verify_simple_html(txt)  # strip any embedded html
-    hrefcount = len(re.findall(r"https?://", txt, flags=re.IGNORECASE))
-    if not membic and hrefcount > 0:
-        raise ValueError("No href allowed in subject")
-    if membic and hrefcount > 1:
-        raise ValueError("Only one href allowed in message body")
-    if membic:
+    # optional link back to theme does not count as an extra href
+    hsrch = re.sub(r"https://membic.org", "", txt)
+    hrefcount = len(re.findall(r"https?://", hsrch, flags=re.IGNORECASE))
+    if not membic:
+        if hrefcount > 0:
+            raise ValueError("No href allowed in subject")
+    else: # have membic
+        if hrefcount > 1:
+            raise ValueError("Only one href allowed in message body")
         url = membic.get("url") or membic.get("rurl")
         if url not in txt:
             raise ValueError("Membic url not found in message body")
