@@ -318,7 +318,7 @@ def feed_object_from_path(path):
         ob = dbacc.cfbk(fts[pes[0]], "dsId", pes[1], required=True)
     else:  # find as hashtag
         if pes[0] == "rsscoop":  # legacy feed
-            coopid = flask.request.args.get("coop", "", required=True)
+            coopid = flask.request.args.get("coop", "")
             ob = dbacc.cfbk("Theme", "importid", coopid)
         else:
             ob = dbacc.cfbk("Theme", "hashtag", pes[0])
