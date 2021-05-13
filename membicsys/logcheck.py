@@ -38,10 +38,11 @@ def search_log_file(lfp, srchts):
                     lc += 1
                     if "ERROR" in line:
                         errors += "  " + line
-                    elif line.startswith("ValueError: "):
-                        errors += "  " + line
                     elif "WARNING" in line:
                         warnings += "  " + line
+                elif lc > 0:  # processed at least one relevant log line
+                    if line.startsWith("ValueError: "):
+                        errors += "  " + line
         firstline = "Checked " + str(lc) + " lines from " + lfp + "\n"
         txt = firstline + errors + warnings
         if errors or warnings:
