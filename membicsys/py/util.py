@@ -79,10 +79,8 @@ def is_development_server():
         if re.search(r"\:\d{4}", flask.request.url):
             info["isdev"] = True
             info["why"] = "flask.request.url has a 4 digit port number)"
-    elif os.environ["HOME"] != "/home/theriex":
-        info["isdev"] = True
-        info["why"] = ("\"HOME\" env var \"" + os.environ["HOME"] +
-                       "\" != \"/home/theriex\")")  # deployment home dir
+    # Do not negatively match on the server home directory to determine if
+    # development.  May change with the hosting user.
     if info["isdev"]:
         return info
     return False
