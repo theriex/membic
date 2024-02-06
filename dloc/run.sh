@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run from membic directory (dloc/run.sh)
+# Run from membic/membicsys e.g. $ ../dloc/run.sh
 #
 # If gunicorn fails to start with [ERROR] Connection in use: ('', 8081) then
 # ps -A | grep "gunicorn"
