@@ -1,0 +1,4 @@
+# server -rw-r--r--: chmod 644
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ /apphook.cgi/$1 [L]

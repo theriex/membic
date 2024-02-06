@@ -20,7 +20,7 @@ import py.mconf as mconf
 # This cache bust value is updated via membic/build/cachev.js which keeps
 # all the cache bust values updated and in sync across the sourcebase.  Do
 # not edit it directly.
-cachev = "v=210225"
+cachev = "v=240206"
 
 indexHTML = """
 <!doctype html>
