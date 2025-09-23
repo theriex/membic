@@ -334,6 +334,8 @@ def reqarg(argname, fieldtype="string", required=False):
         fieldname = fieldtype[dotidx + 1:]
         fieldtype = entdefs[entity][fieldname]["pt"]
     if fieldtype == "email":
+        if argval and str(argval).lower() == "unset_value" and not required:
+            return argval
         emaddr = plain_email_address(argval)
         if required and not emaddr:
             raise ValueError("Missing required value for " + argname)

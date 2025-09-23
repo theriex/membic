@@ -288,6 +288,8 @@ function helperFunctions () {
     pyc += "        fieldname = fieldtype[dotidx + 1:]\n";
     pyc += "        fieldtype = entdefs[entity][fieldname][\"pt\"]\n";
     pyc += "    if fieldtype == \"email\":\n";
+    pyc += "        if argval and str(argval).lower() == \"unset_value\" and not required:\n";
+    pyc += "            return argval\n";
     pyc += "        emaddr = plain_email_address(argval)\n";
     pyc += "        if required and not emaddr:\n";
     pyc += "            raise ValueError(\"Missing required value for \" + argname)\n";

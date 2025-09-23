@@ -9,6 +9,8 @@
 #pylint: disable=too-many-locals
 #pylint: disable=line-too-long
 #pylint: disable=too-many-lines
+#pylint: disable=consider-using-from-import
+#pylint: disable=superfluous-parens
 import logging
 import flask
 import py.dbacc as dbacc
@@ -237,6 +239,7 @@ def read_values(obj, fldspec):
     updlo = {"dsType":obj["dsType"], "dsId":obj.get("dsId", "")}
     obtype = obj["dsType"]
     for fld in fldspec["inflds"]:
+        logging.info("read_values: " + fld)
         val = dbacc.reqarg(fld, obtype + "." + fld)
         if "special" in fldspec:
             if fld in fldspec["special"]:
@@ -723,32 +726,45 @@ def process_mshare(muser, membic, sendto, subj, body):
 def accupd():
     res = ""
     try:
+        logging.info("accupd authenticating")
         muser, srvtok = util.authenticate()
+        logging.info("accupd verifying active account")
         util.verify_active_account(muser, lax=True)
+        logging.info("accupd reading input")
         prevemail = muser["email"]
         prevalt = muser["altinmail"]
+        logging.info("accupd prevalt read from altinmail")
         prevhash = muser["hashtag"]
+        logging.info("accupd prevhash read from altinmail")
         read_values(muser, {"inflds": ["email", "altinmail", "name", "aboutme",
                                        "hashtag", "cliset", "perset"],
                             "special": {"aboutme": "simplehtml"}})
+        logging.info("accupd read_values completed")
         val = dbacc.reqarg("password")
         if not val and muser["email"] != prevemail:
             raise ValueError("Password required to change email address.")
         if muser["email"] != prevemail:
+            logging.info("accupd email " + prevemail + " -> " + muser["email"])
             verify_unused_email_address(muser["email"])
             muser["status"] = "Pending"
             muser["actcode"] = util.random_alphanumeric(6)
             util.send_activation_code(muser)
         if val:  # update the hash so they can login with new password
+            logging.info("accupd password change")
             muser["phash"] = util.make_password_hash(muser["email"], val,
                                                      muser["created"])
             srvtok = util.token_for_user(muser)
         if muser["altinmail"] and muser["altinmail"] != prevalt:
+            logging.info("accupd altinmail change " + prevalt + " -> " +
+                         muser["altinmail"])
             verify_unused_email_address(muser["altinmail"], "Alternate Email")
         if muser["hashtag"] and muser["hashtag"] != prevhash:
+            logging.info("accupd hashtag " + prevhash + " -> " +
+                         muser["hashtag"])
             verify_hashtag(muser["hashtag"])
         # Could force caller to pass modified, but they are the only one
         # updating so more likely to get in the way if they image upload.
+        logging.info("accupd writing updated entity")
         muser = dbacc.write_entity(muser, vck=muser["modified"])
         dbacc.entcache.cache_put(muser)  # will likely reference this again soon
         res = (json.dumps(util.make_auth_obj(muser, srvtok)) +
