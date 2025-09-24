@@ -1,6 +1,5 @@
 /*global app, jt, window, confirm, document */
-
-/*jslint browser, white, fudge, for, long */
+/*jslint browser, white, for, long, unordered */
 
 //////////////////////////////////////////////////////////////////////
 // PenName or Theme common display functions.
@@ -40,7 +39,7 @@ app.pcd = (function () {
     }
 
 
-    var embedmgr = {
+    const embedmgr = {
         standardOverrideColors: [ //lower case for all colors defined here
             {name:"link", value:"#84521a", sel: "A:link,A:visited,A:active", 
              attr:"color"},
@@ -82,7 +81,7 @@ app.pcd = (function () {
             var tsdiv = jt.byId("topsectiondiv");
             if(!tsdiv || tsdiv.style.display !== "none" || !app.solopage()) {
                 return; }
-            var hds = ["topmessagelinediv", "topactiondiv", "pgdescdiv",
+            const hds = ["topmessagelinediv", "topactiondiv", "pgdescdiv",
                        "pcdnotidiv"];
             hds.map((i) => jt.byId(i)).forEach(function (hd) {
                 if(hd) { hd.style.display = "none"; } });
@@ -153,22 +152,22 @@ app.pcd = (function () {
             var actargs = "?action=invitation";
             var sig = "";
             var auth = app.login.authenticated();
+            var url = ctx.descobj.exturl + actargs;
+            var descrname = ctx.descobj.name;
             if(auth) {
                 sig = app.login.myProfile().name;
                 //Add the invitation sender to the action so the app can help
                 //the sender avoid duplicate invites, send thanks, whatever.
                 actargs += "&from=" + auth.authId; }
-            var url = ctx.descobj.exturl + actargs;
             if(!url.startsWith("http")) {
                 if(url.startsWith("/")) {
                     url = url.slice(1); }
                 url = app.docroot + url; }
-            var vol = sharemgr.weeklyPrebVolume();
-            var descrname = ctx.descobj.name;
+            const vol = sharemgr.weeklyPrebVolume();
             if(ctx.descobj.disptype !== "theme") {
                 descrname = "The profile page for " + descrname; }
-            var subj = "Invitation to " + ctx.descobj.name;
-            var body = "I'm inviting you to follow \"" + ctx.descobj.name + "\" at " + url + " so you can email me back directly about upcoming membics.\n\n\"" + ctx.descobj.name + "\" is a highly curated, low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). " + sharemgr.emqDescrip() + "\n\nMy guess is you would be interested in what gets added next, and I would be interested in your reactions. Use this link to connect: " + url + "\n\nThoughts welcome.\n" + sig + "\n";
+            const subj = "Invitation to " + ctx.descobj.name;
+            const body = "I'm inviting you to follow \"" + ctx.descobj.name + "\" at " + url + " so you can email me back directly about upcoming membics.\n\n\"" + ctx.descobj.name + "\" is a highly curated, low volume feed (average " + vol.nzwa + " posts per week, some weeks nothing). " + sharemgr.emqDescrip() + "\n\nMy guess is you would be interested in what gets added next, and I would be interested in your reactions. Use this link to connect: " + url + "\n\nThoughts welcome.\n" + sig + "\n";
             var link = "mailto:?subject=" + jt.dquotenc(subj) + "&body=" +
                 jt.dquotenc(body) + "%0A%0A";
             return link; },
@@ -197,7 +196,7 @@ app.pcd = (function () {
                             ["img", {src:app.dr("img/rssiconwhite.png"),
                                      style:"max-width:16px;"}]]]]); }
             if(app.solopage()) {
-                var membicurl = ctx.descobj.exturl + "?action=invitation";
+                const membicurl = ctx.descobj.exturl + "?action=invitation";
                 tac.push(["a", {href:membicurl, //right click to copy
                                 cla:"resp-sharing-button__link",
                                 id:"membiclink", title:"Follow on Membic",
@@ -221,7 +220,7 @@ app.pcd = (function () {
             return tac; },
         togshare: function (bname) {
             jt.byId("pcdsettingsdiv").style.display = "none";
-            var sharediv = jt.byId("pcdsharediv");
+            const sharediv = jt.byId("pcdsharediv");
             if(sharediv.style.display === "block") {
                 sharediv.style.display = "none"; }
             else {
@@ -263,11 +262,11 @@ app.pcd = (function () {
                 jt.out("mailinhelpspan", "");
                 jt.byId("altmaildiv").style.display = "none"; } },
         personalInfoSettingsHTML: function () {
+            var mih = "";
+            var altdisp = "none";
             var fp = app.login.fullProfile();
             if(!fp.cliset.mailins) {
                 fp.cliset.mailins = "enabled"; }
-            var mih = "";
-            var altdisp = "none";
             if(fp.cliset.mailins === "enabled") {
                 mih = stgmgr.mailinHelpHTML();
                 altdisp = "block"; }
@@ -289,7 +288,8 @@ app.pcd = (function () {
                   ["div", {cla:"infolinediv"},
                    [["input", {type:"checkbox", id:"mailincb", value:"mailincb",
                                checked:jt.toru(fp.cliset.mailins === "enabled"),
-                               onclick:mdfs("stgmgr.mailinHelp")}],
+                               onclick:"app.pcd.managerDispatch('stgmgr'," +
+                                       "'mailinHelp')"}],
                     [["label", {fo:"mailincb", id:"mailincblab"},
                       "Enable Mail-In Membics"],
                      ["span", {id:"mailinhelpspan"}, mih]]]]],
@@ -345,10 +345,10 @@ app.pcd = (function () {
         sortOrderSetting: function (embobj, canmod) {
             if((embobj.dsType !== "Theme") || !canmod) {
                 return ""; }
-            var sortby = embobj.cliset.sortby;
-            var opts = [{val:"recency", lab:"Creation Time"},
-                        {val:"rating", lab:"Star Rating"}];
-            opts = opts.map(function (opt) {
+            const sortby = embobj.cliset.sortby;
+            const optvls = [{val:"recency", lab:"Creation Time"},
+                            {val:"rating", lab:"Star Rating"}];
+            const opts = optvls.map(function (opt) {
                 return ["option", {value:opt.val,
                                    selected:jt.toru(opt.val === sortby)},
                         opt.lab]; });
@@ -362,7 +362,7 @@ app.pcd = (function () {
             var emboHTML = [];
             if(canmod) {
                 embobj.cliset.embcolors = embobj.cliset.embcolors || {};
-                var embcolors = embobj.cliset.embcolors;
+                const embcolors = embobj.cliset.embcolors;
                 embedmgr.standardOverrideColors.forEach(function (od) {
                     embcolors[od.name] = embcolors[od.name] || od.value;
                     emboHTML.push(
@@ -391,9 +391,9 @@ app.pcd = (function () {
                  stgmgr.sortOrderSetting(embobj, canmod),
                  stgmgr.embedSetting(embobj, canmod)]); },
         settingsInfoAndUpdateButtonHTML: function (obj, canmod) {
+            var clickstr = jt.fs("app.login.updateAccount()");
             if(!canmod) {
                 return ""; }
-            var clickstr = jt.fs("app.login.updateAccount()");
             if(obj.dsType === "Theme") {
                 clickstr = jt.fs("app.theme.settingsUpdate()"); }
             return jt.tac2html(
@@ -420,7 +420,7 @@ app.pcd = (function () {
                  stgmgr.settingsInfoAndUpdateButtonHTML(prof, true)]));
             //dim and disable the Create Theme button if account is not active
             if(app.login.authenticated().status !== "Active") {
-                var cntb = jt.byId("cntb");
+                const cntb = jt.byId("cntb");
                 cntb.disabled = true;
                 cntb.style.opacity = 0.4; } },
         writeThemeProfSettings: function (divid, obj) {
@@ -436,12 +436,12 @@ app.pcd = (function () {
             var auth = app.login.authenticated();
             if(!auth) { return; }  //must be signed in for settings
             jt.byId("pcdsharediv").style.display = "none";
-            var setdiv = jt.byId("pcdsettingsdiv");
+            const setdiv = jt.byId("pcdsettingsdiv");
             if(setdiv.style.display === "block" && !show) {
                 setdiv.style.display = "none"; }
             else {
                 setdiv.style.display = "block"; }
-            var obj = ctx.actobj.contextobj;
+            const obj = ctx.actobj.contextobj;
             if(!obj || (obj.dsType === "MUser" && obj.dsId === auth.authId)) {
                 stgmgr.writePersonalSettings("pcdsetcontdiv"); }
             else {
@@ -474,11 +474,11 @@ app.pcd = (function () {
         match: function (membic, fist) {
             var contextobj = fist.actobj.contextobj;
             if(membic.dsType === "Overflow") {  //out of items, fault in more
-                var ctxts = fist.ts;
+                const ctxts = fist.ts;
                 app.refmgr.getFull("Overflow", membic.dsId, function (ovrf) {
                     //overflows are cached to avoid refetch
                     if(ovrf) {  //fetch error already logged if not found
-                        var membics = contextobj.preb.slice(0, -1);
+                        const membics = contextobj.preb.slice(0, -1);
                         contextobj.preb = membics.concat(ovrf.preb);
                         fist.actobj.contextobj = contextobj;
                         fist.actobj.itlist = contextobj.preb;
@@ -501,12 +501,12 @@ app.pcd = (function () {
                 fields = ["srchFiltTxt"]; }
             return fields.some((fld) => srchmgr.fldmatch(fld, membic, ps)); },
         tinf: function (fld, membic, ps, tok) {
-            var obj = membic;
+            var val; var obj = membic;
             if(ps.scope === "details") {
                 obj = membic.details; }
             if(!obj || !obj[fld]) {
                 return false; }
-            var val = obj[fld];
+            val = obj[fld];
             if(ps.scope) {  //searching anything except all text
                 val = val.toLowerCase(); }
             return (val.indexOf(tok) >= 0); },
@@ -520,16 +520,17 @@ app.pcd = (function () {
         //treated as an additional filter.  Save parsed search strings for
         //quick access when applying across lots of membics.
         parsedSearch: function (qstr) {
+            var ps;
             ctx.parsedSearches = ctx.parsedSearches || {};
-            var ps = ctx.parsedSearches[qstr];
+            ps = ctx.parsedSearches[qstr];
             if(ps) {
                 return ps; }
             ps = {scope:"", toks:[], pfts:[]};
-            var pqs = srchmgr.parseScope(qstr, ps);
+            const pqs = srchmgr.parseScope(qstr, ps);
             ps.toks = pqs.toLowerCase().match(/\+?"[^"]*"*|\S+/g);
             ps.pfts = ps.toks.filter((tok) => tok.indexOf("+") === 0);
             ps.toks = ps.toks.filter((tok) => tok && tok.indexOf("+") !== 0);
-            var opstrip = function (tok) {
+            const opstrip = function (tok) {
                 if(tok.indexOf("+") === 0) {
                     tok = tok.slice(1); }
                 if(tok.indexOf("\"") === 0) {
@@ -551,24 +552,24 @@ app.pcd = (function () {
             return qstr; },
         //make a single searchable text field for the entire membic.
         verifySearchFilterText: function (membic) {
+            var txt = "";
             if(membic.srchFiltTxt) {
                 return; }  //already set up
-            var txt = "";
-            var flds = ["url", "rurl", "revtype", "cankey", "text", "keywords"];
+            const flds = ["url", "rurl", "revtype", "cankey", "text", "keywords"];
             flds.forEach(function (field) {
                 txt += " " + (membic[field] || ""); });
             srchmgr.scopes.details.forEach(function (field) {
                 txt += " " + (membic.details[field] || ""); });
             membic.srchFiltTxt = txt.toLowerCase(); },
         updateSearchLabelText: function () {
+            var elementslabel = "profiles";
             var link = jt.byId("srchlink");
             if(link && ctx.actobj) {
-                var elementslabel = "profiles";
-                var membicTypesCSV = "MUser,Theme";
-                var obj = ctx.actobj.contextobj;
+                const membicTypesCSV = "MUser,Theme";
+                const obj = ctx.actobj.contextobj;
                 if(obj && membicTypesCSV.csvcontains(obj.dsType)) {
                     elementslabel = "membics"; }
-                var qty = ctx.actobj.itlist.length || 0;
+                const qty = ctx.actobj.itlist.length || 0;
                 if(!qty) {  //nothing to search, gray out the area
                     jt.byId("pcdacsrchdiv").style.opacity = 0.4; }
                 else {  //verify not grayed if there are items to search
@@ -614,9 +615,9 @@ app.pcd = (function () {
                 else {  //no overflow, clear content if there was any
                     jt.out("pcdshoutexpdiv", "");
                     return; } }
-            var states = {closed:{sym:"&#x261F;", nst:"open", h:110},
-                          open:{sym:"&#x261D;", nst:"closed",
-                                h:descrdiv.scrollHeight}};
+            const states = {closed:{sym:"&#x261F;", nst:"open", h:110},
+                            open:{sym:"&#x261D;", nst:"closed",
+                                  h:descrdiv.scrollHeight}};
             descrdiv.style.height = String(states[state].h) + "px";
             jt.out("pcdshoutexpdiv", jt.tac2html(
                 ["a", {href:"#toggleDescriptionExpansion",
@@ -639,7 +640,7 @@ app.pcd = (function () {
             var fs = "normal";
             var prof = app.login.myProfile();
             if(ctx.descobj.contextobj && prof) {  //potentially editable
-                var obj = ctx.descobj.contextobj;
+                const obj = ctx.descobj.contextobj;
                 if(obj.dsType === "MUser" && obj.dsId === prof.dsId) {
                     fs = "editable"; }
                 else if(app.theme.association(obj) === "Founder") {
@@ -668,9 +669,9 @@ app.pcd = (function () {
                 html = jt.linkify(html); }
             return html; },
         startedit: function (fieldname) {
+            var focid = "";
             ctx.descobj.editing = "enabled";  //note content made editable
             stgmgr.toggleSettings("show");  //show Update button to save changes
-            var focid = "";
             Object.entries(oedmgr.dispdefs()).forEach(function ([field, defs]) {
                 var span = jt.byId(defs.eid);
                 span.onclick = null;
@@ -704,7 +705,7 @@ app.pcd = (function () {
             var oef = {name:{eid:"pcdnamespan", dfld:"name"},
                        descr:{eid:"pcddescrspan", dfld:"descr"}};
             if(ctx.actobj && ctx.actobj.contextobj) {
-                var updobj = ctx.actobj.contextobj;
+                const updobj = ctx.actobj.contextobj;
                 if(updobj.dsType === "MUser") {
                     oef.name.srcfld = "name";
                     oef.name.place = "Your Name Here";
@@ -734,18 +735,18 @@ app.pcd = (function () {
         readDoneTimestamp: function (txt) {
             return txt.match(/Done:\s([^<\s]+)/)[1]; },
         monitorUpload: function (submit) {
-            var iframe = jt.byId("pumif");
+            var txt; var iframe = jt.byId("pumif");
             if(!iframe) {
                 return jt.log("picmgr.monitorUpload exiting, no iframe"); }
             jt.byId("picuploadbutton").disabled = true;
             if(submit) {
                 jt.byId("picupldform").submit(); }
-            var picstatdiv = jt.byId("picuploadstatusdiv");
+            const picstatdiv = jt.byId("picuploadstatusdiv");
             if(!picstatdiv.innerHTML) {
                 picstatdiv.innerHTML = "Uploading"; }
             else {  //add a monitoring dot
                 picstatdiv.innerHTML = picstatdiv.innerHTML + "."; }
-            var txt = iframe.contentDocument || iframe.contentWindow.document;
+            txt = iframe.contentDocument || iframe.contentWindow.document;
             if(!txt || !txt.body || txt.body.innerHTML.indexOf("Ready") >= 0) {
                 return app.fork({descr:"monitor pic upload", ms:1000,
                                  func:picmgr.monitorUpload}); }
@@ -754,7 +755,7 @@ app.pcd = (function () {
             jt.out("pcdpicuploaddiv", "");  //clear image upload form
             if(txt.indexOf("Done: ") >= 0) { //successful upload
                 picmgr.notePicUploadMod(picmgr.readDoneTimestamp(txt));
-                var img = jt.byId("pcdpicimg");
+                const img = jt.byId("pcdpicimg");
                 img.src = app.pcd.picImgSrc(ctx.actobj.contextobj); }
             else { //report error
                 jt.err(txt); } },
@@ -765,9 +766,9 @@ app.pcd = (function () {
             if(div.innerHTML) {
                 div.innerHTML = "";
                 return; }
-            var cob = ctx.actobj.contextobj;
-            var oa = obacc[cob.dsType];
-            var auth = app.login.authenticated();
+            const cob = ctx.actobj.contextobj;
+            const oa = obacc[cob.dsType];
+            const auth = app.login.authenticated();
             div.innerHTML = jt.tac2html(
                 ["div", {id:"picuploadformdiv"},
                  //target form submission to iframe to avoid page reload
@@ -810,7 +811,7 @@ app.pcd = (function () {
                 ["div", {id:"signintofollowdiv"},
                  "Sign in to follow " + ctx.descobj.name])); }
         else { //signed in, suggest following if not associated
-            var obj = ctx.actobj.contextobj;
+            const obj = ctx.actobj.contextobj;
             if(obj && obj.dsId !== auth.authId &&  //not self
                app.theme.association(obj) === "Unknown") {  //not following
                 stgmgr.toggleSettings("show"); } }
@@ -907,7 +908,8 @@ app.pcd = (function () {
         var sf = "";
         if(app.login.myProfile()) {  //signed in and user info loaded
             sf = mdfs("stgmgr.toggleSettings"); }
-        var fullurl = app.docroot + app.pcd.linkForThemeOrProfile(obj).slice(1);
+        const fullurl = (app.docroot +
+                         app.pcd.linkForThemeOrProfile(obj).slice(1));
         app.pcd.setPageDescription({picsrc:app.pcd.picImgSrc(obj),
                                     disptype:obacc[obj.dsType].disptype,
                                     contextobj:obj,
@@ -936,7 +938,7 @@ app.pcd = (function () {
             item.svcdata.postctms.forEach(function (pn) {
                 if(!ctx.descobj.assoclinks[pn.ctmid]) {
                     ctx.descobj.assoclinks[pn.ctmid] = pn;
-                    var aldiv = jt.byId("pcdassoclinksdiv");
+                    const aldiv = jt.byId("pcdassoclinksdiv");
                     if(aldiv.innerText) {
                         aldiv.innerHTML += " | "; }
                     aldiv.innerHTML += app.membic.managerDispatch(
@@ -1055,7 +1057,7 @@ return {
                             types:{disp:false, sel:[]}};
                 jt.byId("pcdsrchin").value = ""; }
             else if(mode === "change") {  //refiltering in response to change
-                var sin = jt.byId("pcdsrchin");
+                const sin = jt.byId("pcdsrchin");
                 ctx.fist.qstr = sin.value;
                 if(ctx.fist.qstr.startsWith(" ")) { //from keywords
                     sin.value = "in keywords:" + ctx.fist.qstr;
@@ -1084,7 +1086,7 @@ return {
 
     saveDescripChanges: function () {
         jt.out("pcduppersavediv", "Saving...");
-        var updobj = ctx.actobj.contextobj;
+        const updobj = ctx.actobj.contextobj;
         Object.keys(ctx.descobj.owneredit).forEach(function (key) {
             var de = ctx.descobj.owneredit[key];
             var val = jt.byId(de.eid).innerHTML;
@@ -1094,7 +1096,8 @@ return {
         //Rebuilding everything via app.statemgr.redispatch is heavyhanded,
         //but it doesn't happen often, and rebuilding ensures editable
         //displays are returned to their original state with proper info.
-        var updfs = {"MUser":app.login.updateProfile, "Theme":app.theme.update};
+        const updfs = {"MUser":app.login.updateProfile,
+                       "Theme":app.theme.update};
         updfs[updobj.dsType](updobj,
             function () {
                 app.fork({descr:"saveDesripChanges success", ms:100,
@@ -1115,10 +1118,10 @@ return {
     //  name: display name for the page
     //  descr: text description for the page
     setPageDescription: function (descobj) {
+        var fsz = "large";
         ctx.actobj = null;  //clear any prev to avoid setup confusion
         ctx.descobj = descobj;
         descobj.owneredit = oedmgr.ownerEditableFieldsInfo();
-        var fsz = "large";
         if(descobj.descr.length > 300) {
             fsz = "medium"; }
         jt.out("pgdescdiv", jt.tac2html(
@@ -1150,6 +1153,7 @@ return {
     //  setfstr: onclick for settings button (string)
     //  notif(): Return zero or more notices to be displayed.
     setPageActions: function (actobj) {
+        var filtermode = "init";
         ctx.actobj = actobj;
         jt.out("pgactdiv", jt.tac2html(
             [["div", {id:"pcdctrldiv"},       //main actions line wrapper
@@ -1164,7 +1168,6 @@ return {
         srchmgr.updateSearchLabelText();
         processExtraObject(actobj.extraobj);
         picmgr.ownerEnablePicUpload();
-        var filtermode = "init";
         if(actobj.jumpto) {  //just saved an edit. or similar context
             filtermode = "change"; }
         app.pcd.filterContent(filtermode);
